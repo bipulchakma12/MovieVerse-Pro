@@ -25,14 +25,22 @@ export default function TrendingPage() {
       queryParams.append('limit', '24');
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/movies?${queryParams.toString()}`);
-      const data = await res.json();
-
-      if (data.success && Array.isArray(data.data)) {
-        setMovies(data.data);
+      const res = await fetch(`${apiUrl}/movies?${queryParams.toString()}`).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          setMovies(data.data);
+          setLoading(false);
+          return;
+        }
       }
+
+      // Fallback to TMDB API directly for live hosting deployments
+      const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
+      const fallbackData = await fetchTMDBPopularMovies();
+      setMovies(fallbackData);
     } catch (error) {
-      console.error('Failed to fetch live movies from backend API:', error);
+      console.error('Failed to fetch live movies:', error);
     } finally {
       setLoading(false);
     }

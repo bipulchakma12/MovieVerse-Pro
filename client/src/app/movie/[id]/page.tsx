@@ -22,10 +22,21 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
     try {
       setLoading(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/movies/${params.id}`);
-      const data = await res.json();
-      if (data.success && data.data) {
-        setMovie(data.data);
+      const res = await fetch(`${apiUrl}/movies/${params.id}`).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data.success && data.data) {
+          setMovie(data.data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fallback to TMDB API directly for live hosting deployments
+      const { fetchTMDBMovieDetail } = await import('@/utils/tmdbClient');
+      const fallbackMovie = await fetchTMDBMovieDetail(params.id);
+      if (fallbackMovie) {
+        setMovie(fallbackMovie);
       }
     } catch (e) {
       console.error('Failed to fetch movie detail:', e);
