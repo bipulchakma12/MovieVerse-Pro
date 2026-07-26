@@ -1,0 +1,64 @@
+{
+  "info": {
+    "name": "MovieVerse Pro — Phase 5: Analytics & Admin Dashboard",
+    "_postman_id": "movieverse-phase5-analytics",
+    "description": "Admin Analytics API collection for Phase 5 including Dashboard Overview, Content Performance Metrics, Genre Breakdown, and User Management.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Analytics & Metrics",
+      "item": [
+        {
+          "name": "Get Dashboard Overview Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/analytics/dashboard", "host": ["{{baseUrl}}"], "path": ["api", "analytics", "dashboard"] }
+          }
+        },
+        {
+          "name": "Get Genre Breakdown Analytics (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/analytics/genres", "host": ["{{baseUrl}}"], "path": ["api", "analytics", "genres"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin User Controls",
+      "item": [
+        {
+          "name": "Get All Users List (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+          }
+        },
+        {
+          "name": "Toggle Block User (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/USER_ID_HERE/block", "host": ["{{baseUrl}}"], "path": ["api", "users", "USER_ID_HERE", "block"] }
+          }
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/USER_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api", "users", "USER_ID_HERE"] }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "info": {
+    "name": "MovieVerse Pro — Phase 3: Movies & Genres API",
+    "_postman_id": "movieverse-phase3-movies",
+    "description": "Complete Movie Management System API collection for Phase 3 including Movies CRUD, Genres CRUD, Cast Management, Filtering, Search, and Recommendations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Movies",
+      "item": [
+        {
+          "name": "Get All Movies (with filter & search)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/movies?page=1&limit=10&search=Inception&sort=-ratingAverage",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "movies"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "Inception" },
+                { "key": "sort", "value": "-ratingAverage" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Movie by ID or Slug",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/movies/inception", "host": ["{{baseUrl}}"], "path": ["api", "movies", "inception"] }
+          }
+        },
+        {
+          "name": "Get Movie Recommendations",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/movies/MOVIE_ID_HERE/recommendations", "host": ["{{baseUrl}}"], "path": ["api", "movies", "MOVIE_ID_HERE", "recommendations"] }
+          }
+        },
+        {
+          "name": "Create Movie (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Dune: Part Two\",\n  \"storyline\": \"Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.\",\n  \"posterUrl\": \"https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80\",\n  \"bannerUrl\": \"https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80\",\n  \"trailerUrl\": \"https://www.youtube.com/embed/Way9Dexny3w\",\n  \"videoUrl\": \"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4\",\n  \"releaseYear\": 2024,\n  \"runtimeMinutes\": 166,\n  \"language\": \"English\",\n  \"country\": \"United States\",\n  \"ratingAverage\": 8.6,\n  \"isFeatured\": true,\n  \"isTrending\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/movies", "host": ["{{baseUrl}}"], "path": ["api", "movies"] }
+          }
+        },
+        {
+          "name": "Update Movie (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isFeatured\": true,\n  \"isTrending\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/movies/MOVIE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api", "movies", "MOVIE_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Delete Movie (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/movies/MOVIE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api", "movies", "MOVIE_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Genres",
+      "item": [
+        {
+          "name": "Get All Genres",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/genres", "host": ["{{baseUrl}}"], "path": ["api", "genres"] }
+          }
+        },
+        {
+          "name": "Get Genre by ID or Slug",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/genres/action", "host": ["{{baseUrl}}"], "path": ["api", "genres", "action"] }
+          }
+        },
+        {
+          "name": "Create Genre (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cyberpunk\",\n  \"description\": \"Futuristic sci-fi subgenre focusing on high-tech and low-life.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/genres", "host": ["{{baseUrl}}"], "path": ["api", "genres"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cast Members",
+      "item": [
+        {
+          "name": "Get All Cast Members",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/cast", "host": ["{{baseUrl}}"], "path": ["api", "cast"] }
+          }
+        },
+        {
+          "name": "Create Cast Member (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Denis Villeneuve\",\n  \"roleType\": \"director\",\n  \"bio\": \"Canadian filmmaker known for Arrival, Blade Runner 2049, and Dune.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/cast", "host": ["{{baseUrl}}"], "path": ["api", "cast"] }
+          }
+        }
+      ]
+    }
+  ]
+}

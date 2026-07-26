@@ -1,0 +1,151 @@
+{
+  "info": {
+    "name": "MovieVerse Pro — Phase 4: User Engagement & Social Features",
+    "_postman_id": "movieverse-phase4-user-engagement",
+    "description": "Complete collection for Phase 4: Reviews, Ratings, Like/Reply to Reviews, Favorites, Watch Later, and Continue Watching / Watch History progress tracking.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Reviews & Ratings",
+      "item": [
+        {
+          "name": "Get Movie Reviews",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/reviews/movie/MOVIE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api", "reviews", "movie", "MOVIE_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Add / Update Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 9,\n  \"comment\": \"Absolute masterpiece of modern cinema! Highly recommended.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reviews/movie/MOVIE_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api", "reviews", "movie", "MOVIE_ID_HERE"] }
+          }
+        },
+        {
+          "name": "Like / Unlike Review",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/reviews/REVIEW_ID_HERE/like", "host": ["{{baseUrl}}"], "path": ["api", "reviews", "REVIEW_ID_HERE", "like"] }
+          }
+        },
+        {
+          "name": "Reply to Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": \"Totally agree with your point about the soundtrack!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/reviews/REVIEW_ID_HERE/reply", "host": ["{{baseUrl}}"], "path": ["api", "reviews", "REVIEW_ID_HERE", "reply"] }
+          }
+        },
+        {
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/reviews/REVIEW_ID_HERE", "host": ["{{baseUrl}}"], "path": ["api", "reviews", "REVIEW_ID_HERE"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Favorites & Watchlists",
+      "item": [
+        {
+          "name": "Get User Favorites",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/user-lists/favorites", "host": ["{{baseUrl}}"], "path": ["api", "user-lists", "favorites"] }
+          }
+        },
+        {
+          "name": "Toggle Favorite (Add/Remove)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movieId\": \"MOVIE_ID_HERE\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/user-lists/favorites/toggle", "host": ["{{baseUrl}}"], "path": ["api", "user-lists", "favorites", "toggle"] }
+          }
+        },
+        {
+          "name": "Get Watch Later List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/user-lists/watch-later", "host": ["{{baseUrl}}"], "path": ["api", "user-lists", "watch-later"] }
+          }
+        },
+        {
+          "name": "Toggle Watch Later",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movieId\": \"MOVIE_ID_HERE\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/user-lists/watch-later/toggle", "host": ["{{baseUrl}}"], "path": ["api", "user-lists", "watch-later", "toggle"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Watch History & Continue Watching",
+      "item": [
+        {
+          "name": "Get Watch History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/user-lists/watch-history", "host": ["{{baseUrl}}"], "path": ["api", "user-lists", "watch-history"] }
+          }
+        },
+        {
+          "name": "Update Video Progress",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movieId\": \"MOVIE_ID_HERE\",\n  \"watchedDurationSeconds\": 1450,\n  \"totalDurationSeconds\": 8800\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/user-lists/watch-history/progress", "host": ["{{baseUrl}}"], "path": ["api", "user-lists", "watch-history", "progress"] }
+          }
+        }
+      ]
+    }
+  ]
+}
