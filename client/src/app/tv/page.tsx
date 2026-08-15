@@ -48,7 +48,7 @@ export default function TvShowsPage() {
 
       if (res && res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.data)) {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
           setTvShows(data.data);
           setTotalPages(data.pages || 1);
           setTotalCount(data.total || data.data.length);
@@ -57,7 +57,12 @@ export default function TvShowsPage() {
         }
       }
 
-      setTvShows([]);
+      // Direct TMDB API Fallback for Vercel Live Deployment
+      const { fetchTMDBPopularTvShows } = await import('@/utils/tmdbClient');
+      const fallbackTv = await fetchTMDBPopularTvShows(pageNum);
+      setTvShows(fallbackTv);
+      setTotalPages(500);
+      setTotalCount(50000);
     } catch (error) {
       console.error('Failed to fetch TV shows:', error);
     } finally {
