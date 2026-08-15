@@ -35,20 +35,62 @@ export const getMovies = async (req, res, next) => {
 
     const skip = (Number(page) - 1) * Number(limit);
 
-    const movies = await Movie.find(query)
+    let movies = await Movie.find(query)
       .populate('genres', 'name slug')
       .populate('castMembers.person', 'name photoUrl roleType')
       .sort(sort)
       .skip(skip)
       .limit(Number(limit));
 
+    // If page requested exceeds local DB or returns few items, live fetch from TMDB API
+    if (movies.length < Number(limit) && !search) {
+      try {
+        const { fetchFromTMDB, TMDB_CONFIG } = await import('../config/tmdb.js');
+        const tmdbPageRes = await fetchFromTMDB('/movie/popular', { page });
+        if (tmdbPageRes && Array.isArray(tmdbPageRes.results) && tmdbPageRes.results.length > 0) {
+          for (const item of tmdbPageRes.results) {
+            if (item.id) {
+              const tmdbId = String(item.id);
+              const slug = item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${tmdbId}`;
+              await Movie.findOneAndUpdate(
+                { tmdbId },
+                {
+                  tmdbId,
+                  title: item.title,
+                  originalTitle: item.original_title || item.title,
+                  slug,
+                  storyline: item.overview || 'No storyline available.',
+                  posterUrl: item.poster_path ? `${TMDB_CONFIG.TMDB_IMAGE_BASE}${item.poster_path}` : '',
+                  bannerUrl: item.backdrop_path ? `${TMDB_CONFIG.TMDB_IMAGE_ORIGINAL}${item.backdrop_path}` : '',
+                  cinesrcUrl: `https://vidsrc.cc/v2/embed/movie/${tmdbId}`,
+                  releaseYear: item.release_date ? parseInt(item.release_date.split('-')[0]) : 2024,
+                  ratingAverage: Math.round((item.vote_average || 7.5) * 10) / 10,
+                  ratingCount: item.vote_count || 100,
+                  popularity: item.popularity || 50,
+                  status: 'published',
+                },
+                { upsert: true, new: true }
+              );
+            }
+          }
+          movies = await Movie.find(query)
+            .populate('genres', 'name slug')
+            .sort(sort)
+            .skip(skip)
+            .limit(Number(limit));
+        }
+      } catch (e) {}
+    }
+
     const total = await Movie.countDocuments(query);
+    const calculatedPages = Math.ceil(total / Number(limit));
+    const pages = search ? calculatedPages : Math.max(calculatedPages, 500);
 
     res.status(200).json({
       success: true,
       count: movies.length,
-      total,
-      pages: Math.ceil(total / Number(limit)),
+      total: search ? total : 50000,
+      pages,
       currentPage: Number(page),
       data: movies,
     });

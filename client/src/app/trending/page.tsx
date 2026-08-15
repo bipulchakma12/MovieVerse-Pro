@@ -2,47 +2,65 @@
 
 import React, { useState, useEffect } from 'react';
 import { MovieCard, MovieItem } from '@/components/MovieCard';
-import { Filter, Search, Flame, Loader2 } from 'lucide-react';
+import { Filter, Search, Flame, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function TrendingPage() {
   const [movies, setMovies] = useState<MovieItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const genres = ['all', 'Action', 'Sci-Fi', 'Drama', 'Thriller', 'Adventure', 'Animation', 'Crime'];
 
   useEffect(() => {
-    fetchMovies();
+    setCurrentPage(1);
+    fetchMovies(1);
   }, [selectedGenre, searchTerm]);
 
-  const fetchMovies = async () => {
+  const fetchMovies = async (pageNum = currentPage) => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
       if (searchTerm) queryParams.append('search', searchTerm);
       if (selectedGenre !== 'all') queryParams.append('genre', selectedGenre.toLowerCase());
-      queryParams.append('limit', '60');
+      queryParams.append('page', pageNum.toString());
+      queryParams.append('limit', '100');
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       const res = await fetch(`${apiUrl}/movies?${queryParams.toString()}`).catch(() => null);
+
       if (res && res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.data) && data.data.length > 0) {
           setMovies(data.data);
+          setTotalPages(data.pages || 1);
+          setTotalCount(data.total || data.data.length);
           setLoading(false);
           return;
         }
       }
 
-      // Fallback to TMDB API directly for live hosting deployments
+      // Direct TMDB API Fallback for Vercel Live Deployment
       const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
-      const fallbackData = await fetchTMDBPopularMovies();
+      const fallbackData = await fetchTMDBPopularMovies(pageNum);
       setMovies(fallbackData);
+      setTotalPages(500);
+      setTotalCount(50000);
     } catch (error) {
       console.error('Failed to fetch live movies:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      fetchMovies(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -53,19 +71,19 @@ export default function TrendingPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-border pb-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <Flame className="w-8 h-8 text-brand-500 fill-brand-500" /> Trending & Discover Movies
+            <Flame className="w-8 h-8 text-brand-500 fill-brand-500" /> Trending & Discover Movies Catalog
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Browse real popular blockbusters, top-rated hits, and TMDB live imports
+            Browse <strong className="text-brand-500 font-bold">{totalCount || movies.length}</strong> real popular blockbusters, top-rated hits, and live TMDB collections
           </p>
         </div>
 
         {/* Filter bar */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
+          <div className="relative flex-1 md:w-72">
             <input
               type="text"
-              placeholder="Search movies..."
+              placeholder="Search movies or TMDB ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-xs rounded-full bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -97,13 +115,38 @@ export default function TrendingPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
-          <p className="text-xs text-slate-400">Loading live movies from backend...</p>
+          <p className="text-xs text-slate-400">Loading live movies from catalog...</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
           {movies.map((movie) => (
             <MovieCard key={movie._id} movie={movie} />
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-6 border-t border-slate-200 dark:border-dark-border">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 flex items-center gap-1"
+          >
+            <ChevronLeft className="w-4 h-4" /> Previous
+          </button>
+
+          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            Page <strong className="text-brand-500">{currentPage}</strong> of {totalPages}
+          </span>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-600/20 disabled:opacity-50 flex items-center gap-1"
+          >
+            Next Page <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
 
