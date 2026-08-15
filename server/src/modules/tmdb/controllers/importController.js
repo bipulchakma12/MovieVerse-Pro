@@ -4,6 +4,8 @@ import {
   stopImportService,
   getImportStatusService,
   getImportLogsService,
+  searchTmdbMoviesService,
+  importSingleMovieService,
 } from '../services/importService.js';
 
 // @desc    Start TMDB Daily Export import
@@ -67,3 +69,33 @@ export const getImportLogs = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Search TMDB movies by title
+// @route   GET /api/admin/import/search?q=MovieTitle
+// @access  Public / Admin
+export const searchTmdb = async (req, res, next) => {
+  try {
+    const query = req.query.q || req.query.query || '';
+    const results = await searchTmdbMoviesService(query);
+    res.status(200).json({ success: true, count: results.length, data: results });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Select movie from TMDB search -> Auto Save TMDB ID & Generate CineSrc URL
+// @route   POST /api/admin/import/select
+// @access  Public / Admin
+export const selectAndImportMovie = async (req, res, next) => {
+  try {
+    const { tmdbId } = req.body;
+    if (!tmdbId) {
+      return res.status(400).json({ success: false, message: 'TMDB ID is required' });
+    }
+    const result = await importSingleMovieService(tmdbId);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+

@@ -1,17 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Star, Clock, Calendar, Globe, Bookmark, Heart, Send, MessageSquare, Loader2 } from 'lucide-react';
+import {
+  Star, Clock, Calendar, Globe, Bookmark, Heart, Send,
+  MessageSquare, Loader2, Play, Tv, Check, CheckCircle2
+} from 'lucide-react';
 import { VideoPlayer } from '@/components/VideoPlayer';
 
 export default function MovieDetailsPage({ params }: { params: { id: string } }) {
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [playerMode, setPlayerMode] = useState<'full' | 'trailer'>('full');
+  const [activeTab, setActiveTab] = useState<'sources' | 'trailer'>('sources');
+  const [streamServer, setStreamServer] = useState<'server1' | 'server2' | 'server3' | 'server4'>('server1');
   const [userRating, setUserRating] = useState(0);
   const [commentText, setCommentText] = useState('');
-  const [isFavorite, setIsFavorite] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
+
+  // User List States
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isWatchLater, setIsWatchLater] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
+  const [wlLoading, setWlLoading] = useState(false);
 
   useEffect(() => {
     fetchMovieDetail();
@@ -27,16 +36,16 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
         const data = await res.json();
         if (data.success && data.data) {
           setMovie(data.data);
+          checkUserListStatus(data.data);
           setLoading(false);
           return;
         }
       }
-
-      // Fallback to TMDB API directly for live hosting deployments
       const { fetchTMDBMovieDetail } = await import('@/utils/tmdbClient');
       const fallbackMovie = await fetchTMDBMovieDetail(params.id);
       if (fallbackMovie) {
         setMovie(fallbackMovie);
+        checkUserListStatus(fallbackMovie);
       }
     } catch (e) {
       console.error('Failed to fetch movie detail:', e);
@@ -45,43 +54,136 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
     }
   };
 
+  const checkUserListStatus = async (movieObj: any) => {
+    if (!movieObj || !movieObj._id) return;
+    const token = localStorage.getItem('movieverse-token');
+
+    // Guest fallback in localStorage
+    const favs = JSON.parse(localStorage.getItem('guest_favs') || '[]');
+    const wls = JSON.parse(localStorage.getItem('guest_wls') || '[]');
+    setIsFavorite(favs.includes(movieObj._id));
+    setIsWatchLater(wls.includes(movieObj._id));
+
+    if (!token) return;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    try {
+      const [resFav, resWl] = await Promise.all([
+        fetch(`${apiUrl}/user-lists/favorites`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+        fetch(`${apiUrl}/user-lists/watch-later`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+      ]);
+      if (resFav && resFav.ok) {
+        const data = await resFav.json();
+        if (data.success && Array.isArray(data.data)) {
+          setIsFavorite(data.data.some((f: any) => (f.movie?._id || f.movie) === movieObj._id));
+        }
+      }
+      if (resWl && resWl.ok) {
+        const data = await resWl.json();
+        if (data.success && Array.isArray(data.data)) {
+          setIsWatchLater(data.data.some((w: any) => (w.movie?._id || w.movie) === movieObj._id));
+        }
+      }
+    } catch (e) { /* ignore */ }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!movie || !movie._id) return;
+    try {
+      setFavLoading(true);
+      const token = localStorage.getItem('movieverse-token');
+
+      if (!token) {
+        const favs = JSON.parse(localStorage.getItem('guest_favs') || '[]');
+        let updated;
+        if (favs.includes(movie._id)) {
+          updated = favs.filter((id: string) => id !== movie._id);
+          setIsFavorite(false);
+        } else {
+          updated = [...favs, movie._id];
+          setIsFavorite(true);
+        }
+        localStorage.setItem('guest_favs', JSON.stringify(updated));
+        return;
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/user-lists/favorites/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ movieId: movie._id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsFavorite(data.isFavorite);
+      }
+    } catch (e) {
+      console.error('Failed to toggle favorite:', e);
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
+  const handleToggleWatchLater = async () => {
+    if (!movie || !movie._id) return;
+    try {
+      setWlLoading(true);
+      const token = localStorage.getItem('movieverse-token');
+
+      if (!token) {
+        const wls = JSON.parse(localStorage.getItem('guest_wls') || '[]');
+        let updated;
+        if (wls.includes(movie._id)) {
+          updated = wls.filter((id: string) => id !== movie._id);
+          setIsWatchLater(false);
+        } else {
+          updated = [...wls, movie._id];
+          setIsWatchLater(true);
+        }
+        localStorage.setItem('guest_wls', JSON.stringify(updated));
+        return;
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${apiUrl}/user-lists/watch-later/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ movieId: movie._id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsWatchLater(data.inWatchLater);
+      }
+    } catch (e) {
+      console.error('Failed to toggle watch later:', e);
+    } finally {
+      setWlLoading(false);
+    }
+  };
+
   const fetchMovieReviews = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       const res = await fetch(`${apiUrl}/reviews/movie/${params.id}`);
       const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
-        setReviews(data.data);
-      }
-    } catch (e) {
-      // Ignore
-    }
+      if (data.success && Array.isArray(data.data)) setReviews(data.data);
+    } catch (e) { /* ignore */ }
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText || !movie) return;
-
     try {
       const token = localStorage.getItem('movieverse-token');
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       const res = await fetch(`${apiUrl}/reviews/movie/${movie._id}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ rating: userRating || 8, comment: commentText }),
       });
       const data = await res.json();
-      if (data.success) {
-        setReviews([data.data, ...reviews]);
-        setCommentText('');
-        setUserRating(0);
-      }
-    } catch (e) {
-      console.error('Failed to post review:', e);
-    }
+      if (data.success) { setReviews([data.data, ...reviews]); setCommentText(''); setUserRating(0); }
+    } catch (e) { console.error('Failed to post review:', e); }
   };
 
   if (loading) {
@@ -103,12 +205,32 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
 
   const genreNames = Array.isArray(movie.genres)
     ? movie.genres.map((g: any) => (typeof g === 'string' ? g : g.name))
-    : ['Action', 'Sci-Fi'];
+    : ['Action'];
+
+  const tmdbId = movie.tmdbId;
+  const trailerUrl = movie.trailerUrl || 'https://www.youtube.com/embed/YoHD9XEInc0';
+
+  // Multi-server endpoints for full movie streaming
+  const server1Url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
+  const server2Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
+  const server3Url = `https://autoembed.co/movie/tmdb/${tmdbId}`;
+  const server4Url = `https://vidsrc.to/embed/movie/${tmdbId}`;
+
+  const currentStreamUrl =
+    streamServer === 'server1'
+      ? server1Url
+      : streamServer === 'server2'
+      ? server2Url
+      : streamServer === 'server3'
+      ? server3Url
+      : server4Url;
+
+  const isUpcoming = movie.releaseYear && movie.releaseYear > 2024;
 
   return (
     <div className="pb-16">
-      
-      {/* Banner & Hero Header */}
+
+      {/* Hero Banner */}
       <div className="relative w-full h-[50vh] min-h-[350px] bg-slate-950 overflow-hidden">
         <img
           src={movie.bannerUrl || movie.posterUrl}
@@ -121,15 +243,17 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
           <img
             src={movie.posterUrl}
             alt={movie.title}
-            className="w-36 sm:w-48 rounded-2xl border-4 border-slate-900 shadow-2xl flex-shrink-0"
+            className="w-36 sm:w-48 rounded-2xl border-4 border-slate-900 shadow-2xl flex-shrink-0 object-cover"
           />
-
           <div className="space-y-3 text-white">
             <div className="flex flex-wrap gap-2">
-              {genreNames.map((g: string) => (
-                <span key={g} className="px-3 py-1 rounded-full text-xs font-semibold bg-brand-600/80 backdrop-blur-md">
-                  {g}
+              {isUpcoming && (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/90 text-slate-950 uppercase">
+                  Coming {movie.releaseYear}
                 </span>
+              )}
+              {genreNames.filter(Boolean).map((g: string) => (
+                <span key={g} className="px-3 py-1 rounded-full text-xs font-semibold bg-brand-600/80 backdrop-blur-md">{g}</span>
               ))}
             </div>
             <h1 className="text-3xl sm:text-5xl font-black">{movie.title}</h1>
@@ -139,157 +263,231 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
               </span>
               <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {movie.runtimeMinutes || 120} min</span>
               <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {movie.releaseYear || 2024}</span>
-              <span className="flex items-center gap-1"><Globe className="w-4 h-4" /> {movie.country || 'English'}</span>
+              <span className="flex items-center gap-1"><Globe className="w-4 h-4" /> {movie.country || 'US'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content Details Grid */}
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column: Player & Reviews */}
+
+        {/* Left: Player + Reviews */}
         <div className="lg:col-span-2 space-y-8">
-          
-          {/* Video Player & Stream Selector */}
+
+          {/* Player Controls & Server Switcher */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                Movie Player
-              </h2>
-              {/* Stream Source Toggle */}
-              <div className="flex items-center gap-2 bg-slate-100 dark:bg-dark-card p-1 rounded-xl border border-slate-200 dark:border-dark-border">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setPlayerMode('full')}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    playerMode === 'full'
+                  onClick={() => setActiveTab('sources')}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
+                    activeTab === 'sources'
                       ? 'bg-brand-600 text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-white'
+                      : 'text-slate-400 hover:text-white bg-slate-800'
                   }`}
                 >
-                  ▶ Watch Full Movie (1080p Stream)
+                  <Tv className="w-3.5 h-3.5" /> Watch Full Movie
                 </button>
                 <button
-                  onClick={() => setPlayerMode('trailer')}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    playerMode === 'trailer'
+                  onClick={() => setActiveTab('trailer')}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
+                    activeTab === 'trailer'
                       ? 'bg-brand-600 text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-white'
+                      : 'text-slate-400 hover:text-white bg-slate-800'
                   }`}
                 >
-                  🍿 Official Trailer
+                  <Play className="w-3.5 h-3.5 fill-current" /> Trailer
                 </button>
               </div>
+
+              {/* Server Switcher */}
+              {activeTab === 'sources' && tmdbId && (
+                <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px] font-bold">
+                  <span className="px-2 text-slate-500">Server:</span>
+                  <button
+                    onClick={() => setStreamServer('server1')}
+                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                      streamServer === 'server1' ? 'bg-brand-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Server 1 (CineSrc)
+                  </button>
+                  <button
+                    onClick={() => setStreamServer('server2')}
+                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                      streamServer === 'server2' ? 'bg-brand-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Server 2 (MultiEmbed)
+                  </button>
+                  <button
+                    onClick={() => setStreamServer('server3')}
+                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                      streamServer === 'server3' ? 'bg-brand-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Server 3 (AutoEmbed)
+                  </button>
+                  <button
+                    onClick={() => setStreamServer('server4')}
+                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                      streamServer === 'server4' ? 'bg-brand-600 text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Server 4 (VidSrc.to)
+                  </button>
+                </div>
+              )}
             </div>
 
-            <VideoPlayer
-              src={
-                playerMode === 'full'
-                  ? (movie.videoUrl || 'https://vjs.zencdn.net/v/oceans.mp4')
-                  : (movie.trailerUrl || 'https://www.youtube.com/embed/YoHD9XEInc0')
-              }
-              poster={movie.bannerUrl || movie.posterUrl}
-              title={`${movie.title} (${playerMode === 'full' ? 'Full Movie 1080p HD' : 'Official Trailer'})`}
-            />
+            {/* Official Trailer Player */}
+            {activeTab === 'trailer' && (
+              <div className="space-y-2">
+                <VideoPlayer
+                  src={trailerUrl}
+                  poster={movie.bannerUrl || movie.posterUrl}
+                  title={`${movie.title} — Official Trailer`}
+                />
+                <p className="text-xs text-slate-500 text-center">
+                  🎬 Official YouTube Trailer
+                </p>
+              </div>
+            )}
+
+            {/* Full Movie Stream Player */}
+            {activeTab === 'sources' && tmdbId && (
+              <div className="space-y-3">
+                <VideoPlayer
+                  src={currentStreamUrl}
+                  poster={movie.bannerUrl || movie.posterUrl}
+                  title={`${movie.title} — Full Movie HD Stream`}
+                />
+              </div>
+            )}
+
+            {/* No tmdbId fallback */}
+            {activeTab === 'sources' && !tmdbId && (
+              <div className="p-6 rounded-xl bg-slate-900 border border-slate-700 text-center text-slate-400 text-sm">
+                No authorized video source available for this title.
+              </div>
+            )}
           </div>
 
           {/* Storyline */}
           <div className="p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border space-y-3">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Storyline</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{movie.storyline}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              {movie.storyline || movie.overview || 'No overview available.'}
+            </p>
           </div>
 
-          {/* Reviews & Star Ratings */}
+          {/* User Reviews */}
           <div className="p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border space-y-6">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-brand-500" /> User Reviews & Ratings
+              <MessageSquare className="w-5 h-5 text-brand-500" /> User Reviews
             </h3>
 
-            {/* Write Review Form */}
             <form onSubmit={handleReviewSubmit} className="space-y-4 border-b border-slate-200 dark:border-dark-border pb-6">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Your Rating:</span>
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setUserRating(star)}
-                      className={`w-5 h-5 text-xs font-bold rounded ${userRating >= star ? 'text-amber-400' : 'text-slate-400'}`}
-                    >
-                      ★
-                    </button>
-                  ))}
-                  <span className="text-xs text-slate-400 ml-2">({userRating || 0}/10)</span>
-                </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Rating:</span>
+                {[1,2,3,4,5,6,7,8,9,10].map((star) => (
+                  <button
+                    key={star} type="button"
+                    onClick={() => setUserRating(star)}
+                    className={`text-lg leading-none ${userRating >= star ? 'text-amber-400' : 'text-slate-400'}`}
+                  >★</button>
+                ))}
+                <span className="text-xs text-slate-400">({userRating || 0}/10)</span>
               </div>
-
-              <div className="relative">
-                <textarea
-                  rows={3}
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Write your review or thoughts about this movie..."
-                  className="w-full p-3 text-xs rounded-xl bg-slate-100 dark:bg-dark-bg border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-200"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 transition-all flex items-center gap-2"
-              >
+              <textarea
+                rows={3} value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write your thoughts about this movie..."
+                className="w-full p-3 text-xs rounded-xl bg-slate-100 dark:bg-dark-bg border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-200 resize-none"
+              />
+              <button type="submit" className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 transition-all flex items-center gap-2">
                 <Send className="w-3.5 h-3.5" /> Submit Review
               </button>
             </form>
 
-            {/* Reviews List */}
             <div className="space-y-4">
+              {reviews.length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-4">No reviews yet. Be the first!</p>
+              )}
               {reviews.map((rev: any) => (
-                <div key={rev._id || rev.id} className="p-4 rounded-xl bg-slate-50 dark:bg-dark-bg border border-slate-200 dark:border-dark-border space-y-2">
+                <div key={rev._id} className="p-4 rounded-xl bg-slate-50 dark:bg-dark-bg border border-slate-200 dark:border-dark-border space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <img src={rev.user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'} alt={rev.user?.name || 'User'} className="w-8 h-8 rounded-full object-cover" />
+                      <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold">
+                        {(rev.user?.name || 'U')[0].toUpperCase()}
+                      </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-900 dark:text-white">{rev.user?.name || 'Anonymous User'}</div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white">{rev.user?.name || 'Anonymous'}</div>
                         <div className="text-[10px] text-slate-400">Recently</div>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-xs font-bold">
-                      ★ {rev.rating}/10
-                    </span>
+                    <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-xs font-bold">★ {rev.rating}/10</span>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{rev.comment}</p>
                 </div>
               ))}
             </div>
-
           </div>
-
         </div>
 
-        {/* Right Sidebar: Actions */}
+        {/* Right Sidebar */}
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border space-y-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border space-y-3">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white">Movie Info</h4>
+            <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+              {movie.releaseYear && <div><span className="font-semibold text-slate-900 dark:text-white">Year:</span> {movie.releaseYear}</div>}
+              {movie.runtimeMinutes && <div><span className="font-semibold text-slate-900 dark:text-white">Runtime:</span> {movie.runtimeMinutes} min</div>}
+              {movie.language && <div><span className="font-semibold text-slate-900 dark:text-white">Language:</span> {movie.language}</div>}
+              {movie.country && <div><span className="font-semibold text-slate-900 dark:text-white">Country:</span> {movie.country}</div>}
+              {tmdbId && <div><span className="font-semibold text-slate-900 dark:text-white">TMDB ID:</span> {tmdbId}</div>}
+            </div>
+          </div>
+
+          {/* Interactive Favorites & Watch Later Buttons */}
+          <div className="p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border space-y-3">
             <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
+              onClick={handleToggleFavorite}
+              disabled={favLoading}
+              className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${
                 isFavorite
-                  ? 'bg-rose-600 text-white'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+                  ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/30'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-              {isFavorite ? 'In Favorites' : 'Add to Favorites'}
+              {favLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current text-white' : ''}`} />
+              )}
+              {isFavorite ? 'Saved in Favorites ❤️' : 'Add to Favorites'}
             </button>
 
-            <button className="w-full py-3 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 flex items-center justify-center gap-2">
-              <Bookmark className="w-4 h-4" /> Watch Later
+            <button
+              onClick={handleToggleWatchLater}
+              disabled={wlLoading}
+              className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${
+                isWatchLater
+                  ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-600/30'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              {wlLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Bookmark className={`w-4 h-4 ${isWatchLater ? 'fill-current text-white' : ''}`} />
+              )}
+              {isWatchLater ? 'Added to Watch Later 🔖' : 'Watch Later'}
             </button>
           </div>
         </div>
 
       </div>
-
     </div>
   );
 }

@@ -22,7 +22,7 @@ export default function TrendingPage() {
       const queryParams = new URLSearchParams();
       if (searchTerm) queryParams.append('search', searchTerm);
       if (selectedGenre !== 'all') queryParams.append('genre', selectedGenre.toLowerCase());
-      queryParams.append('limit', '24');
+      queryParams.append('limit', '60');
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       const res = await fetch(`${apiUrl}/movies?${queryParams.toString()}`).catch(() => null);

@@ -69,7 +69,13 @@ export const getMovieByIdOrSlug = async (req, res, next) => {
         .populate('genres', 'name slug')
         .populate('castMembers.person', 'name photoUrl bio roleType');
     } else {
-      movie = await Movie.findOne({ slug: idOrSlug })
+      movie = await Movie.findOne({
+        $or: [
+          { slug: idOrSlug },
+          { tmdbId: idOrSlug },
+          { slug: new RegExp('^' + idOrSlug + '$', 'i') },
+        ],
+      })
         .populate('genres', 'name slug')
         .populate('castMembers.person', 'name photoUrl bio roleType');
     }

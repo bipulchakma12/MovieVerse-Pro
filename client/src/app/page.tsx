@@ -13,7 +13,7 @@ export default function Home() {
     const fetchHomeMovies = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        const res = await fetch(`${apiUrl}/movies?limit=12`).catch(() => null);
+        const res = await fetch(`${apiUrl}/movies?limit=30`).catch(() => null);
         
         if (res && res.ok) {
           const data = await res.json();
@@ -27,7 +27,7 @@ export default function Home() {
         // Fallback to TMDB API directly for live hosting deployments
         const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
         const fallbackData = await fetchTMDBPopularMovies();
-        setFeaturedMovies(fallbackData.slice(0, 12));
+        setFeaturedMovies(fallbackData.slice(0, 30));
       } catch (e) {
         console.error('Failed to fetch home movies:', e);
       } finally {

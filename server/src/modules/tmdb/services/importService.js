@@ -4,7 +4,7 @@ import { TmdbImportProgress } from '../models/TmdbImportProgress.js';
 import { TmdbImportLog } from '../models/TmdbImportLog.js';
 import { IMPORT_STATUS, LOG_LEVEL } from '../types/tmdb.types.js';
 import { downloadDailyExport, extractMovieIdsFromExport, getExportFilename } from '../utils/downloader.js';
-import { fetchEnrichedMovieDetails } from '../utils/tmdbApiClient.js';
+import { fetchEnrichedMovieDetails, searchTmdbMovies } from '../utils/tmdbApiClient.js';
 import { TMDB_CONFIG } from '../../../config/tmdb.js';
 
 let isRunning = false;
@@ -125,6 +125,7 @@ const saveTmdbMovieToMongo = async (enriched) => {
     bannerUrl,
     trailerUrl,
     videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    cinesrcUrl: `https://vidsrc.cc/v2/embed/movie/${tmdbId}`,
     releaseYear,
     releaseDate: enriched.release_date ? new Date(enriched.release_date) : undefined,
     runtimeMinutes: enriched.runtime || 120,
@@ -156,12 +157,16 @@ const saveTmdbMovieToMongo = async (enriched) => {
       providerName: sp.provider_name,
       logoPath: sp.logo_path ? `${TMDB_CONFIG.TMDB_IMAGE_BASE}${sp.logo_path}` : undefined,
     })),
-    posters: (enriched.images?.posters || []).slice(0, 5).map((p) => `${TMDB_CONFIG.TMDB_IMAGE_BASE}${p.file_path}`),
-    backdrops: (enriched.images?.backdrops || []).slice(0, 5).map((b) => `${TMDB_CONFIG.TMDB_IMAGE_ORIGINAL}${b.file_path}`),
-    trailers: youtubeTrailers.map((y) => ({ key: y.key, name: y.name, site: y.site, type: y.type })),
+    trailers: (youtubeTrailers || []).slice(0, 5).map((y) => ({
+      key: String(y.key || ''),
+      name: String(y.name || ''),
+      site: String(y.site || 'YouTube'),
+      type: String(y.type || 'Trailer'),
+    })),
   };
 
-  await Movie.findOneAndUpdate({ tmdbId }, movieData, { upsert: true, new: true });
+  const savedDoc = await Movie.findOneAndUpdate({ tmdbId }, movieData, { upsert: true, new: true });
+  return savedDoc;
 };
 
 /**
@@ -417,3 +422,45 @@ export const getImportLogsService = async (limit = 100, page = 1) => {
     data: logs,
   };
 };
+
+/**
+ * Search TMDB Movies by title
+ */
+export const searchTmdbMoviesService = async (query) => {
+  if (!query || query.trim().length === 0) return [];
+  const results = await searchTmdbMovies(query);
+  return results.map((m) => ({
+    tmdbId: String(m.id),
+    title: m.title || m.original_title,
+    originalTitle: m.original_title,
+    releaseDate: m.release_date,
+    releaseYear: m.release_date ? parseInt(m.release_date.split('-')[0]) : null,
+    posterUrl: m.poster_path
+      ? `${TMDB_CONFIG.TMDB_IMAGE_BASE}${m.poster_path}`
+      : 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80',
+    bannerUrl: m.backdrop_path ? `${TMDB_CONFIG.TMDB_IMAGE_ORIGINAL}${m.backdrop_path}` : null,
+    ratingAverage: Math.round((m.vote_average || 7.0) * 10) / 10,
+    overview: m.overview,
+    popularity: m.popularity,
+    cinesrcUrl: `https://vidsrc.cc/v2/embed/movie/${m.id}`,
+  }));
+};
+
+/**
+ * Import a Single Movie by TMDB ID
+ * Automatically saves tmdbId & generates CineSrc stream URL
+ */
+export const importSingleMovieService = async (tmdbId) => {
+  const enriched = await fetchEnrichedMovieDetails(tmdbId);
+  if (!enriched) {
+    throw new Error(`Movie with TMDB ID ${tmdbId} not found on TMDB`);
+  }
+  const savedMovie = await saveTmdbMovieToMongo(enriched);
+  return {
+    success: true,
+    message: `Movie "${savedMovie.title}" imported successfully. TMDB ID ${tmdbId} saved & CineSrc URL generated.`,
+    movie: savedMovie,
+    cinesrcUrl: savedMovie.cinesrcUrl,
+  };
+};
+

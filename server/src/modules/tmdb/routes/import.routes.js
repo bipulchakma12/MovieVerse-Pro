@@ -5,12 +5,16 @@ import {
   stopImport,
   getImportStatus,
   getImportLogs,
+  searchTmdb,
+  selectAndImportMovie,
 } from '../controllers/importController.js';
 import { protect, adminOnly } from '../../../middleware/auth.js';
 
 const router = express.Router();
 
-// Admin Import Routes
+// Admin Import & Automated CineSrc Link Pipeline Routes
+router.get('/search', searchTmdb);
+router.post('/select', selectAndImportMovie);
 router.post('/start', protect, adminOnly, startImport);
 router.post('/resume', protect, adminOnly, resumeImport);
 router.post('/stop', protect, adminOnly, stopImport);

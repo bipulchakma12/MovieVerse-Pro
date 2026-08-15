@@ -86,3 +86,22 @@ export const fetchEnrichedMovieDetails = async (tmdbId, retries = 3) => {
 
   return null;
 };
+
+/**
+ * Search TMDB movies by title query
+ */
+export const searchTmdbMovies = async (query) => {
+  const apiKey = process.env.TMDB_API_KEY || TMDB_CONFIG.TMDB_API_KEY;
+  const baseUrl = process.env.TMDB_BASE_URL || TMDB_CONFIG.TMDB_BASE_URL;
+
+  const url = `${baseUrl}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+  const response = await fetch(url, { headers: getHeaders() });
+
+  if (!response.ok) {
+    throw new Error(`TMDB Search API failed with status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.results || [];
+};
+

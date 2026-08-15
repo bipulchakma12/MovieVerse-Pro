@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, Subtitles, Settings } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Play, Pause, Volume2, VolumeX, Maximize, Subtitles,
+  Settings, Loader2, AlertCircle, RefreshCw, Film, Sparkles, Tv, ExternalLink
+} from 'lucide-react';
 
 interface VideoPlayerProps {
   src: string;
@@ -21,26 +24,50 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showSubtitles, setShowSubtitles] = useState(false);
-  const [quality, setQuality] = useState('1080p');
+  const [quality, setQuality] = useState('Auto (1080p)');
 
-  // Check if source is a YouTube embed URL
-  const isYouTube = src && (src.includes('youtube.com') || src.includes('youtu.be'));
-  const youtubeEmbedUrl = isYouTube
-    ? src.includes('embed')
-      ? `${src}?autoplay=1&rel=0`
-      : `https://www.youtube.com/embed/${src.split('v=')[1]?.split('&')[0]}?autoplay=1&rel=0`
+  // Determine if URL is an iframe embed vs direct video stream (MP4/HLS)
+  const isEmbed = src && (
+    src.includes('youtube.com') ||
+    src.includes('youtu.be') ||
+    src.includes('vidsrc') ||
+    src.includes('autoembed') ||
+    src.includes('2embed') ||
+    src.includes('smashy') ||
+    src.includes('embed.su') ||
+    src.includes('multiembed') ||
+    (!src.endsWith('.mp4') && !src.endsWith('.webm') && !src.endsWith('.m3u8') && !src.includes('gtv-videos-bucket'))
+  );
+
+  const embedUrl = isEmbed
+    ? src.includes('youtube.com') && !src.includes('embed')
+      ? `https://www.youtube.com/embed/${src.split('v=')[1]?.split('&')[0]}?autoplay=1&rel=0`
+      : src
     : src;
+
+  // Reset error states when source changes
+  useEffect(() => {
+    setHasError(false);
+    setIsLoading(false);
+  }, [src]);
 
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play().catch((err) => console.log('Autoplay error:', err));
+        videoRef.current.play().catch((err) => {
+          console.warn('Playback request interrupted:', err);
+          setHasError(true);
+          setErrorMessage('Playback block or media source unavailable.');
+        });
       }
       setIsPlaying(!isPlaying);
     }
@@ -79,149 +106,141 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const toggleFullscreen = () => {
     if (containerRef.current) {
       if (!document.fullscreenElement) {
-        containerRef.current.requestFullscreen().catch((err) => console.error(err));
+        containerRef.current.requestFullscreen().catch((err) => console.error('Fullscreen error:', err));
       } else {
-        document.exitFullscreen().catch((err) => console.error(err));
+        document.exitFullscreen().catch((err) => console.error('Exit fullscreen error:', err));
       }
     }
   };
 
   const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds < 0) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  // If YouTube URL, render responsive YouTube iframe
-  if (isYouTube) {
+  // If source is an iframe embed, render responsive embed container without blocking loading overlays
     return (
       <div
         ref={containerRef}
-        className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl border border-slate-800"
+        className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 shadow-2xl border border-slate-800/80 group"
       >
         <iframe
-          src={youtubeEmbedUrl}
-          title={title || 'Movie Video Player'}
+          src={embedUrl}
+          title={title || 'MovieVerse Stream Player'}
           className="w-full h-full border-0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
+          allow="autoplay; fullscreen *; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write; display-capture"
+          allowFullScreen={true}
+          // @ts-ignore
+          webkitallowfullscreen="true"
+          // @ts-ignore
+          mozallowfullscreen="true"
+          referrerPolicy="no-referrer"
         />
       </div>
     );
-  }
 
+  // Native HTML5 Video Stream Player (Supports HTTP 206 Partial Content Range Requests)
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black group shadow-2xl border border-slate-800"
+      className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 group shadow-2xl border border-slate-800 select-none"
     >
       <video
         ref={videoRef}
         src={src || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
         poster={poster}
         onTimeUpdate={handleTimeUpdate}
+        onWaiting={() => setIsLoading(true)}
+        onCanPlay={() => setIsLoading(false)}
+        onPlaying={() => { setIsLoading(false); setIsPlaying(true); }}
+        onPause={() => setIsPlaying(false)}
+        onError={() => {
+          setIsLoading(false);
+          setHasError(true);
+          setErrorMessage('Unable to load video stream. Verify source media URL or CORS configuration.');
+        }}
         onClick={togglePlay}
-        playsInline
-        controls={false}
-        className="w-full h-full object-cover cursor-pointer"
+        className="w-full h-full object-contain cursor-pointer"
       />
 
-      {/* Big Center Play Button Overlay when paused */}
-      {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] transition-opacity z-20 pointer-events-auto">
+      {/* Loading Spinner */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none z-20">
+          <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
+          <span className="text-xs text-slate-300 font-medium mt-2">Buffering stream...</span>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {hasError && (
+        <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-20 space-y-3">
+          <AlertCircle className="w-12 h-12 text-rose-500" />
+          <h4 className="text-sm font-bold text-white">Stream Playback Interrupted</h4>
+          <p className="text-xs text-slate-400 max-w-sm">{errorMessage}</p>
           <button
-            onClick={togglePlay}
-            className="w-20 h-20 rounded-full bg-brand-600/90 text-white flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform border border-brand-400/50"
-            aria-label="Play Movie"
+            onClick={() => {
+              setHasError(false);
+              if (videoRef.current) {
+                videoRef.current.load();
+                videoRef.current.play().catch(() => {});
+              }
+            }}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 transition-all flex items-center gap-1.5"
           >
-            <Play className="w-10 h-10 fill-current ml-1" />
+            <RefreshCw className="w-3.5 h-3.5" /> Retry Stream
           </button>
         </div>
       )}
 
-      {/* Subtitle Display Simulation */}
-      {showSubtitles && (
-        <div className="absolute bottom-16 left-0 right-0 text-center pointer-events-none px-4 z-10">
-          <span className="inline-block px-3 py-1 bg-black/80 text-white text-xs sm:text-sm font-medium rounded-md backdrop-blur-sm">
-            [ Subtitle English: "Every choice has a consequence in MovieVerse." ]
-          </span>
-        </div>
-      )}
-
-      {/* Control Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 z-10">
-        
-        {/* Top Header */}
-        <div className="flex items-center justify-between text-white text-sm font-medium">
-          <span>{title || 'Now Playing'}</span>
-          <span className="px-2 py-0.5 rounded bg-brand-600 text-xs font-bold">{quality}</span>
+      {/* Custom Video Controls Overlay */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 space-y-2">
+        {/* Progress Bar */}
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={progress}
+            onChange={handleSeek}
+            className="w-full h-1.5 rounded-lg appearance-none bg-slate-700/60 accent-brand-500 cursor-pointer focus:outline-none"
+          />
         </div>
 
-        {/* Bottom Bar Controls */}
-        <div className="space-y-2">
-          {/* Progress Bar */}
-          <div className="flex items-center gap-2">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={progress}
-              onChange={handleSeek}
-              className="w-full h-1.5 bg-slate-700 accent-brand-500 rounded-lg cursor-pointer"
-            />
+        {/* Action Controls */}
+        <div className="flex items-center justify-between text-white text-xs">
+          <div className="flex items-center gap-3">
+            <button onClick={togglePlay} className="p-1 hover:text-brand-400 transition-colors">
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
+            </button>
+            <button onClick={toggleMute} className="p-1 hover:text-brand-400 transition-colors">
+              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+            <span className="text-[11px] text-slate-300 font-mono">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
           </div>
 
-          <div className="flex items-center justify-between text-white text-xs">
-            <div className="flex items-center gap-4">
-              <button onClick={togglePlay} className="hover:text-brand-500 transition-colors">
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
-              </button>
-
-              <button onClick={toggleMute} className="hover:text-brand-500 transition-colors">
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-              </button>
-
-              <span>
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Subtitles toggle */}
-              <button
-                onClick={() => setShowSubtitles(!showSubtitles)}
-                className={`p-1 rounded ${showSubtitles ? 'text-brand-500' : 'text-slate-400 hover:text-white'}`}
-                title="Subtitles (CC)"
-              >
-                <Subtitles className="w-5 h-5" />
-              </button>
-
-              {/* Quality selector */}
-              <div className="relative group/q">
-                <button className="flex items-center gap-1 hover:text-brand-500">
-                  <Settings className="w-4 h-4" />
-                </button>
-                <div className="absolute bottom-6 right-0 hidden group-hover/q:block bg-slate-900 border border-slate-700 rounded-lg py-1 px-2 space-y-1 text-xs">
-                  {['1080p', '720p', '480p'].map((q) => (
-                    <div
-                      key={q}
-                      onClick={() => setQuality(q)}
-                      className={`cursor-pointer px-2 py-1 rounded hover:bg-slate-800 ${quality === q ? 'text-brand-500 font-bold' : ''}`}
-                    >
-                      {q}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Fullscreen */}
-              <button onClick={toggleFullscreen} className="hover:text-brand-500 transition-colors">
-                <Maximize className="w-5 h-5" />
-              </button>
-            </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowSubtitles(!showSubtitles)}
+              className={`p-1 transition-colors ${showSubtitles ? 'text-brand-400 font-bold' : 'text-slate-400 hover:text-white'}`}
+              title="Subtitles"
+            >
+              <Subtitles className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setQuality(quality === '1080p' ? '720p' : '1080p')}
+              className="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-bold text-slate-300 hover:text-white"
+            >
+              {quality}
+            </button>
+            <button onClick={toggleFullscreen} className="p-1 hover:text-brand-400 transition-colors">
+              <Maximize className="w-4 h-4" />
+            </button>
           </div>
         </div>
-
       </div>
     </div>
   );

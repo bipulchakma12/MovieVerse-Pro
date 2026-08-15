@@ -85,7 +85,7 @@ export const Navbar: React.FC = () => {
             <Link href="/trending" className="flex items-center gap-2 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
               <Clapperboard className="w-4 h-4 text-rose-500" /> Movies
             </Link>
-            <Link href="/trending" className="flex items-center gap-2 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+            <Link href="/tv" className="flex items-center gap-2 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
               <Tv className="w-4 h-4 text-sky-500" /> TV Shows
             </Link>
           </nav>
@@ -210,7 +210,7 @@ export const Navbar: React.FC = () => {
             <Link href="/trending" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
               <Clapperboard className="w-5 h-5 text-rose-500" /> Movies
             </Link>
-            <Link href="/trending" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
+            <Link href="/tv" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
               <Tv className="w-5 h-5 text-sky-500" /> TV Shows
             </Link>
 

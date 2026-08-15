@@ -34,7 +34,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/YoHD9XEInc0',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    videoUrl: 'https://www.youtube.com/embed/YoHD9XEInc0',
     releaseYear: 2010,
     runtimeMinutes: 148,
     language: 'English',
@@ -52,7 +52,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/uYPbbksJxIg',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    videoUrl: 'https://www.youtube.com/embed/uYPbbksJxIg',
     releaseYear: 2023,
     runtimeMinutes: 180,
     language: 'English',
@@ -70,7 +70,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/zSWdZVtXT7E',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    videoUrl: 'https://www.youtube.com/embed/zSWdZVtXT7E',
     releaseYear: 2014,
     runtimeMinutes: 169,
     language: 'English',
@@ -88,7 +88,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/Way9Dexny3w',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    videoUrl: 'https://www.youtube.com/embed/Way9Dexny3w',
     releaseYear: 2024,
     runtimeMinutes: 166,
     language: 'English',
@@ -106,7 +106,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/EXeTwQWrcwY',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    videoUrl: 'https://www.youtube.com/embed/EXeTwQWrcwY',
     releaseYear: 2008,
     runtimeMinutes: 152,
     language: 'English',
@@ -124,7 +124,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1515260268569-9271009adfdb?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/vKQi3bBA1y8',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    videoUrl: 'https://www.youtube.com/embed/vKQi3bBA1y8',
     releaseYear: 1999,
     runtimeMinutes: 136,
     language: 'English',
@@ -142,7 +142,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/gCcx85zbxz4',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+    videoUrl: 'https://www.youtube.com/embed/gCcx85zbxz4',
     releaseYear: 2017,
     runtimeMinutes: 164,
     language: 'English',
@@ -160,7 +160,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/d9MyW72ELq0',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+    videoUrl: 'https://www.youtube.com/embed/d9MyW72ELq0',
     releaseYear: 2022,
     runtimeMinutes: 192,
     language: 'English',
@@ -178,7 +178,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1635863138275-d9b33299680b?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/g4Hbz2jLxvQ',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+    videoUrl: 'https://www.youtube.com/embed/g4Hbz2jLxvQ',
     releaseYear: 2018,
     runtimeMinutes: 117,
     language: 'English',
@@ -196,7 +196,7 @@ const moviesData = [
     posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80',
     bannerUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
     trailerUrl: 'https://www.youtube.com/embed/wxN1T1uxQ2g',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutback2015.mp4',
+    videoUrl: 'https://www.youtube.com/embed/wxN1T1uxQ2g',
     releaseYear: 2022,
     runtimeMinutes: 139,
     language: 'English',
@@ -217,7 +217,7 @@ export const seedDatabase = async () => {
       return;
     }
     await mongoose.connect(connStr);
-    console.log('🌱 Connected to DB for seeding...');
+    console.log('🌱 Connected to DB for seeding YouTube movies...');
 
     await Promise.all([
       Genre.deleteMany({}),
@@ -251,7 +251,7 @@ export const seedDatabase = async () => {
     });
 
     await Movie.insertMany(moviesWithRefs);
-    console.log(`✅ Database successfully seeded with ${createdGenres.length} genres, ${createdCast.length} cast members, and ${moviesData.length} movies!`);
+    console.log(`✅ Database successfully wiped and re-seeded with 100% YouTube video streams for all ${moviesData.length} movies!`);
   } catch (error) {
     console.error('❌ Seeding error:', error.message);
   }

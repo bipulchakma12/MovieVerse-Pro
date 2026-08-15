@@ -1,22 +1,12 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { fetchFromTMDB, TMDB_CONFIG } from '../config/tmdb.js';
-import { Movie, Genre, Cast } from '../models/index.js';
+import { Movie, Genre } from '../models/index.js';
 
 dotenv.config();
 
-// Pool of 1080p Full Movie MP4 Streams
-const FULL_MOVIE_STREAMS = [
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-  'https://vjs.zencdn.net/v/oceans.mp4',
-];
-
 /**
- * Fetch and import trending & popular movies with real TMDB trailers & video streams
+ * Sync extensive list of TMDB movies (Popular, Trending, Top Rated, Upcoming) into MongoDB
  */
 export const syncMoviesFromTMDB = async () => {
   try {
@@ -28,12 +18,6 @@ export const syncMoviesFromTMDB = async () => {
 
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(connStr);
-    }
-
-    try {
-      await Movie.collection.dropIndexes();
-    } catch (e) {
-      // Index might not exist yet
     }
 
     console.log('🔄 Fetching live movie genres from TMDB API...');
@@ -51,14 +35,28 @@ export const syncMoviesFromTMDB = async () => {
       genreMap.set(g.id, genreDoc._id);
     }
 
-    console.log('🎬 Fetching popular & trending movies from TMDB API...');
-    const [popularRes, trendingRes] = await Promise.all([
-      fetchFromTMDB('/movie/popular', { page: 1 }),
-      fetchFromTMDB('/trending/movie/week', { page: 1 }),
-    ]);
+    console.log('🎬 Fetching 200+ movies across TMDB Popular, Trending, Top Rated & Upcoming lists...');
 
-    const tmdbMovies = [...(popularRes.results || []), ...(trendingRes.results || [])];
-    const uniqueMovies = Array.from(new Map(tmdbMovies.map((m) => [m.id, m])).values());
+    const pagesToFetch = [1, 2, 3, 4, 5];
+    const fetchPromises = [];
+
+    for (const page of pagesToFetch) {
+      fetchPromises.push(fetchFromTMDB('/movie/popular', { page }).catch(() => ({ results: [] })));
+      fetchPromises.push(fetchFromTMDB('/trending/movie/week', { page }).catch(() => ({ results: [] })));
+      fetchPromises.push(fetchFromTMDB('/movie/top_rated', { page }).catch(() => ({ results: [] })));
+      fetchPromises.push(fetchFromTMDB('/movie/upcoming', { page }).catch(() => ({ results: [] })));
+    }
+
+    const resArray = await Promise.all(fetchPromises);
+    let rawMovies = [];
+    resArray.forEach((r) => {
+      if (r && Array.isArray(r.results)) {
+        rawMovies = rawMovies.concat(r.results);
+      }
+    });
+
+    const uniqueMovies = Array.from(new Map(rawMovies.map((m) => [m.id, m])).values());
+    console.log(`📦 Fetched ${uniqueMovies.length} unique TMDB movies to process into MongoDB...`);
 
     let importedCount = 0;
 
@@ -66,10 +64,12 @@ export const syncMoviesFromTMDB = async () => {
       const item = uniqueMovies[index];
       if (!item.title || !item.poster_path) continue;
 
-      const slug = item.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
+      const tmdbId = String(item.id);
+      const slug =
+        item.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)+/g, '') + `-${tmdbId}`;
 
       const posterUrl = `${TMDB_CONFIG.TMDB_IMAGE_BASE}${item.poster_path}`;
       const bannerUrl = item.backdrop_path
@@ -81,44 +81,33 @@ export const syncMoviesFromTMDB = async () => {
         .filter(Boolean);
 
       const releaseYear = item.release_date ? parseInt(item.release_date.split('-')[0]) : 2024;
-
-      // Fetch actual official TMDB Trailer Video Key
-      let trailerUrl = 'https://www.youtube.com/embed/YoHD9XEInc0';
-      try {
-        const videosData = await fetchFromTMDB(`/movie/${item.id}/videos`);
-        const trailer = (videosData.results || []).find(
-          (v) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
-        );
-        if (trailer && trailer.key) {
-          trailerUrl = `https://www.youtube.com/embed/${trailer.key}`;
-        }
-      } catch (err) {
-        // Fallback trailer if videos endpoint fails
-      }
-
-      // Assign cycling full movie stream URL
-      const videoUrl = FULL_MOVIE_STREAMS[index % FULL_MOVIE_STREAMS.length];
+      const cinesrcUrl = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
 
       await Movie.findOneAndUpdate(
-        { slug },
+        { tmdbId },
         {
-          tmdbId: item.id,
+          tmdbId,
+          imdbId: item.imdb_id || null,
           title: item.title,
+          originalTitle: item.original_title || item.title,
           slug,
           storyline: item.overview || 'No storyline available.',
           posterUrl,
           bannerUrl,
-          trailerUrl,
-          videoUrl,
+          trailerUrl: `https://www.youtube.com/embed/YoHD9XEInc0`,
+          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          cinesrcUrl,
           releaseYear,
-          runtimeMinutes: 120 + Math.floor(Math.random() * 40),
-          language: 'English',
+          releaseDate: item.release_date ? new Date(item.release_date) : undefined,
+          runtimeMinutes: 120 + Math.floor(Math.random() * 35),
+          language: item.original_language ? item.original_language.toUpperCase() : 'English',
           country: 'United States',
           ratingAverage: Math.round((item.vote_average || 7.5) * 10) / 10,
           ratingCount: item.vote_count || 100,
-          viewsCount: Math.floor(Math.random() * 15000) + 1000,
-          isFeatured: item.vote_average > 7.8,
-          isTrending: item.popularity > 50,
+          popularity: item.popularity || 50,
+          viewsCount: Math.floor(Math.random() * 25000) + 1000,
+          isFeatured: (item.vote_average || 0) >= 7.8,
+          isTrending: (item.popularity || 0) >= 40,
           status: 'published',
           genres: mappedGenres,
         },
@@ -128,14 +117,14 @@ export const syncMoviesFromTMDB = async () => {
       importedCount++;
     }
 
-    console.log(`✅ Successfully imported and updated ${importedCount} movies with real TMDB trailers & 1080p full streams!`);
+    console.log(`✅ Successfully imported and saved ${importedCount} TMDB movies into MongoDB!`);
     return {
       success: true,
-      message: `Imported ${importedCount} movies with videos successfully`,
+      message: `Successfully imported ${importedCount} TMDB movies into MongoDB catalog with CineSrc stream links`,
       count: importedCount,
     };
   } catch (error) {
-    console.error('❌ TMDB Sync Error:', error.message);
+    console.error('❌ TMDB Extensive Sync Error:', error.message);
     return { success: false, message: error.message };
   }
 };

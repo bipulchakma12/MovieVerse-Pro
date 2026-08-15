@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const movieSchema = new mongoose.Schema(
   {
     tmdbId: {
-      type: Number,
+      type: String,
       unique: true,
       sparse: true,
       index: true,
@@ -48,6 +48,10 @@ const movieSchema = new mongoose.Schema(
     videoUrl: {
       type: String,
       default: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    },
+    cinesrcUrl: {
+      type: String,
+      trim: true,
     },
     releaseYear: {
       type: Number,
@@ -163,14 +167,7 @@ const movieSchema = new mongoose.Schema(
     ],
     posters: [String],
     backdrops: [String],
-    trailers: [
-      {
-        key: String,
-        name: String,
-        site: String,
-        type: String,
-      },
-    ],
+    trailers: [mongoose.Schema.Types.Mixed],
   },
   {
     timestamps: true,
