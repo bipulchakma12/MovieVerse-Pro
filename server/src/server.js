@@ -23,14 +23,17 @@ import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
 
+import { rateLimiter } from './middleware/rateLimiter.js';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect Database
 connectDB();
 
-// Core Middlewares
+// Core Security & Protection Middlewares
 app.use(helmet({ contentSecurityPolicy: false }));
+app.use(rateLimiter(15 * 60 * 1000, 300)); // Max 300 requests per 15 mins per IP
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
