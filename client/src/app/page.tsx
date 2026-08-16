@@ -1,25 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Flame, Star, Sparkles, MonitorPlay, Tv, Film } from 'lucide-react';
+import { Play, Flame, Star, Sparkles, MonitorPlay, Tv, Film, Bookmark } from 'lucide-react';
 import Link from 'next/link';
-import { MovieCard, MovieItem } from '@/components/MovieCard';
 
-interface TvItem {
+interface MediaItem {
   _id: string;
   tmdbId?: string;
-  name: string;
+  title: string;
   slug: string;
   posterUrl: string;
-  firstAirYear?: number;
+  releaseYear?: number;
   ratingAverage?: number;
-  numberOfSeasons?: number;
+  type: 'movie' | 'tv';
+  runtimeOrSeasons?: string;
   genres?: any[];
 }
 
 export default function Home() {
-  const [featuredMovies, setFeaturedMovies] = useState<MovieItem[]>([]);
-  const [featuredTvShows, setFeaturedTvShows] = useState<TvItem[]>([]);
+  const [activeTab, setActiveTab] = useState<'all' | 'movie' | 'tv'>('all');
+  const [allMedia, setAllMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,40 +29,90 @@ export default function Home() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
         // 1. Fetch Movies
-        const movieRes = await fetch(`${apiUrl}/movies?limit=30`).catch(() => null);
+        let moviesList: MediaItem[] = [];
+        const movieRes = await fetch(`${apiUrl}/movies?limit=24`).catch(() => null);
         if (movieRes && movieRes.ok) {
           const data = await movieRes.json();
           if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-            setFeaturedMovies(data.data);
-          } else {
-            const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
-            const fallbackMovies = await fetchTMDBPopularMovies();
-            setFeaturedMovies(fallbackMovies.slice(0, 30));
+            moviesList = data.data.map((m: any) => ({
+              _id: m._id,
+              tmdbId: m.tmdbId,
+              title: m.title,
+              slug: m.slug,
+              posterUrl: m.posterUrl,
+              releaseYear: m.releaseYear || 2024,
+              ratingAverage: m.ratingAverage || 7.9,
+              type: 'movie' as const,
+              runtimeOrSeasons: `${m.runtimeMinutes || 120} min`,
+              genres: m.genres,
+            }));
           }
-        } else {
+        }
+        if (moviesList.length === 0) {
           const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
           const fallbackMovies = await fetchTMDBPopularMovies();
-          setFeaturedMovies(fallbackMovies.slice(0, 30));
+          moviesList = fallbackMovies.slice(0, 24).map((m: any) => ({
+            _id: m._id,
+            tmdbId: m.tmdbId,
+            title: m.title,
+            slug: m.slug,
+            posterUrl: m.posterUrl,
+            releaseYear: m.releaseYear || 2024,
+            ratingAverage: m.ratingAverage || 7.9,
+            type: 'movie' as const,
+            runtimeOrSeasons: `${m.runtimeMinutes || 120} min`,
+            genres: m.genres,
+          }));
         }
 
         // 2. Fetch TV Shows
-        const tvRes = await fetch(`${apiUrl}/tv?limit=30`).catch(() => null);
+        let tvList: MediaItem[] = [];
+        const tvRes = await fetch(`${apiUrl}/tv?limit=24`).catch(() => null);
         if (tvRes && tvRes.ok) {
           const data = await tvRes.json();
           if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-            setFeaturedTvShows(data.data);
-          } else {
-            const { fetchTMDBPopularTvShows } = await import('@/utils/tmdbClient');
-            const fallbackTv = await fetchTMDBPopularTvShows();
-            setFeaturedTvShows(fallbackTv.slice(0, 30));
+            tvList = data.data.map((t: any) => ({
+              _id: t._id,
+              tmdbId: t.tmdbId,
+              title: t.name,
+              slug: t.slug,
+              posterUrl: t.posterUrl,
+              releaseYear: t.firstAirYear || 2024,
+              ratingAverage: t.ratingAverage || 8.1,
+              type: 'tv' as const,
+              runtimeOrSeasons: `${t.numberOfSeasons || 1} Seasons`,
+              genres: t.genres,
+            }));
           }
-        } else {
+        }
+        if (tvList.length === 0) {
           const { fetchTMDBPopularTvShows } = await import('@/utils/tmdbClient');
           const fallbackTv = await fetchTMDBPopularTvShows();
-          setFeaturedTvShows(fallbackTv.slice(0, 30));
+          tvList = fallbackTv.slice(0, 24).map((t: any) => ({
+            _id: t._id,
+            tmdbId: t.tmdbId,
+            title: t.name,
+            slug: t.slug,
+            posterUrl: t.posterUrl,
+            releaseYear: t.firstAirYear || 2024,
+            ratingAverage: t.ratingAverage || 8.1,
+            type: 'tv' as const,
+            runtimeOrSeasons: `${t.numberOfSeasons || 1} Seasons`,
+            genres: t.genres,
+          }));
         }
+
+        // Interleave / Combine both Movies and TV Shows alternately for "All" feed
+        const combined: MediaItem[] = [];
+        const maxLen = Math.max(moviesList.length, tvList.length);
+        for (let i = 0; i < maxLen; i++) {
+          if (i < moviesList.length) combined.push(moviesList[i]);
+          if (i < tvList.length) combined.push(tvList[i]);
+        }
+
+        setAllMedia(combined);
       } catch (e) {
-        console.error('Failed to fetch home catalog:', e);
+        console.error('Failed to fetch home media:', e);
       } finally {
         setLoading(false);
       }
@@ -70,6 +120,13 @@ export default function Home() {
 
     fetchHomeCatalog();
   }, []);
+
+  const displayedMedia =
+    activeTab === 'all'
+      ? allMedia
+      : activeTab === 'movie'
+      ? allMedia.filter((item) => item.type === 'movie')
+      : allMedia.filter((item) => item.type === 'tv');
 
   return (
     <div className="space-y-16 pb-20">
@@ -111,88 +168,118 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 1. Featured & Popular Movies Section */}
+      {/* Main Combined Feed: Featured Movies & TV Shows */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-border pb-4">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Flame className="w-6 h-6 text-brand-500 fill-brand-500" /> Featured & Popular Movies
-          </h2>
-          <Link href="/trending" className="text-xs font-bold text-brand-500 hover:underline">
-            View All Movies →
-          </Link>
+        
+        {/* Section Header with Category Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-border pb-4">
+          <div className="flex items-center gap-2">
+            <Flame className="w-6 h-6 text-brand-500 fill-brand-500" />
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Featured Movies & TV Shows
+            </h2>
+          </div>
+
+          {/* Quick Filter Tabs: All / Movies / TV Shows */}
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-card p-1 rounded-xl border border-slate-200 dark:border-dark-border">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'all'
+                  ? 'bg-brand-600 text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              🔥 All Titles
+            </button>
+            <button
+              onClick={() => setActiveTab('movie')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'movie'
+                  ? 'bg-brand-600 text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              🍿 Movies
+            </button>
+            <button
+              onClick={() => setActiveTab('tv')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'tv'
+                  ? 'bg-sky-600 text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              📺 TV Series
+            </button>
+          </div>
         </div>
 
-        {loading && featuredMovies.length === 0 ? (
-          <div className="text-center py-12 text-xs text-slate-400">
-            Loading live movies...
+        {/* Media Grid: Displays Both Movies & TV Series with Type Badges */}
+        {loading && displayedMedia.length === 0 ? (
+          <div className="text-center py-16 text-xs text-slate-400">
+            Loading movies & TV series catalog...
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {featuredMovies.map((movie) => (
-              <MovieCard key={movie._id} movie={movie} />
-            ))}
+            {displayedMedia.map((item) => {
+              const targetUrl = item.type === 'movie' ? `/movie/${item.slug || item._id}` : `/tv/${item.slug || item._id}`;
+              const isTv = item.type === 'tv';
+
+              return (
+                <Link
+                  key={`${item.type}-${item._id}`}
+                  href={targetUrl}
+                  className="group flex flex-col space-y-2.5"
+                >
+                  <div className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-dark-border shadow-md group-hover:border-brand-500 transition-all duration-300">
+                    <img
+                      src={item.posterUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+
+                    {/* Type Badge: Rose for Movie, Sky Blue for TV Series */}
+                    <div
+                      className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-md ${
+                        isTv ? 'bg-sky-600/90' : 'bg-brand-600/90'
+                      }`}
+                    >
+                      {isTv ? <Tv className="w-2.5 h-2.5" /> : <Film className="w-2.5 h-2.5" />}
+                      {isTv ? 'TV Series' : 'Movie'}
+                    </div>
+
+                    {/* Rating Badge */}
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-bold text-amber-400 flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-amber-400" /> {item.ratingAverage || 8.0}
+                    </div>
+
+                    {/* Hover Play Icon Overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <div className="w-11 h-11 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                        <Play className="w-5 h-5 fill-current ml-0.5" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1 group-hover:text-brand-500 transition-colors">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <span>{item.releaseYear || 2024}</span>
+                      <span>•</span>
+                      <span>{item.runtimeOrSeasons}</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>
 
-      {/* 2. Trending TV Series & Shows Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-dark-border pb-4">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Tv className="w-6 h-6 text-sky-500" /> Trending TV Series & Shows
-          </h2>
-          <Link href="/tv" className="text-xs font-bold text-sky-500 hover:underline">
-            View All TV Shows →
-          </Link>
-        </div>
-
-        {loading && featuredTvShows.length === 0 ? (
-          <div className="text-center py-12 text-xs text-slate-400">
-            Loading live TV shows...
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {featuredTvShows.map((show) => (
-              <Link
-                key={show._id}
-                href={`/tv/${show.slug || show._id}`}
-                className="group flex flex-col space-y-2.5"
-              >
-                <div className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-dark-border shadow-md group-hover:border-sky-500 transition-all duration-300">
-                  <img
-                    src={show.posterUrl}
-                    alt={show.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  
-                  {/* TV Show Badge */}
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-sky-600/90 backdrop-blur-md text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-1">
-                    <Tv className="w-2.5 h-2.5" /> TV Series
-                  </div>
-
-                  {/* Rating Badge */}
-                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-bold text-amber-400 flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-amber-400" /> {show.ratingAverage || 8.0}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1 group-hover:text-sky-500 transition-colors">
-                    {show.name}
-                  </h3>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    <span>{show.firstAirYear || 2024}</span>
-                    <span>•</span>
-                    <span>HD Series</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 3. Feature Highlights Grid */}
+      {/* Feature Highlights Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
