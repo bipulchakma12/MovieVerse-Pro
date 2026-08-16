@@ -63,7 +63,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="mt-8 pt-6 border-t border-slate-200 dark:border-dark-border flex flex-col sm:flex-row items-center justify-between text-xs gap-4">
-          <p>© {new Date().getFullYear()} MovieVerse Pro. Built with Next.js & Express.</p>
+          <p>© {new Date().getFullYear()} MovieVerse Pro.</p>
           <p className="flex items-center gap-1">
             Crafted with <Heart className="w-3.5 h-3.5 text-brand-500 fill-brand-500" /> for cinema lovers.
           </p>
