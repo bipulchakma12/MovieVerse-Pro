@@ -22,6 +22,17 @@ export default function Home() {
   const [allMedia, setAllMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Rotating dynamic hero title animation
+  const rotatingWords = ['Movies', 'TV Shows', 'Blockbusters', 'Series & Cinema'];
+  const [wordIndex, setWordIndex] = useState(0);
+
+  useEffect(() => {
+    const wordInterval = setInterval(() => {
+      setWordIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, 2800);
+    return () => clearInterval(wordInterval);
+  }, []);
+
   useEffect(() => {
     const fetchHomeCatalog = async () => {
       try {
@@ -140,9 +151,13 @@ export default function Home() {
             <Sparkles className="w-3.5 h-3.5" /> Next-Gen Movies & TV Streaming Platform
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-none max-w-4xl mx-auto">
-            Unlimited Movies, TV Shows & Custom{' '}
-            <span className="bg-gradient-to-r from-brand-500 via-rose-500 to-sky-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tight leading-tight max-w-5xl mx-auto">
+            Unlimited{' '}
+            <span className="inline-block min-w-[180px] sm:min-w-[320px] text-brand-500 transition-all duration-300 transform">
+              {rotatingWords[wordIndex]}
+            </span>
+            <br className="hidden sm:inline" /> & Custom{' '}
+            <span className="animated-gradient-text drop-shadow-[0_0_30px_rgba(225,29,72,0.35)]">
               Watchlists
             </span>
           </h1>

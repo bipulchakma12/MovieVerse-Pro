@@ -62,7 +62,7 @@
 
 @keyframes pulseGlow {
   0%, 100% {
-    opacity: 0.6;
+    opacity: 0.7;
     transform: scale(1);
   }
   50% {
@@ -80,6 +80,27 @@
   }
 }
 
+/* Flowing Rainbow / Sunset Gradient Text */
+@keyframes textGradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient-text {
+  background: linear-gradient(270deg, #e11d48, #f43f5e, #ec4899, #a855f7, #38bdf8, #f59e0b, #e11d48);
+  background-size: 350% 350%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textGradientFlow 5s ease infinite;
+}
+
 .animate-fade-in {
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -89,7 +110,7 @@
 }
 
 .animate-pulse-glow {
-  animation: pulseGlow 3s ease-in-out infinite;
+  animation: pulseGlow 2.5s ease-in-out infinite;
 }
 
 .shimmer-loading {
