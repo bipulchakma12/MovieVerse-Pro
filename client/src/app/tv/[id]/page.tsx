@@ -231,7 +231,7 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
 
               {/* Server Switcher */}
               {activeTab === 'stream' && (
-                <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px] font-bold">
+                <div className="flex flex-wrap items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800 text-[11px] font-bold">
                   <span className="px-2 text-slate-500">Server:</span>
                   <button
                     onClick={() => setStreamServer('server1')}
