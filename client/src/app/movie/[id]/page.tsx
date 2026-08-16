@@ -225,6 +225,8 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
       ? server3Url
       : server4Url;
 
+  const isUpcoming = movie.releaseYear && movie.releaseYear > 2024;
+
   const movieSchema = {
     '@context': 'https://schema.org',
     '@type': 'Movie',
