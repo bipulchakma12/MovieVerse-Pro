@@ -47,6 +47,16 @@ export const Navbar: React.FC = () => {
     router.push('/login');
   };
 
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (searchQuery.trim()) {
+      setMobileMenuOpen(false);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push('/search');
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-dark-border bg-white/90 dark:bg-dark-bg/90 backdrop-blur-md transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -63,19 +73,34 @@ export const Navbar: React.FC = () => {
               </span>
             </Link>
 
-            {/* Desktop Search Bar - Compact Width */}
-            <div className="hidden md:block w-56 lg:w-64">
-              <div className="relative w-full">
+            {/* Desktop Search Bar - Connected & Functional */}
+            <form onSubmit={handleSearch} className="hidden md:block w-56 lg:w-72">
+              <div className="relative w-full flex items-center">
                 <input
                   type="text"
-                  placeholder="Search movies..."
+                  placeholder="Search movies & TV shows..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 transition-all"
+                  className="w-full pl-9 pr-8 py-1.5 text-xs rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 transition-all"
                 />
-                <Search className="absolute left-3 top-2 w-3.5 h-3.5 text-slate-400" />
+                <button
+                  type="submit"
+                  className="absolute left-2.5 top-2 text-slate-400 hover:text-brand-500 transition-colors"
+                  title="Search"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                </button>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-            </div>
+            </form>
           </div>
 
           {/* Nav Links */}
@@ -180,6 +205,15 @@ export const Navbar: React.FC = () => {
               </Link>
             )}
 
+            {/* Mobile Quick Search Button */}
+            <Link
+              href="/search"
+              className="md:hidden p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-card rounded-lg transition-colors"
+              title="Search"
+            >
+              <Search className="w-5 h-5 text-slate-500" />
+            </Link>
+
             {/* Mobile menu trigger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -196,16 +230,22 @@ export const Navbar: React.FC = () => {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-slate-200 dark:border-dark-border px-4 pt-3 pb-6 space-y-4 bg-white dark:bg-dark-bg transition-colors">
-          <div className="relative w-full">
+          <form onSubmit={handleSearch} className="relative w-full flex items-center">
             <input
               type="text"
-              placeholder="Search movies..."
+              placeholder="Search movies & TV shows..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400"
+              className="w-full pl-10 pr-24 py-2.5 text-sm rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400"
             />
-            <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
-          </div>
+            <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
+            <button
+              type="submit"
+              className="absolute right-1.5 px-4 py-1.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs transition-all shadow active:scale-95"
+            >
+              Search
+            </button>
+          </form>
 
           <div className="flex flex-col space-y-3 font-semibold text-slate-700 dark:text-slate-200">
             <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
