@@ -7,8 +7,37 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "MovieVerse Pro — Ultimate Movie & TV Platform",
-  description: "Discover, stream, review, and track your favorite movies & TV shows with personalized recommendations.",
+  title: "MovieVerse Pro — Watch HD Movies & TV Shows Online Free | #1 Movie Platform",
+  description: "MovieVerse Pro is the ultimate online movie streaming platform. Watch full movies, blockbuster hits, trending TV series, and trailers in full HD online for free.",
+  keywords: [
+    "movie",
+    "movies",
+    "movie verse pro",
+    "movieverse pro",
+    "movieverse",
+    "watch movies online",
+    "free movie streaming",
+    "hd movies",
+    "tv shows",
+    "full movie online",
+    "blockbuster movies"
+  ],
+  authors: [{ name: "MovieVerse Pro Team" }],
+  creator: "MovieVerse Pro",
+  publisher: "MovieVerse Pro",
+  robots: "index, follow",
+  openGraph: {
+    title: "MovieVerse Pro — #1 Platform to Watch Movies Online Free",
+    description: "Discover, stream, review, and track 50,000+ movies & TV shows with high-speed CineSrc streaming on MovieVerse Pro.",
+    url: "https://movieverse-pro.vercel.app",
+    siteName: "MovieVerse Pro",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MovieVerse Pro — #1 Platform to Watch Movies Online",
+    description: "Stream full movies & TV series in HD for free on MovieVerse Pro.",
+  },
 };
 
 export default function RootLayout({
