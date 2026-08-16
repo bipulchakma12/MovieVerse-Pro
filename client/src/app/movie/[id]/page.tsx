@@ -6,7 +6,7 @@ import {
   MessageSquare, Loader2, Play, Tv, Check, CheckCircle2
 } from 'lucide-react';
 import { VideoPlayer } from '@/components/VideoPlayer';
-import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
+import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater, addToWatchHistory } from '@/utils/userLists';
 import { getLocalReviews, saveLocalReview, ReviewItem } from '@/utils/reviews';
 
 export default function MovieDetailsPage({ params }: { params: { id: string } }) {
@@ -40,6 +40,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
         if (data.success && data.data) {
           setMovie(data.data);
           checkUserLists(data.data);
+          recordWatchHistory(data.data);
           setLoading(false);
           return;
         }
@@ -49,12 +50,29 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
       if (fallbackMovie) {
         setMovie(fallbackMovie);
         checkUserLists(fallbackMovie);
+        recordWatchHistory(fallbackMovie);
       }
     } catch (e) {
       console.error('Failed to fetch movie detail:', e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const recordWatchHistory = (movieObj: any) => {
+    if (!movieObj) return;
+    addToWatchHistory({
+      _id: String(movieObj._id || movieObj.tmdbId),
+      tmdbId: String(movieObj.tmdbId || movieObj._id),
+      title: movieObj.title,
+      slug: movieObj.slug || String(movieObj._id),
+      posterUrl: movieObj.posterUrl,
+      releaseYear: movieObj.releaseYear || 2024,
+      runtimeMinutes: movieObj.runtimeMinutes || 120,
+      ratingAverage: movieObj.ratingAverage || 8.0,
+      type: 'movie',
+      genres: movieObj.genres,
+    });
   };
 
   const checkUserLists = (movieObj: any) => {

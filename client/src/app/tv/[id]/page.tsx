@@ -6,7 +6,7 @@ import {
   MessageSquare, Loader2, Play, Tv, Layers, Film, CheckCircle2
 } from 'lucide-react';
 import { VideoPlayer } from '@/components/VideoPlayer';
-import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
+import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater, addToWatchHistory } from '@/utils/userLists';
 import { getLocalReviews, saveLocalReview, ReviewItem } from '@/utils/reviews';
 
 export default function TvShowDetailsPage({ params }: { params: { id: string } }) {
@@ -50,6 +50,22 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
     setTimeout(() => setReviewSuccess(false), 3500);
   };
 
+  const recordTvWatchHistory = (showObj: any) => {
+    if (!showObj) return;
+    addToWatchHistory({
+      _id: String(showObj._id || showObj.tmdbId),
+      tmdbId: String(showObj.tmdbId || showObj._id),
+      title: `${showObj.name} (S${selectedSeason}:E${selectedEpisode})`,
+      slug: showObj.slug || String(showObj._id),
+      posterUrl: showObj.posterUrl,
+      releaseYear: showObj.firstAirYear || 2024,
+      runtimeMinutes: 45,
+      ratingAverage: showObj.ratingAverage || 8.2,
+      type: 'tv',
+      genres: showObj.genres,
+    });
+  };
+
   const fetchTvDetail = async () => {
     try {
       setLoading(true);
@@ -63,6 +79,7 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
           const showId = String(data.data._id || data.data.tmdbId);
           setIsFavorite(isItemInFavorites(showId));
           setIsWatchLater(isItemInWatchLater(showId));
+          recordTvWatchHistory(data.data);
           setLoading(false);
           return;
         }
@@ -74,6 +91,7 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
         const showId = String(fallbackShow._id || fallbackShow.tmdbId);
         setIsFavorite(isItemInFavorites(showId));
         setIsWatchLater(isItemInWatchLater(showId));
+        recordTvWatchHistory(fallbackShow);
       }
     } catch (e) {
       console.error('Failed to fetch TV detail:', e);

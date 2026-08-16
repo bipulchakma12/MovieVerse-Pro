@@ -10,12 +10,15 @@ export interface SavedMediaItem {
   type: 'movie' | 'tv';
   genres?: any[];
   savedAt?: number;
+  watchedAt?: number;
+  formattedWatchedTime?: string;
 }
 
 const FAV_KEY = 'movieverse_saved_favorites';
 const WL_KEY = 'movieverse_saved_watchlater';
+const HISTORY_KEY = 'movieverse_watch_history';
 
-// Helper to get from storage
+// ================= FAVORITES =================
 export function getSavedFavorites(): SavedMediaItem[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -58,7 +61,7 @@ export function toggleItemFavorite(item: SavedMediaItem): boolean {
   return !exists;
 }
 
-// Watch Later Helpers
+// ================= WATCH LATER =================
 export function getSavedWatchLater(): SavedMediaItem[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -99,6 +102,67 @@ export function toggleItemWatchLater(item: SavedMediaItem): boolean {
   syncWithBackend('/user-lists/watch-later/toggle', item._id);
 
   return !exists;
+}
+
+// ================= WATCH HISTORY (Works 100% For Guests & Logged-in Users) =================
+export function getWatchHistory(): SavedMediaItem[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function addToWatchHistory(item: SavedMediaItem): void {
+  if (!item || (!item._id && !item.tmdbId)) return;
+  if (typeof window === 'undefined') return;
+
+  try {
+    const list = getWatchHistory();
+    const idToMatch = String(item._id || item.tmdbId);
+
+    // Remove if already exists so we can move it to the top
+    const filtered = list.filter((i) => String(i._id) !== idToMatch && String(i.tmdbId) !== idToMatch);
+
+    const now = Date.now();
+    const historyItem: SavedMediaItem = {
+      ...item,
+      watchedAt: now,
+      formattedWatchedTime: new Date(now).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
+
+    // Keep up to 50 items
+    const updated = [historyItem, ...filtered].slice(0, 50);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event('movieverse_lists_updated'));
+  } catch (e) {
+    console.error('Failed to update watch history:', e);
+  }
+}
+
+export function removeFromWatchHistory(id: string): void {
+  if (typeof window === 'undefined' || !id) return;
+  try {
+    const list = getWatchHistory();
+    const updated = list.filter((i) => String(i._id) !== String(id) && String(i.tmdbId) !== String(id));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    window.dispatchEvent(new Event('movieverse_lists_updated'));
+  } catch (e) {}
+}
+
+export function clearWatchHistory(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(HISTORY_KEY);
+    window.dispatchEvent(new Event('movieverse_lists_updated'));
+  } catch (e) {}
 }
 
 async function syncWithBackend(endpoint: string, movieId?: string) {
