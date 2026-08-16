@@ -1,3 +1,4 @@
+// MovieVerse Pro — Main Layout (v2.1)
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
