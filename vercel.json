@@ -1,0 +1,23 @@
+{
+  "buildCommand": "cd client && npm run build",
+  "outputDirectory": "client/.next",
+  "installCommand": "cd client && npm install",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/googled38457b6a5a09cd3.html",
+      "destination": "/api/google-verify"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "index, follow"
+        }
+      ]
+    }
+  ]
+}
