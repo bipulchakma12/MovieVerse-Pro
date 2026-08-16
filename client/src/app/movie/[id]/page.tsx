@@ -6,6 +6,7 @@ import {
   MessageSquare, Loader2, Play, Tv, Check, CheckCircle2
 } from 'lucide-react';
 import { VideoPlayer } from '@/components/VideoPlayer';
+import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
 
 export default function MovieDetailsPage({ params }: { params: { id: string } }) {
   const [movie, setMovie] = useState<any>(null);
@@ -36,7 +37,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
         const data = await res.json();
         if (data.success && data.data) {
           setMovie(data.data);
-          checkUserListStatus(data.data);
+          checkUserLists(data.data);
           setLoading(false);
           return;
         }
@@ -45,7 +46,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
       const fallbackMovie = await fetchTMDBMovieDetail(params.id);
       if (fallbackMovie) {
         setMovie(fallbackMovie);
-        checkUserListStatus(fallbackMovie);
+        checkUserLists(fallbackMovie);
       }
     } catch (e) {
       console.error('Failed to fetch movie detail:', e);
@@ -54,111 +55,49 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
     }
   };
 
-  const checkUserListStatus = async (movieObj: any) => {
-    if (!movieObj || !movieObj._id) return;
-    const token = localStorage.getItem('movieverse-token');
-
-    // Guest fallback in localStorage
-    const favs = JSON.parse(localStorage.getItem('guest_favs') || '[]');
-    const wls = JSON.parse(localStorage.getItem('guest_wls') || '[]');
-    setIsFavorite(favs.includes(movieObj._id));
-    setIsWatchLater(wls.includes(movieObj._id));
-
-    if (!token) return;
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    try {
-      const [resFav, resWl] = await Promise.all([
-        fetch(`${apiUrl}/user-lists/favorites`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-        fetch(`${apiUrl}/user-lists/watch-later`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-      ]);
-      if (resFav && resFav.ok) {
-        const data = await resFav.json();
-        if (data.success && Array.isArray(data.data)) {
-          setIsFavorite(data.data.some((f: any) => (f.movie?._id || f.movie) === movieObj._id));
-        }
-      }
-      if (resWl && resWl.ok) {
-        const data = await resWl.json();
-        if (data.success && Array.isArray(data.data)) {
-          setIsWatchLater(data.data.some((w: any) => (w.movie?._id || w.movie) === movieObj._id));
-        }
-      }
-    } catch (e) { /* ignore */ }
+  const checkUserLists = (movieObj: any) => {
+    if (!movieObj) return;
+    const movieId = String(movieObj._id || movieObj.tmdbId);
+    setIsFavorite(isItemInFavorites(movieId));
+    setIsWatchLater(isItemInWatchLater(movieId));
   };
 
-  const handleToggleFavorite = async () => {
-    if (!movie || !movie._id) return;
-    try {
-      setFavLoading(true);
-      const token = localStorage.getItem('movieverse-token');
-
-      if (!token) {
-        const favs = JSON.parse(localStorage.getItem('guest_favs') || '[]');
-        let updated;
-        if (favs.includes(movie._id)) {
-          updated = favs.filter((id: string) => id !== movie._id);
-          setIsFavorite(false);
-        } else {
-          updated = [...favs, movie._id];
-          setIsFavorite(true);
-        }
-        localStorage.setItem('guest_favs', JSON.stringify(updated));
-        return;
-      }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/user-lists/favorites/toggle`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ movieId: movie._id }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIsFavorite(data.isFavorite);
-      }
-    } catch (e) {
-      console.error('Failed to toggle favorite:', e);
-    } finally {
-      setFavLoading(false);
-    }
+  const handleToggleFavorite = () => {
+    if (!movie) return;
+    setFavLoading(true);
+    const newState = toggleItemFavorite({
+      _id: String(movie._id || movie.tmdbId),
+      tmdbId: String(movie.tmdbId || movie._id),
+      title: movie.title,
+      slug: movie.slug || String(movie._id),
+      posterUrl: movie.posterUrl,
+      releaseYear: movie.releaseYear || 2024,
+      runtimeMinutes: movie.runtimeMinutes || 120,
+      ratingAverage: movie.ratingAverage || 8.0,
+      type: 'movie',
+      genres: movie.genres,
+    });
+    setIsFavorite(newState);
+    setTimeout(() => setFavLoading(false), 200);
   };
 
-  const handleToggleWatchLater = async () => {
-    if (!movie || !movie._id) return;
-    try {
-      setWlLoading(true);
-      const token = localStorage.getItem('movieverse-token');
-
-      if (!token) {
-        const wls = JSON.parse(localStorage.getItem('guest_wls') || '[]');
-        let updated;
-        if (wls.includes(movie._id)) {
-          updated = wls.filter((id: string) => id !== movie._id);
-          setIsWatchLater(false);
-        } else {
-          updated = [...wls, movie._id];
-          setIsWatchLater(true);
-        }
-        localStorage.setItem('guest_wls', JSON.stringify(updated));
-        return;
-      }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/user-lists/watch-later/toggle`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ movieId: movie._id }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIsWatchLater(data.inWatchLater);
-      }
-    } catch (e) {
-      console.error('Failed to toggle watch later:', e);
-    } finally {
-      setWlLoading(false);
-    }
+  const handleToggleWatchLater = () => {
+    if (!movie) return;
+    setWlLoading(true);
+    const newState = toggleItemWatchLater({
+      _id: String(movie._id || movie.tmdbId),
+      tmdbId: String(movie.tmdbId || movie._id),
+      title: movie.title,
+      slug: movie.slug || String(movie._id),
+      posterUrl: movie.posterUrl,
+      releaseYear: movie.releaseYear || 2024,
+      runtimeMinutes: movie.runtimeMinutes || 120,
+      ratingAverage: movie.ratingAverage || 8.0,
+      type: 'movie',
+      genres: movie.genres,
+    });
+    setIsWatchLater(newState);
+    setTimeout(() => setWlLoading(false), 200);
   };
 
   const fetchMovieReviews = async () => {

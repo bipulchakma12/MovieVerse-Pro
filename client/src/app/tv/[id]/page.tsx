@@ -6,6 +6,7 @@ import {
   MessageSquare, Loader2, Play, Tv, Layers, Film
 } from 'lucide-react';
 import { VideoPlayer } from '@/components/VideoPlayer';
+import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
 
 export default function TvShowDetailsPage({ params }: { params: { id: string } }) {
   const [tvShow, setTvShow] = useState<any>(null);
@@ -33,13 +34,21 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
         const data = await res.json();
         if (data.success && data.data) {
           setTvShow(data.data);
+          const showId = String(data.data._id || data.data.tmdbId);
+          setIsFavorite(isItemInFavorites(showId));
+          setIsWatchLater(isItemInWatchLater(showId));
           setLoading(false);
           return;
         }
       }
       const { fetchTMDBTvShowDetail } = await import('@/utils/tmdbClient');
       const fallbackShow = await fetchTMDBTvShowDetail(params.id);
-      if (fallbackShow) setTvShow(fallbackShow);
+      if (fallbackShow) {
+        setTvShow(fallbackShow);
+        const showId = String(fallbackShow._id || fallbackShow.tmdbId);
+        setIsFavorite(isItemInFavorites(showId));
+        setIsWatchLater(isItemInWatchLater(showId));
+      }
     } catch (e) {
       console.error('Failed to fetch TV detail:', e);
     } finally {
@@ -304,21 +313,51 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
 
           <div className="p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border space-y-3">
             <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                isFavorite ? 'bg-rose-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+              onClick={() => {
+                if (!tvShow) return;
+                const newState = toggleItemFavorite({
+                  _id: String(tvShow._id || tvShow.tmdbId),
+                  tmdbId: String(tvShow.tmdbId || tvShow._id),
+                  title: tvShow.name,
+                  slug: tvShow.slug || String(tvShow._id),
+                  posterUrl: tvShow.posterUrl,
+                  releaseYear: tvShow.firstAirYear || 2024,
+                  runtimeMinutes: (tvShow.numberOfSeasons || 1) * 10 * 45,
+                  ratingAverage: tvShow.ratingAverage || 8.0,
+                  type: 'tv',
+                  genres: tvShow.genres,
+                });
+                setIsFavorite(newState);
+              }}
+              className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                isFavorite ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+              <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current text-white' : ''}`} />
               {isFavorite ? 'Saved in Favorites ❤️' : 'Add to Favorites'}
             </button>
             <button
-              onClick={() => setIsWatchLater(!isWatchLater)}
-              className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                isWatchLater ? 'bg-sky-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+              onClick={() => {
+                if (!tvShow) return;
+                const newState = toggleItemWatchLater({
+                  _id: String(tvShow._id || tvShow.tmdbId),
+                  tmdbId: String(tvShow.tmdbId || tvShow._id),
+                  title: tvShow.name,
+                  slug: tvShow.slug || String(tvShow._id),
+                  posterUrl: tvShow.posterUrl,
+                  releaseYear: tvShow.firstAirYear || 2024,
+                  runtimeMinutes: (tvShow.numberOfSeasons || 1) * 10 * 45,
+                  ratingAverage: tvShow.ratingAverage || 8.0,
+                  type: 'tv',
+                  genres: tvShow.genres,
+                });
+                setIsWatchLater(newState);
+              }}
+              className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                isWatchLater ? 'bg-sky-600 hover:bg-sky-700 text-white shadow-lg shadow-sky-600/30' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              <Bookmark className={`w-4 h-4 ${isWatchLater ? 'fill-current' : ''}`} />
+              <Bookmark className={`w-4 h-4 ${isWatchLater ? 'fill-current text-white' : ''}`} />
               {isWatchLater ? 'Added to Watch Later 🔖' : 'Watch Later'}
             </button>
           </div>
