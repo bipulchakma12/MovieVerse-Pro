@@ -38,6 +38,9 @@ export const metadata: Metadata = {
     title: "MovieVerse Pro — #1 Platform to Watch Movies Online",
     description: "Stream full movies & TV series in HD for free on MovieVerse Pro.",
   },
+  verification: {
+    google: "googled38457b6a5a09cd3",
+  },
 };
 
 export default function RootLayout({
