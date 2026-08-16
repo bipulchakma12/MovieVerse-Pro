@@ -39,7 +39,10 @@ export const metadata: Metadata = {
     description: "Stream full movies & TV series in HD for free on MovieVerse Pro.",
   },
   verification: {
-    google: "googled38457b6a5a09cd3",
+    google: [
+      "QPMIEbArIZAIsJV_-uW7gX448_Xmva0-ep6jptI",
+      "googled38457b6a5a09cd3"
+    ],
   },
 };
 
