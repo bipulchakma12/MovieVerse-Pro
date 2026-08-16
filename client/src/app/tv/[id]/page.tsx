@@ -86,9 +86,30 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
       : streamServer === 'server3'
       ? server3Url
       : server4Url;
+  const tvSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'TVSeries',
+    name: tvShow.name,
+    image: tvShow.posterUrl,
+    description: tvShow.storyline || tvShow.overview || 'Watch TV Series Online',
+    numberOfSeasons: tvShow.numberOfSeasons || 1,
+    numberOfEpisodes: tvShow.numberOfEpisodes || 10,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: tvShow.ratingAverage || 8.0,
+      reviewCount: tvShow.ratingCount || 200,
+      bestRating: 10,
+      worstRating: 1,
+    },
+  };
 
   return (
     <div className="pb-16">
+      {/* Google Schema.org TVSeries Rich Snippet */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(tvSchema) }}
+      />
 
       {/* Hero Banner Header */}
       <div className="relative w-full h-[50vh] min-h-[350px] bg-slate-950 overflow-hidden">

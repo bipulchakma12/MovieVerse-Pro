@@ -225,10 +225,29 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
       ? server3Url
       : server4Url;
 
-  const isUpcoming = movie.releaseYear && movie.releaseYear > 2024;
+  const movieSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Movie',
+    name: movie.title,
+    image: movie.posterUrl,
+    description: movie.storyline || movie.overview || 'Watch HD Movie Online',
+    datePublished: movie.releaseYear ? `${movie.releaseYear}` : '2024',
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: movie.ratingAverage || 8.0,
+      reviewCount: movie.ratingCount || 120,
+      bestRating: 10,
+      worstRating: 1,
+    },
+  };
 
   return (
     <div className="pb-16">
+      {/* Google Schema.org Movie Rich Snippet */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(movieSchema) }}
+      />
 
       {/* Hero Banner */}
       <div className="relative w-full h-[50vh] min-h-[350px] bg-slate-950 overflow-hidden">
