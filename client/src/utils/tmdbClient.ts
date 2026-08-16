@@ -3,6 +3,32 @@ export const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 export const TMDB_IMAGE_ORIGINAL = 'https://image.tmdb.org/t/p/original';
 
+// TMDB Genre ID Mappings
+export const MOVIE_GENRE_MAP: Record<string, number> = {
+  action: 28,
+  'sci-fi': 878,
+  drama: 18,
+  thriller: 53,
+  adventure: 12,
+  animation: 16,
+  crime: 80,
+  comedy: 35,
+  horror: 27,
+  fantasy: 14,
+  romance: 10749,
+  mystery: 9648,
+};
+
+export const TV_GENRE_MAP: Record<string, number> = {
+  action: 10759,
+  'sci-fi': 10765,
+  drama: 18,
+  animation: 16,
+  comedy: 35,
+  crime: 80,
+  mystery: 9648,
+};
+
 // YouTube Full Movies & Blockbuster Trailer Keys
 const POPULAR_YOUTUBE_KEYS = [
   'YoHD9XEInc0', // Inception / Action
@@ -17,9 +43,20 @@ const POPULAR_YOUTUBE_KEYS = [
   'a8Gx8wiNbs8', // Transformers
 ];
 
-export const fetchTMDBPopularMovies = async (page = 1) => {
+export const fetchTMDBPopularMovies = async (page = 1, genre = 'all', search = '') => {
   try {
-    const res = await fetch(`${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`);
+    let url = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`;
+
+    if (search && search.trim()) {
+      url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(search.trim())}&page=${page}`;
+    } else if (genre && genre !== 'all') {
+      const genreId = MOVIE_GENRE_MAP[genre.toLowerCase()];
+      if (genreId) {
+        url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${genreId}&sort_by=popularity.desc&page=${page}`;
+      }
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
 
     if (data.results && Array.isArray(data.results)) {
@@ -31,7 +68,7 @@ export const fetchTMDBPopularMovies = async (page = 1) => {
           _id: m.id.toString(),
           tmdbId: m.id.toString(),
           title: m.title,
-          slug: m.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${m.id}`,
+          slug: m.title ? m.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${m.id}` : `movie-${m.id}`,
           storyline: m.overview || 'No storyline available.',
           posterUrl: m.poster_path
             ? `${TMDB_IMAGE_BASE}${m.poster_path}`
@@ -43,7 +80,7 @@ export const fetchTMDBPopularMovies = async (page = 1) => {
           runtimeMinutes: 120 + (index * 5) % 45,
           ratingAverage: Math.round((m.vote_average || 7.8) * 10) / 10,
           ratingCount: m.vote_count || 320,
-          genres: [{ name: 'Popular', slug: 'popular' }],
+          genres: [{ name: genre !== 'all' ? genre : 'Popular', slug: genre }],
         };
       });
     }
@@ -54,9 +91,20 @@ export const fetchTMDBPopularMovies = async (page = 1) => {
   }
 };
 
-export const fetchTMDBPopularTvShows = async (page = 1) => {
+export const fetchTMDBPopularTvShows = async (page = 1, genre = 'all', search = '') => {
   try {
-    const res = await fetch(`${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&page=${page}`);
+    let url = `${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&page=${page}`;
+
+    if (search && search.trim()) {
+      url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(search.trim())}&page=${page}`;
+    } else if (genre && genre !== 'all') {
+      const genreId = TV_GENRE_MAP[genre.toLowerCase()];
+      if (genreId) {
+        url = `${TMDB_BASE_URL}/discover/tv?api_key=${TMDB_API_KEY}&with_genres=${genreId}&sort_by=popularity.desc&page=${page}`;
+      }
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
 
     if (data.results && Array.isArray(data.results)) {
@@ -74,7 +122,7 @@ export const fetchTMDBPopularTvShows = async (page = 1) => {
         numberOfSeasons: 1,
         ratingAverage: Math.round((t.vote_average || 8.0) * 10) / 10,
         ratingCount: t.vote_count || 400,
-        genres: [{ name: 'Popular', slug: 'popular' }],
+        genres: [{ name: genre !== 'all' ? genre : 'Popular', slug: genre }],
       }));
     }
     return [];

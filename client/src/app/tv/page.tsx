@@ -59,7 +59,7 @@ export default function TvShowsPage() {
 
       // Direct TMDB API Fallback for Vercel Live Deployment
       const { fetchTMDBPopularTvShows } = await import('@/utils/tmdbClient');
-      const fallbackTv = await fetchTMDBPopularTvShows(pageNum);
+      const fallbackTv = await fetchTMDBPopularTvShows(pageNum, selectedGenre, searchTerm);
       setTvShows(fallbackTv);
       setTotalPages(500);
       setTotalCount(50000);

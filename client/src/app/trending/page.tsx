@@ -45,7 +45,7 @@ export default function TrendingPage() {
 
       // Direct TMDB API Fallback for Vercel Live Deployment
       const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
-      const fallbackData = await fetchTMDBPopularMovies(pageNum);
+      const fallbackData = await fetchTMDBPopularMovies(pageNum, selectedGenre, searchTerm);
       setMovies(fallbackData);
       setTotalPages(500);
       setTotalCount(50000);
