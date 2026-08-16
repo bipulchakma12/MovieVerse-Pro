@@ -25,11 +25,23 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       e.preventDefault();
     };
 
+    // 4. Block unauthorized ad redirects & popunders
+    const originalOpen = window.open;
+    window.open = function (...args: any[]) {
+      const url = args[0] ? String(args[0]) : '';
+      if (url.startsWith('/') || (typeof window !== 'undefined' && url.includes(window.location.hostname))) {
+        return originalOpen.apply(window, args as any);
+      }
+      console.log('Blocked ad popup window:', url);
+      return null;
+    };
+
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('dragstart', handleDragStart);
 
     return () => {
+      window.open = originalOpen;
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('dragstart', handleDragStart);

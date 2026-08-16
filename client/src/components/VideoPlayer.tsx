@@ -224,7 +224,8 @@ export default function VideoPlayer({
             src={embedUrl}
             title={title || 'MovieVerse Stream Player'}
             className="w-full h-full border-0"
-            allow="autoplay; fullscreen *; encrypted-media; picture-in-picture; accelerometer; gyroscope; clipboard-write; display-capture"
+            allow="autoplay; fullscreen *; encrypted-media; picture-in-picture; accelerometer; gyroscope"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-fullscreen"
             allowFullScreen={true}
             // @ts-ignore
             webkitallowfullscreen="true"
