@@ -163,7 +163,7 @@ export default function Home() {
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            Welcome to <strong className="text-slate-800 dark:text-slate-200">MovieVerse Pro</strong>. Explore 50,000+ trending blockbusters, live TV series, reviews, and interactive video playback.
+            Welcome to <strong className="text-slate-800 dark:text-slate-200">MovieVerse Pro</strong>.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
