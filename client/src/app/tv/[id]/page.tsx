@@ -108,8 +108,8 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
   const totalEpisodes = 12;
 
   // Fast TV Stream URLs with Season & Episode support
-  const server1Url = `https://vidsrc.xyz/embed/tv?tmdb=${tmdbId}&season=${selectedSeason}&episode=${selectedEpisode}`;
-  const server2Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${selectedSeason}&e=${selectedEpisode}`;
+  const server1Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${selectedSeason}&e=${selectedEpisode}`;
+  const server2Url = `https://vidsrc.xyz/embed/tv?tmdb=${tmdbId}&season=${selectedSeason}&episode=${selectedEpisode}`;
   const server3Url = `https://player.smashy.stream/tv/${tmdbId}?s=${selectedSeason}&e=${selectedEpisode}`;
   const server4Url = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
 
@@ -219,13 +219,13 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
                     onClick={() => setStreamServer('server1')}
                     className={`px-2.5 py-1 rounded-lg transition-all ${streamServer === 'server1' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'}`}
                   >
-                    Server 1 (VidSrc.xyz)
+                    Server 1 (MultiEmbed)
                   </button>
                   <button
                     onClick={() => setStreamServer('server2')}
                     className={`px-2.5 py-1 rounded-lg transition-all ${streamServer === 'server2' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-white'}`}
                   >
-                    Server 2 (MultiEmbed)
+                    Server 2 (VidSrc.xyz)
                   </button>
                   <button
                     onClick={() => setStreamServer('server3')}

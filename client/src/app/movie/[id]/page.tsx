@@ -149,8 +149,8 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
   const trailerUrl = movie.trailerUrl || 'https://www.youtube.com/embed/YoHD9XEInc0';
 
   // Multi-server endpoints for full movie streaming
-  const server1Url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
-  const server2Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
+  const server1Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
+  const server2Url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
   const server3Url = `https://autoembed.co/movie/tmdb/${tmdbId}`;
   const server4Url = `https://vidsrc.to/embed/movie/${tmdbId}`;
 
@@ -270,7 +270,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
                       streamServer === 'server1' ? 'bg-brand-600 text-white' : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    Server 1 (CineSrc)
+                    Server 1 (MultiEmbed)
                   </button>
                   <button
                     onClick={() => setStreamServer('server2')}
@@ -278,7 +278,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
                       streamServer === 'server2' ? 'bg-brand-600 text-white' : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    Server 2 (MultiEmbed)
+                    Server 2 (CineSrc)
                   </button>
                   <button
                     onClick={() => setStreamServer('server3')}
