@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "MovieVerse Pro — #1 Platform to Watch Movies Online Free",
     description: "Discover, stream, review, and track 50,000+ movies & TV shows with high-speed CineSrc streaming on MovieVerse Pro.",
-    url: "https://movieverse-pro.vercel.app",
+    url: "https://movie-verse-pro-client.vercel.app",
     siteName: "MovieVerse Pro",
     type: "website",
   },
@@ -37,9 +37,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MovieVerse Pro — #1 Platform to Watch Movies Online",
     description: "Stream full movies & TV series in HD for free on MovieVerse Pro.",
-  },
-  verification: {
-    google: "MH1Osikqntad8Po7T5cLX2qqGlwwi7gT3i02s8YRGHc",
   },
 };
 
@@ -50,6 +47,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        {/* Google Search Console Verification — Hardcoded for 100% detection */}
+        <meta name="google-site-verification" content="MH1Osikqntad8Po7T5cLX2qqGlwwi7gT3i02s8YRGHc" />
+      </head>
       <body>
         <ThemeProvider>
           <AuthProvider>
