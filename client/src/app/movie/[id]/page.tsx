@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
+import { getLocalReviews, saveLocalReview, ReviewItem } from '@/utils/reviews';
 
 export default function MovieDetailsPage({ params }: { params: { id: string } }) {
   const [movie, setMovie] = useState<any>(null);
@@ -15,7 +16,8 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
   const [streamServer, setStreamServer] = useState<'server1' | 'server2' | 'server3' | 'server4'>('server1');
   const [userRating, setUserRating] = useState(0);
   const [commentText, setCommentText] = useState('');
-  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
 
   // User List States
   const [isFavorite, setIsFavorite] = useState(false);
@@ -100,29 +102,26 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
     setTimeout(() => setWlLoading(false), 200);
   };
 
-  const fetchMovieReviews = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/reviews/movie/${params.id}`);
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) setReviews(data.data);
-    } catch (e) { /* ignore */ }
+  const fetchMovieReviews = () => {
+    const list = getLocalReviews(String(params.id));
+    setReviews(list);
   };
 
-  const handleReviewSubmit = async (e: React.FormEvent) => {
+  const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText || !movie) return;
-    try {
-      const token = localStorage.getItem('movieverse-token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/reviews/movie/${movie._id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ rating: userRating || 8, comment: commentText }),
-      });
-      const data = await res.json();
-      if (data.success) { setReviews([data.data, ...reviews]); setCommentText(''); setUserRating(0); }
-    } catch (e) { console.error('Failed to post review:', e); }
+    if (!commentText.trim() || !movie) return;
+
+    const newRev = saveLocalReview(
+      String(movie._id || movie.tmdbId || params.id),
+      commentText,
+      userRating || 9
+    );
+
+    setReviews((prev) => [newRev, ...prev.filter((r) => r._id !== newRev._id)]);
+    setCommentText('');
+    setUserRating(0);
+    setReviewSuccess(true);
+    setTimeout(() => setReviewSuccess(false), 3500);
   };
 
   if (loading) {
@@ -344,29 +343,56 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
 
           {/* User Reviews */}
           <div className="p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border space-y-6">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-brand-500" /> User Reviews
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-brand-500" /> User Reviews & Comments
+              </span>
+              <span className="text-xs font-normal text-slate-400">({reviews.length} reviews)</span>
             </h3>
+
+            {reviewSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-xs font-bold flex items-center gap-2 animate-fade-in">
+                <CheckCircle2 className="w-4 h-4" /> Your review was published successfully!
+              </div>
+            )}
 
             <form onSubmit={handleReviewSubmit} className="space-y-4 border-b border-slate-200 dark:border-dark-border pb-6">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Rating:</span>
-                {[1,2,3,4,5,6,7,8,9,10].map((star) => (
-                  <button
-                    key={star} type="button"
-                    onClick={() => setUserRating(star)}
-                    className={`text-lg leading-none ${userRating >= star ? 'text-amber-400' : 'text-slate-400'}`}
-                  >★</button>
-                ))}
-                <span className="text-xs text-slate-400">({userRating || 0}/10)</span>
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Your Rating:</span>
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-bg px-2.5 py-1 rounded-xl border border-slate-200 dark:border-dark-border">
+                  {[1,2,3,4,5,6,7,8,9,10].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setUserRating(star)}
+                      className={`text-base leading-none transition-transform hover:scale-125 ${
+                        (userRating || 9) >= star ? 'text-amber-400' : 'text-slate-400 dark:text-slate-600'
+                      }`}
+                      title={`${star}/10`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <span className="text-xs font-bold text-amber-500">
+                  {userRating ? `${userRating}/10` : '9/10 (Recommended)'}
+                </span>
               </div>
+
               <textarea
-                rows={3} value={commentText}
+                rows={3}
+                value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Write your thoughts about this movie..."
-                className="w-full p-3 text-xs rounded-xl bg-slate-100 dark:bg-dark-bg border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-200 resize-none"
+                placeholder="Share your review or thoughts about this title..."
+                className="w-full p-3.5 text-xs rounded-xl bg-slate-100 dark:bg-dark-bg border border-slate-200 dark:border-dark-border focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder-slate-400 resize-none transition-all"
+                required
               />
-              <button type="submit" className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 transition-all flex items-center gap-2">
+
+              <button
+                type="submit"
+                disabled={!commentText.trim()}
+                className="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-brand-600/30"
+              >
                 <Send className="w-3.5 h-3.5" /> Submit Review
               </button>
             </form>
