@@ -8,7 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "MovieVerse Pro — Watch HD Movies & TV Shows Online Free | #1 Movie Platform",
+  title: "MovieVerse Pro",
   description: "MovieVerse Pro is the ultimate online movie streaming platform. Watch full movies, blockbuster hits, trending TV series, and trailers in full HD online for free.",
   keywords: [
     "movie",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   publisher: "MovieVerse Pro",
   robots: "index, follow",
   openGraph: {
-    title: "MovieVerse Pro — #1 Platform to Watch Movies Online Free",
+    title: "MovieVerse Pro",
     description: "Discover, stream, review, and track 50,000+ movies & TV shows with high-speed CineSrc streaming on MovieVerse Pro.",
     url: "https://movie-verse-pro-client.vercel.app",
     siteName: "MovieVerse Pro",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MovieVerse Pro — #1 Platform to Watch Movies Online",
+    title: "MovieVerse Pro",
     description: "Stream full movies & TV series in HD for free on MovieVerse Pro.",
   },
   icons: {
