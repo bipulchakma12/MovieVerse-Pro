@@ -294,11 +294,24 @@ function SearchContent() {
         </span>
       </div>
 
-      {/* Loading Spinner */}
+      {/* User-Friendly Neon Orbital Spinner */}
       {loading ? (
-        <div className="py-24 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
-          <p className="text-xs text-slate-400">Searching title database...</p>
+        <div className="py-28 flex flex-col items-center justify-center select-none animate-fade-in">
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+            {/* Outer glowing pulsing ring */}
+            <div className="absolute inset-0 rounded-full border-2 border-brand-500/30 animate-ping opacity-60" />
+            
+            {/* Main fast rotating gradient ring */}
+            <div className="absolute inset-0 rounded-full border-3 sm:border-4 border-t-brand-500 border-r-rose-500 border-b-transparent border-l-transparent animate-spin duration-700 shadow-lg shadow-brand-500/30" />
+            
+            {/* Inner counter-rotating neon ring */}
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-3 border-r-sky-400 border-b-brand-400 border-t-transparent border-l-transparent animate-spin duration-500" />
+            
+            {/* Center glowing Search Icon */}
+            <div className="absolute flex items-center justify-center text-brand-500 animate-pulse">
+              <Search className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+          </div>
         </div>
       ) : filteredResults.length === 0 ? (
         <div className="py-24 text-center space-y-3">

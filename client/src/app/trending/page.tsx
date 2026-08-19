@@ -23,32 +23,38 @@ export default function TrendingPage() {
   const fetchMovies = async (pageNum = currentPage) => {
     try {
       setLoading(true);
+      const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
+      
       const queryParams = new URLSearchParams();
       if (searchTerm) queryParams.append('search', searchTerm);
       if (selectedGenre !== 'all') queryParams.append('genre', selectedGenre.toLowerCase());
       queryParams.append('page', pageNum.toString());
       queryParams.append('limit', '100');
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 600);
+
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/movies?${queryParams.toString()}`).catch(() => null);
+      const backendPromise = fetch(`${apiUrl}/movies?${queryParams.toString()}`, { signal: controller.signal })
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null);
 
-      if (res && res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-          setMovies(data.data);
-          setTotalPages(data.pages || 1);
-          setTotalCount(data.total || data.data.length);
-          setLoading(false);
-          return;
-        }
+      const tmdbPromise = fetchTMDBPopularMovies(pageNum, selectedGenre, searchTerm);
+
+      const [backendRes, tmdbData] = await Promise.all([
+        backendPromise.finally(() => clearTimeout(timeoutId)),
+        tmdbPromise
+      ]);
+
+      if (backendRes?.success && Array.isArray(backendRes?.data) && backendRes.data.length > 0) {
+        setMovies(backendRes.data);
+        setTotalPages(backendRes.pages || 1);
+        setTotalCount(backendRes.total || backendRes.data.length);
+      } else {
+        setMovies(tmdbData);
+        setTotalPages(500);
+        setTotalCount(50000);
       }
-
-      // Direct TMDB API Fallback for Vercel Live Deployment
-      const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
-      const fallbackData = await fetchTMDBPopularMovies(pageNum, selectedGenre, searchTerm);
-      setMovies(fallbackData);
-      setTotalPages(500);
-      setTotalCount(50000);
     } catch (error) {
       console.error('Failed to fetch live movies:', error);
     } finally {
@@ -88,20 +94,19 @@ export default function TrendingPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-xs rounded-full bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
-            <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           </div>
         </div>
       </div>
 
-      {/* Genre Pills */}
+      {/* Genre pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        <Filter className="w-4 h-4 text-slate-400 flex-shrink-0" />
         {genres.map((g) => (
           <button
             key={g}
             onClick={() => setSelectedGenre(g)}
             className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              selectedGenre === g
+              selectedGenre.toLowerCase() === g.toLowerCase()
                 ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
                 : 'bg-white dark:bg-dark-card text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-dark-border'
             }`}
@@ -111,11 +116,24 @@ export default function TrendingPage() {
         ))}
       </div>
 
-      {/* Movie Grid */}
+      {/* Movie Grid with User-Friendly Neon Orbital Spinner */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
-          <p className="text-xs text-slate-400">Loading live movies from catalog...</p>
+        <div className="flex flex-col items-center justify-center py-28 select-none animate-fade-in">
+          <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+            {/* Outer glowing pulsing ring */}
+            <div className="absolute inset-0 rounded-full border-2 border-brand-500/30 animate-ping opacity-60" />
+            
+            {/* Main fast rotating gradient ring */}
+            <div className="absolute inset-0 rounded-full border-3 sm:border-4 border-t-brand-500 border-r-rose-500 border-b-transparent border-l-transparent animate-spin duration-700 shadow-lg shadow-brand-500/30" />
+            
+            {/* Inner counter-rotating neon ring */}
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-3 border-r-sky-400 border-b-brand-400 border-t-transparent border-l-transparent animate-spin duration-500" />
+            
+            {/* Center glowing Flame Icon */}
+            <div className="absolute flex items-center justify-center text-brand-500 animate-pulse">
+              <Flame className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
