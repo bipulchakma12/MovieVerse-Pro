@@ -124,38 +124,38 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           
           {/* Left: Brand Logo & Main Nav Links */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-5 xl:gap-8 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform duration-200">
                 <Film className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white transition-colors drop-shadow">
+              <span className="text-xl font-bold text-white transition-colors drop-shadow whitespace-nowrap">
                 MovieVerse<span className="text-brand-500 font-extrabold">Pro</span>
               </span>
             </Link>
 
-            {/* Nav Links */}
-            <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold">
-              <Link href="/" className="flex items-center gap-1.5 px-2 py-1 text-white hover:text-brand-400 transition-colors">
-                <Home className="w-4 h-4 text-brand-500" /> Home
+            {/* Nav Links - Guaranteed No Wrap */}
+            <nav className="hidden lg:flex items-center gap-4 xl:gap-6 text-sm font-semibold whitespace-nowrap flex-shrink-0">
+              <Link href="/" className="flex items-center gap-1.5 px-2 py-1 text-white hover:text-brand-400 transition-colors whitespace-nowrap">
+                <Home className="w-4 h-4 text-brand-500 flex-shrink-0" /> Home
               </Link>
-              <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-brand-400 transition-colors">
-                <Clapperboard className="w-4 h-4 text-rose-500" /> Movies
+              <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-brand-400 transition-colors whitespace-nowrap">
+                <Clapperboard className="w-4 h-4 text-rose-500 flex-shrink-0" /> Movies
               </Link>
-              <Link href="/tv" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-sky-400 transition-colors">
-                <Tv className="w-4 h-4 text-sky-400" /> TV Shows
+              <Link href="/tv" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-sky-400 transition-colors whitespace-nowrap">
+                <Tv className="w-4 h-4 text-sky-400 flex-shrink-0" /> TV Shows
               </Link>
-              <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-amber-400 transition-colors">
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Top IMDB
+              <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-amber-400 transition-colors whitespace-nowrap">
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400 flex-shrink-0" /> Top IMDB
               </Link>
             </nav>
           </div>
 
           {/* Right: CineB Live Search Bar + User Controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
             
             {/* Desktop Search Bar with Live Floating Dropdown (CineB Style) */}
-            <div ref={searchContainerRef} className="relative hidden md:block w-64 lg:w-80">
+            <div ref={searchContainerRef} className="relative hidden md:block w-48 sm:w-56 lg:w-64 xl:w-72 flex-shrink-0">
               <form onSubmit={handleSearch} className="relative w-full flex items-center">
                 <input
                   type="text"
