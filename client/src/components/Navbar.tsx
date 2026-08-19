@@ -127,12 +127,9 @@ export const Navbar: React.FC = () => {
           
           {/* Left: Brand Logo & Interactive Animated Nav Links */}
           <div className="flex items-center gap-5 xl:gap-8 flex-shrink-0">
-            <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                <Film className="w-6 h-6 text-white transition-transform group-hover:scale-110" />
-              </div>
-              <span className="text-xl font-bold text-white transition-colors drop-shadow whitespace-nowrap">
-                MovieVerse<span className="text-brand-500 font-extrabold">Pro</span>
+            <Link href="/" className="flex items-center group flex-shrink-0">
+              <span className="text-2xl font-black text-white tracking-tight transition-transform group-hover:scale-105 drop-shadow whitespace-nowrap">
+                MovieVerse<span className="text-brand-500 font-black">Pro</span>
               </span>
             </Link>
 
