@@ -190,10 +190,10 @@ export default function Home() {
               alt={currentHero.title}
               className="w-full h-full object-cover object-center animate-fade-in transform scale-105 duration-1000 ease-out"
             />
-            {/* Cinematic Gradient Overlays (left dark vignette + bottom blend to page background) */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-black/30 md:to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0b0c10] via-black/40 to-black/40" />
-            <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-black/80 to-transparent" />
+            {/* CineB Crystal-Clear Full-Light Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent max-w-xl sm:max-w-2xl" />
+            <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#0b0c10] via-[#0b0c10]/30 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/50 to-transparent" />
           </div>
 
           {/* Left Hero Content Info */}
