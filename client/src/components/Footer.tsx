@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Film, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -13,14 +13,11 @@ export const Footer: React.FC = () => {
           {/* Brand Col */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center">
-                <Film className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-slate-900 dark:text-white">
-                MovieVerse<span className="text-brand-500">Pro</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                MovieVerse<span className="text-brand-500 font-black">Pro</span>
               </span>
             </Link>
-            <p className="text-xs leading-relaxed max-w-sm">
+            <p className="text-xs leading-relaxed max-w-sm text-slate-500 dark:text-slate-400">
               Your ultimate destination for discovering, tracking, and reviewing movies & TV shows with high-performance recommendations.
             </p>
           </div>
@@ -30,9 +27,9 @@ export const Footer: React.FC = () => {
             <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-200 uppercase tracking-wider mb-3">Explore</h4>
             <ul className="space-y-2 text-xs">
               <li><Link href="/" className="hover:text-brand-500 transition-colors">Featured Movies</Link></li>
-              <li><Link href="/genres" className="hover:text-brand-500 transition-colors">Genres & Categories</Link></li>
-              <li><Link href="/top-rated" className="hover:text-brand-500 transition-colors">Top Rated</Link></li>
-              <li><Link href="/upcoming" className="hover:text-brand-500 transition-colors">Upcoming Releases</Link></li>
+              <li><Link href="/trending" className="hover:text-brand-500 transition-colors">Movies Catalog</Link></li>
+              <li><Link href="/tv" className="hover:text-brand-500 transition-colors">TV Shows</Link></li>
+              <li><Link href="/trending" className="hover:text-brand-500 transition-colors">Top IMDB</Link></li>
             </ul>
           </div>
 
@@ -49,8 +46,8 @@ export const Footer: React.FC = () => {
 
         </div>
 
-        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-dark-border flex flex-col sm:flex-row items-center justify-between text-xs gap-4">
-          <p>© {new Date().getFullYear()} MovieVerse Pro.</p>
+        <div className="mt-8 pt-6 border-t border-slate-200 dark:border-dark-border flex flex-col sm:flex-row items-center justify-between text-xs gap-4 text-slate-500 dark:text-slate-400">
+          <p>© {new Date().getFullYear()} MovieVerse Pro. All rights reserved.</p>
           <p className="flex items-center gap-1">
             Crafted with <Heart className="w-3.5 h-3.5 text-brand-500 fill-brand-500" /> for cinema lovers.
           </p>

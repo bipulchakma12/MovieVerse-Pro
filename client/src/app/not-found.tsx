@@ -5,9 +5,11 @@ import { Film } from 'lucide-react';
 export default function NotFound() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
-      <div className="w-16 h-16 rounded-2xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-4">
-        <Film className="w-8 h-8" />
-      </div>
+      <Link href="/" className="mb-4 inline-block hover:scale-105 transition-transform">
+        <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          MovieVerse<span className="text-brand-500 font-black">Pro</span>
+        </span>
+      </Link>
       <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2">404 - Page Not Found</h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
         The movie or page you are looking for does not exist or has been moved.

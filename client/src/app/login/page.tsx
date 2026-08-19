@@ -64,10 +64,12 @@ export default function LoginPage() {
         
         {/* Header */}
         <div className="text-center space-y-2 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center mx-auto shadow-lg shadow-brand-500/20">
-            <Film className="w-6 h-6 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome Back</h2>
+          <Link href="/" className="inline-block hover:scale-105 transition-transform">
+            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              MovieVerse<span className="text-brand-500 font-black">Pro</span>
+            </span>
+          </Link>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Welcome Back</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Sign in to access your watchlists and custom recommendations
           </p>
