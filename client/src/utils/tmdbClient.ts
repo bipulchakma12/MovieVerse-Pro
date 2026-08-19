@@ -43,9 +43,10 @@ const POPULAR_YOUTUBE_KEYS = [
   'a8Gx8wiNbs8', // Transformers
 ];
 
+// Live Real-Time Auto-Update: Fetch Newly Released & Trending Daily Movies
 export const fetchTMDBPopularMovies = async (page = 1, genre = 'all', search = '') => {
   try {
-    let url = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`;
+    let url = `${TMDB_BASE_URL}/movie/now_playing?api_key=${TMDB_API_KEY}&page=${page}`;
 
     if (search && search.trim()) {
       url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(search.trim())}&page=${page}`;
@@ -72,6 +73,7 @@ export const fetchTMDBPopularMovies = async (page = 1, genre = 'all', search = '
         runtimeMinutes: 120 + ((m.id || index) % 45),
         ratingAverage: Math.round((m.vote_average || 8.0) * 10) / 10,
         ratingCount: m.vote_count || 500,
+        type: 'movie',
         genres: [{ name: genre !== 'all' ? genre : 'Popular', slug: genre }],
       }));
     }
@@ -82,9 +84,10 @@ export const fetchTMDBPopularMovies = async (page = 1, genre = 'all', search = '
   }
 };
 
+// Live Real-Time Auto-Update: Fetch Newly Aired & Trending TV Series
 export const fetchTMDBPopularTvShows = async (page = 1, genre = 'all', search = '') => {
   try {
-    let url = `${TMDB_BASE_URL}/tv/popular?api_key=${TMDB_API_KEY}&page=${page}`;
+    let url = `${TMDB_BASE_URL}/tv/on_the_air?api_key=${TMDB_API_KEY}&page=${page}`;
 
     if (search && search.trim()) {
       url = `${TMDB_BASE_URL}/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(search.trim())}&page=${page}`;
@@ -110,6 +113,7 @@ export const fetchTMDBPopularTvShows = async (page = 1, genre = 'all', search = 
         numberOfSeasons: 1,
         ratingAverage: Math.round((t.vote_average || 8.0) * 10) / 10,
         ratingCount: t.vote_count || 400,
+        type: 'tv',
         genres: [{ name: genre !== 'all' ? genre : 'Popular', slug: genre }],
       }));
     }
@@ -117,6 +121,52 @@ export const fetchTMDBPopularTvShows = async (page = 1, genre = 'all', search = 
   } catch (err) {
     console.error('TMDB TV Popular Fallback error:', err);
     return [];
+  }
+};
+
+// Global Live New Release Auto-Sync (Pulls trending day + now playing)
+export const fetchTMDBRealtimeNewReleases = async () => {
+  try {
+    const [moviesRes, tvRes] = await Promise.all([
+      fetch(`${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}`),
+      fetch(`${TMDB_BASE_URL}/trending/tv/day?api_key=${TMDB_API_KEY}`)
+    ]);
+
+    const moviesData = await moviesRes.json();
+    const tvData = await tvRes.json();
+
+    const moviesList = (moviesData.results || []).slice(0, 20).map((m: any) => ({
+      _id: m.id.toString(),
+      tmdbId: m.id.toString(),
+      title: m.title,
+      slug: (m.title || 'movie').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${m.id}`,
+      storyline: m.overview || 'Live New Release Movie in HD.',
+      posterUrl: m.poster_path ? `${TMDB_IMAGE_BASE}${m.poster_path}` : '',
+      bannerUrl: m.backdrop_path ? `${TMDB_IMAGE_ORIGINAL}${m.backdrop_path}` : `${TMDB_IMAGE_BASE}${m.poster_path}`,
+      releaseYear: m.release_date ? parseInt(m.release_date.split('-')[0]) : 2024,
+      runtimeOrSeasons: '135min',
+      ratingAverage: Math.round((m.vote_average || 8.0) * 10) / 10,
+      type: 'movie' as const,
+    }));
+
+    const tvList = (tvData.results || []).slice(0, 20).map((t: any) => ({
+      _id: t.id.toString(),
+      tmdbId: t.id.toString(),
+      title: t.name,
+      slug: (t.name || 'tv-show').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${t.id}`,
+      storyline: t.overview || 'Live New Release TV Series in HD.',
+      posterUrl: t.poster_path ? `${TMDB_IMAGE_BASE}${t.poster_path}` : '',
+      bannerUrl: t.backdrop_path ? `${TMDB_IMAGE_ORIGINAL}${t.backdrop_path}` : `${TMDB_IMAGE_BASE}${t.poster_path}`,
+      releaseYear: t.first_air_date ? parseInt(t.first_air_date.split('-')[0]) : 2024,
+      runtimeOrSeasons: '1 Season',
+      ratingAverage: Math.round((t.vote_average || 8.0) * 10) / 10,
+      type: 'tv' as const,
+    }));
+
+    return { movies: moviesList, tv: tvList };
+  } catch (e) {
+    console.error('Realtime sync error:', e);
+    return { movies: [], tv: [] };
   }
 };
 

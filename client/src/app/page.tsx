@@ -227,6 +227,10 @@ export default function Home() {
     };
 
     fetchHomeCatalog();
+
+    // Real-Time Live Auto-Update: Polling every 5 minutes for globally published movies
+    const autoSyncTimer = setInterval(fetchHomeCatalog, 5 * 60 * 1000);
+    return () => clearInterval(autoSyncTimer);
   }, []);
 
   // Automatic Hero Carousel Slider Interval (every 5 seconds)
