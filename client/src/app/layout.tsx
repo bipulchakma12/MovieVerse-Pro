@@ -39,6 +39,16 @@ export const metadata: Metadata = {
     title: "MovieVerse Pro — #1 Platform to Watch Movies Online",
     description: "Stream full movies & TV series in HD for free on MovieVerse Pro.",
   },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: ['/favicon.svg'],
+    apple: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -51,6 +61,10 @@ export default function RootLayout({
       <head>
         {/* Google Search Console Verification — Hardcoded for 100% detection */}
         <meta name="google-site-verification" content="MH1Osikqntad8Po7T5cLX2qqGlwwi7gT3i02s8YRGHc" />
+        {/* Browser Favicon Logo */}
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="alternate icon" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
       </head>
       <body>
         <ThemeProvider>
