@@ -58,35 +58,26 @@ export const fetchTMDBPopularMovies = async (page = 1, genre = 'all', search = '
 
     const res = await fetch(url);
     const data = await res.json();
-
-    if (data.results && Array.isArray(data.results)) {
-      return data.results.map((m: any, index: number) => {
-        const youtubeKey = POPULAR_YOUTUBE_KEYS[index % POPULAR_YOUTUBE_KEYS.length];
-        const youtubeEmbedUrl = `https://www.youtube.com/embed/${youtubeKey}`;
-
-        return {
-          _id: m.id.toString(),
-          tmdbId: m.id.toString(),
-          title: m.title,
-          slug: m.title ? m.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${m.id}` : `movie-${m.id}`,
-          storyline: m.overview || 'No storyline available.',
-          posterUrl: m.poster_path
-            ? `${TMDB_IMAGE_BASE}${m.poster_path}`
-            : 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80',
-          bannerUrl: m.backdrop_path ? `${TMDB_IMAGE_ORIGINAL}${m.backdrop_path}` : `${TMDB_IMAGE_BASE}${m.poster_path}`,
-          trailerUrl: youtubeEmbedUrl,
-          videoUrl: youtubeEmbedUrl,
-          releaseYear: m.release_date ? parseInt(m.release_date.split('-')[0]) : 2024,
-          runtimeMinutes: 120 + (index * 5) % 45,
-          ratingAverage: Math.round((m.vote_average || 7.8) * 10) / 10,
-          ratingCount: m.vote_count || 320,
-          genres: [{ name: genre !== 'all' ? genre : 'Popular', slug: genre }],
-        };
-      });
+    if (data && data.results) {
+      return data.results.map((m: any, index: number) => ({
+        _id: m.id.toString(),
+        tmdbId: m.id.toString(),
+        title: m.title,
+        slug: (m.title || 'movie').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${m.id}`,
+        storyline: m.overview || 'Live TMDB Blockbuster Movie ready to stream in HD.',
+        posterUrl: m.poster_path ? `${TMDB_IMAGE_BASE}${m.poster_path}` : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80',
+        bannerUrl: m.backdrop_path ? `${TMDB_IMAGE_ORIGINAL}${m.backdrop_path}` : `${TMDB_IMAGE_BASE}${m.poster_path}`,
+        trailerUrl: `https://www.youtube.com/embed/${POPULAR_YOUTUBE_KEYS[index % POPULAR_YOUTUBE_KEYS.length]}`,
+        releaseYear: m.release_date ? parseInt(m.release_date.split('-')[0]) : 2024,
+        runtimeMinutes: 120 + ((m.id || index) % 45),
+        ratingAverage: Math.round((m.vote_average || 8.0) * 10) / 10,
+        ratingCount: m.vote_count || 500,
+        genres: [{ name: genre !== 'all' ? genre : 'Popular', slug: genre }],
+      }));
     }
     return [];
   } catch (err) {
-    console.error('TMDB Direct Fallback error:', err);
+    console.error('TMDB Popular Fallback error:', err);
     return [];
   }
 };
@@ -106,17 +97,14 @@ export const fetchTMDBPopularTvShows = async (page = 1, genre = 'all', search = 
 
     const res = await fetch(url);
     const data = await res.json();
-
-    if (data.results && Array.isArray(data.results)) {
+    if (data && data.results) {
       return data.results.map((t: any) => ({
         _id: t.id.toString(),
         tmdbId: t.id.toString(),
         name: t.name,
-        slug: (t.name || 'tv-show').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${t.id}`,
-        storyline: t.overview || 'No storyline available.',
-        posterUrl: t.poster_path
-          ? `${TMDB_IMAGE_BASE}${t.poster_path}`
-          : 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=600&q=80',
+        slug: (t.name || 'tv-series').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${t.id}`,
+        storyline: t.overview || 'Popular Live TMDB TV Series with multi-server streams.',
+        posterUrl: t.poster_path ? `${TMDB_IMAGE_BASE}${t.poster_path}` : 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?auto=format&fit=crop&w=500&q=80',
         bannerUrl: t.backdrop_path ? `${TMDB_IMAGE_ORIGINAL}${t.backdrop_path}` : `${TMDB_IMAGE_BASE}${t.poster_path}`,
         firstAirYear: t.first_air_date ? parseInt(t.first_air_date.split('-')[0]) : 2024,
         numberOfSeasons: 1,
@@ -128,6 +116,45 @@ export const fetchTMDBPopularTvShows = async (page = 1, genre = 'all', search = 
     return [];
   } catch (err) {
     console.error('TMDB TV Popular Fallback error:', err);
+    return [];
+  }
+};
+
+export const searchTMDBMulti = async (query: string, limit = 6) => {
+  if (!query || !query.trim()) return [];
+  try {
+    const res = await fetch(
+      `${TMDB_BASE_URL}/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query.trim())}&page=1`
+    );
+    const data = await res.json();
+    if (data && Array.isArray(data.results)) {
+      return data.results
+        .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
+        .slice(0, limit)
+        .map((item: any) => {
+          const isTv = item.media_type === 'tv';
+          const title = isTv ? item.name : item.title;
+          const year = isTv
+            ? item.first_air_date ? item.first_air_date.split('-')[0] : '2024'
+            : item.release_date ? item.release_date.split('-')[0] : '2024';
+          const slug = (title || 'title').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${item.id}`;
+          
+          return {
+            id: item.id.toString(),
+            title: title || 'Untitled',
+            slug,
+            type: item.media_type as 'movie' | 'tv',
+            year: year || '2024',
+            rating: item.vote_average ? Math.round(item.vote_average * 10) / 10 : 8.0,
+            posterUrl: item.poster_path
+              ? `${TMDB_IMAGE_BASE}${item.poster_path}`
+              : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=300&q=80',
+          };
+        });
+    }
+    return [];
+  } catch (err) {
+    console.error('searchTMDBMulti error:', err);
     return [];
   }
 };

@@ -18,6 +18,7 @@ import {
   ChevronDown,
   History,
   Star,
+  Loader2,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
@@ -28,8 +29,14 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
 
   // Detect window scroll to toggle navbar transparency with high performance passive listener
   useEffect(() => {
@@ -47,9 +54,38 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Live Auto-Suggest Search with Debounce (CineB Style)
+  useEffect(() => {
+    if (!searchQuery || !searchQuery.trim() || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      setIsSearching(false);
+      return;
+    }
+
+    setShowDropdown(true);
+    setIsSearching(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const { searchTMDBMulti } = await import('@/utils/tmdbClient');
+        const results = await searchTMDBMulti(searchQuery, 6);
+        setSearchResults(results);
+      } catch (err) {
+        console.error('Live search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setUserDropdownOpen(false);
       }
@@ -67,6 +103,7 @@ export const Navbar: React.FC = () => {
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    setShowDropdown(false);
     if (searchQuery.trim()) {
       setMobileMenuOpen(false);
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
@@ -86,8 +123,8 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Logo & Compact Search */}
-          <div className="flex items-center gap-6">
+          {/* Left: Brand Logo & Main Nav Links */}
+          <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform duration-200">
                 <Film className="w-6 h-6 text-white" />
@@ -97,19 +134,42 @@ export const Navbar: React.FC = () => {
               </span>
             </Link>
 
-            {/* Desktop Search Bar - CineB Translucent Glass Style */}
-            <form onSubmit={handleSearch} className="hidden md:block w-56 lg:w-72">
-              <div className="relative w-full flex items-center">
+            {/* Nav Links */}
+            <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold">
+              <Link href="/" className="flex items-center gap-1.5 px-2 py-1 text-white hover:text-brand-400 transition-colors">
+                <Home className="w-4 h-4 text-brand-500" /> Home
+              </Link>
+              <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-brand-400 transition-colors">
+                <Clapperboard className="w-4 h-4 text-rose-500" /> Movies
+              </Link>
+              <Link href="/tv" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-sky-400 transition-colors">
+                <Tv className="w-4 h-4 text-sky-400" /> TV Shows
+              </Link>
+              <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-amber-400 transition-colors">
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Top IMDB
+              </Link>
+            </nav>
+          </div>
+
+          {/* Right: CineB Live Search Bar + User Controls */}
+          <div className="flex items-center gap-4">
+            
+            {/* Desktop Search Bar with Live Floating Dropdown (CineB Style) */}
+            <div ref={searchContainerRef} className="relative hidden md:block w-64 lg:w-80">
+              <form onSubmit={handleSearch} className="relative w-full flex items-center">
                 <input
                   type="text"
                   placeholder="Enter keywords..."
                   value={searchQuery}
+                  onFocus={() => {
+                    if (searchQuery.trim().length >= 2) setShowDropdown(true);
+                  }}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-1.5 text-xs rounded-full bg-white/10 hover:bg-white/15 focus:bg-slate-900/90 backdrop-blur-md border border-white/15 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 text-white placeholder:text-slate-400 transition-all shadow-inner"
+                  className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-white/10 hover:bg-white/15 focus:bg-slate-900/95 backdrop-blur-md border border-white/15 focus:border-[#ffd233] focus:outline-none focus:ring-1 focus:ring-[#ffd233] text-white placeholder:text-slate-400 transition-all shadow-inner"
                 />
                 <button
                   type="submit"
-                  className="absolute left-2.5 top-2 text-slate-300 hover:text-white transition-colors"
+                  className="absolute left-3 top-2.5 text-slate-300 hover:text-white transition-colors"
                   title="Search"
                 >
                   <Search className="w-3.5 h-3.5" />
@@ -117,34 +177,84 @@ export const Navbar: React.FC = () => {
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-2 text-slate-400 hover:text-white"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setShowDropdown(false);
+                    }}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
-              </div>
-            </form>
-          </div>
+              </form>
 
-          {/* Nav Links */}
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold">
-            <Link href="/" className="flex items-center gap-1.5 px-2 py-1 text-white hover:text-brand-400 transition-colors">
-              <Home className="w-4 h-4 text-brand-500" /> Home
-            </Link>
-            <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-brand-400 transition-colors">
-              <Clapperboard className="w-4 h-4 text-rose-500" /> Movies
-            </Link>
-            <Link href="/tv" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-sky-400 transition-colors">
-              <Tv className="w-4 h-4 text-sky-400" /> TV Shows
-            </Link>
-            <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-amber-400 transition-colors">
-              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Top IMDB
-            </Link>
-          </nav>
+              {/* CineB Live Auto-Suggest Dropdown Modal */}
+              {showDropdown && searchQuery.trim().length >= 2 && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl bg-[#14151c]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden z-50 animate-fade-in">
+                  {isSearching ? (
+                    <div className="p-4 flex items-center justify-center gap-2 text-xs text-slate-400">
+                      <Loader2 className="w-4 h-4 text-brand-500 animate-spin" />
+                      <span>Searching live movies & series...</span>
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="divide-y divide-white/5 max-h-[380px] overflow-y-auto">
+                      {searchResults.map((item) => (
+                        <Link
+                          key={`${item.type}-${item.id}`}
+                          href={item.type === 'tv' ? `/tv/${item.slug || item.id}` : `/movie/${item.slug || item.id}`}
+                          onClick={() => {
+                            setShowDropdown(false);
+                            setSearchQuery('');
+                          }}
+                          className="flex items-center gap-3.5 p-3 hover:bg-white/10 transition-colors group"
+                        >
+                          <img
+                            src={item.posterUrl}
+                            alt={item.title}
+                            className="w-10 h-14 rounded-lg object-cover bg-slate-800 flex-shrink-0 shadow group-hover:scale-105 transition-transform"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-bold text-white group-hover:text-brand-400 transition-colors truncate">
+                              {item.title}
+                            </h4>
+                            <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5 capitalize">
+                              <span>{item.type === 'tv' ? 'TV Show' : 'Movie'}</span>
+                              <span>•</span>
+                              <span>{item.year}</span>
+                              {item.rating > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-amber-400 font-bold flex items-center gap-0.5">
+                                    <Star className="w-2.5 h-2.5 fill-amber-400" /> {item.rating}
+                                  </span>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
+                      {/* View all button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowDropdown(false);
+                          router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                        }}
+                        className="w-full py-2.5 px-4 bg-slate-900/80 hover:bg-brand-600/30 text-brand-400 hover:text-brand-300 font-bold text-xs text-center transition-colors border-t border-white/5 block"
+                      >
+                        View all results for "{searchQuery}" →
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-5 text-center text-xs text-slate-400">
+                      No results found. Press Enter to view full search catalog.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <ThemeToggle />
 
             {/* User State Component */}
@@ -159,7 +269,7 @@ export const Navbar: React.FC = () => {
                     alt={user.name}
                     className="w-8 h-8 rounded-full object-cover ring-2 ring-brand-500/50"
                   />
-                  <span className="hidden sm:inline-block text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-[100px] truncate">
+                  <span className="hidden sm:inline-block text-xs font-semibold text-white max-w-[100px] truncate">
                     {user.name}
                   </span>
                   <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:inline-block" />
@@ -167,10 +277,10 @@ export const Navbar: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-2xl py-2 z-50 divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#14151c] border border-white/10 shadow-2xl py-2 z-50 divide-y divide-slate-800">
                     <div className="px-4 py-3">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                      <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                      <p className="text-xs text-slate-400 truncate">{user.email}</p>
                       {isAdmin && (
                         <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/10 text-brand-500">
                           <ShieldCheck className="w-3 h-3" /> Admin Account
@@ -178,11 +288,11 @@ export const Navbar: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="py-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                    <div className="py-1 text-sm font-medium text-slate-200">
                       <Link
                         href="/profile"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 transition-colors"
                       >
                         <User className="w-4 h-4 text-brand-500" />
                         My Profile
@@ -190,7 +300,7 @@ export const Navbar: React.FC = () => {
                       <Link
                         href="/favorites"
                         onClick={() => setUserDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 transition-colors"
                       >
                         <Bookmark className="w-4 h-4 text-amber-500" />
                         Favorites & Watchlist
@@ -199,7 +309,7 @@ export const Navbar: React.FC = () => {
                         <Link
                           href="/admin"
                           onClick={() => setUserDropdownOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800/60 text-brand-600 dark:text-brand-400 transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 text-brand-400 transition-colors"
                         >
                           <ShieldCheck className="w-4 h-4" />
                           Admin Dashboard
@@ -222,89 +332,121 @@ export const Navbar: React.FC = () => {
             ) : (
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-all shadow-md shadow-brand-600/20 active:scale-95"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md shadow-brand-600/30 transition-all hover:scale-105 active:scale-95"
               >
-                <User className="w-4 h-4" />
-                Sign In
+                <User className="w-3.5 h-3.5" /> Sign In
               </Link>
             )}
 
-            {/* Mobile Quick Search Button */}
-            <Link
-              href="/search"
-              className="md:hidden p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-card rounded-lg transition-colors"
-              title="Search"
-            >
-              <Search className="w-5 h-5 text-slate-500" />
-            </Link>
+            {/* Mobile Hamburger Button */}
+            <div className="flex items-center gap-2 lg:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
 
-            {/* Mobile menu trigger */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-dark-card rounded-lg transition-colors"
-              aria-label="Toggle Navigation Menu"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
-
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200 dark:border-dark-border px-4 pt-3 pb-6 space-y-4 bg-white dark:bg-dark-bg transition-colors">
-          <form onSubmit={handleSearch} className="relative w-full flex items-center">
-            <input
-              type="text"
-              placeholder="Search movies & TV shows..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-24 py-2.5 text-sm rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400"
-            />
-            <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-            <button
-              type="submit"
-              className="absolute right-1.5 px-4 py-1.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs transition-all shadow active:scale-95"
-            >
-              Search
-            </button>
-          </form>
+        <div className="lg:hidden border-t border-white/10 px-4 pt-3 pb-6 space-y-4 bg-slate-950/95 backdrop-blur-xl transition-colors">
+          
+          {/* Mobile Search Form */}
+          <div ref={mobileSearchRef} className="relative">
+            <form onSubmit={handleSearch} className="relative w-full flex items-center">
+              <input
+                type="text"
+                placeholder="Search movies & TV series..."
+                value={searchQuery}
+                onFocus={() => {
+                  if (searchQuery.trim().length >= 2) setShowDropdown(true);
+                }}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-white/10 text-white placeholder-slate-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              />
+              <button type="submit" className="absolute left-3 top-2.5 text-slate-400">
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            </form>
 
-          <div className="flex flex-col space-y-3 font-semibold text-slate-700 dark:text-slate-200">
-            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
-              <Home className="w-5 h-5 text-brand-500" /> Home
-            </Link>
-            <Link href="/trending" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
-              <Clapperboard className="w-5 h-5 text-rose-500" /> Movies
-            </Link>
-            <Link href="/tv" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
-              <Tv className="w-5 h-5 text-sky-500" /> TV Shows
-            </Link>
-            <Link href="/trending" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-amber-500">
-              <Star className="w-5 h-5 text-amber-400 fill-amber-400" /> Top IMDB
-            </Link>
-
-            {isAuthenticated && user ? (
-              <>
-                <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
-                  <User className="w-5 h-5 text-brand-500" /> My Profile ({user.name})
-                </Link>
-                {isAdmin && (
-                  <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 text-brand-500 font-bold">
-                    <ShieldCheck className="w-5 h-5" /> Admin Dashboard
+            {/* Mobile Live Dropdown */}
+            {showDropdown && searchQuery.trim().length >= 2 && (
+              <div className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 shadow-2xl overflow-hidden divide-y divide-white/5 max-h-72 overflow-y-auto">
+                {searchResults.map((item) => (
+                  <Link
+                    key={`mob-${item.type}-${item.id}`}
+                    href={item.type === 'tv' ? `/tv/${item.slug || item.id}` : `/movie/${item.slug || item.id}`}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      setMobileMenuOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className="flex items-center gap-3 p-2.5 hover:bg-white/10 transition-colors"
+                  >
+                    <img
+                      src={item.posterUrl}
+                      alt={item.title}
+                      className="w-9 h-12 rounded object-cover flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">{item.title}</p>
+                      <p className="text-[10px] text-slate-400 capitalize">{item.type === 'tv' ? 'TV Show' : 'Movie'} • {item.year}</p>
+                    </div>
                   </Link>
-                )}
-                <button onClick={handleLogout} className="flex items-center gap-2 p-2 text-rose-500 font-bold text-left">
-                  <LogOut className="w-5 h-5" /> Sign Out
-                </button>
-              </>
-            ) : (
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 p-2 rounded-lg bg-brand-600 text-white font-semibold shadow-md">
-                <User className="w-5 h-5" /> Sign In
-              </Link>
+                ))}
+              </div>
             )}
           </div>
+
+          <nav className="flex flex-col space-y-2 text-sm font-semibold text-slate-200">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <Home className="w-4 h-4 text-brand-500" /> Home
+            </Link>
+            <Link
+              href="/trending"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <Clapperboard className="w-4 h-4 text-rose-500" /> Movies Catalog
+            </Link>
+            <Link
+              href="/tv"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <Tv className="w-4 h-4 text-sky-500" /> TV Shows & Series
+            </Link>
+            <Link
+              href="/trending"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Top IMDB
+            </Link>
+            <Link
+              href="/favorites"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <Bookmark className="w-4 h-4 text-amber-500" /> My Favorites & Watchlist
+            </Link>
+            <Link
+              href="/history"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <History className="w-4 h-4 text-emerald-500" /> Watch History
+            </Link>
+          </nav>
         </div>
       )}
     </header>
