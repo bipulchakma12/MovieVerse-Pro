@@ -265,9 +265,9 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
               </span>
             </div>
 
-            {/* CineB Season & Episode Dropdowns */}
-            <div className="flex flex-wrap items-center gap-4 pt-1">
-              <div>
+            {/* CineB Season & Episode Dropdowns (Mobile Responsive Grid) */}
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-4 pt-1 max-w-md">
+              <div className="w-full">
                 <label className="text-[11px] font-bold text-slate-400 block mb-1.5">Season</label>
                 <div className="relative">
                   <select
@@ -276,11 +276,11 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
                       setSelectedSeason(Number(e.target.value));
                       setSelectedEpisode(1);
                     }}
-                    className="appearance-none bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs sm:text-sm rounded-xl pl-4 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffd233] cursor-pointer shadow-lg"
+                    className="w-full appearance-none bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs sm:text-sm rounded-xl pl-4 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffd233] cursor-pointer shadow-lg"
                   >
-                    {Array.from({ length: Math.max(totalSeasons, 1) }, (_, i) => (
-                      <option key={i + 1} value={i + 1} className="bg-slate-900 text-white">
-                        Season {i + 1}
+                    {Array.from({ length: totalSeasons }, (_, i) => i + 1).map((s) => (
+                      <option key={s} value={s} className="bg-slate-900 text-white">
+                        Season {s}
                       </option>
                     ))}
                   </select>
@@ -288,17 +288,17 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
                 </div>
               </div>
 
-              <div>
+              <div className="w-full">
                 <label className="text-[11px] font-bold text-slate-400 block mb-1.5">Episode</label>
                 <div className="relative">
                   <select
                     value={selectedEpisode}
                     onChange={(e) => setSelectedEpisode(Number(e.target.value))}
-                    className="appearance-none bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs sm:text-sm rounded-xl pl-4 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffd233] cursor-pointer shadow-lg"
+                    className="w-full appearance-none bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs sm:text-sm rounded-xl pl-4 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffd233] cursor-pointer shadow-lg"
                   >
-                    {Array.from({ length: totalEpisodes }, (_, i) => (
-                      <option key={i + 1} value={i + 1} className="bg-slate-900 text-white">
-                        Episode {i + 1}
+                    {Array.from({ length: totalEpisodes }, (_, i) => i + 1).map((ep) => (
+                      <option key={ep} value={ep} className="bg-slate-900 text-white">
+                        Episode {ep}
                       </option>
                     ))}
                   </select>

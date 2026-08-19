@@ -116,6 +116,30 @@ export default function Home() {
   const [isPaused, setIsPaused] = useState(false);
   const slideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Mobile Touch Swipe Gesture Detection
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const diff = touchStartX.current - touchEndX.current;
+    if (diff > 45) {
+      nextSlide(); // Swipe Left -> Next Slide
+    } else if (diff < -45) {
+      prevSlide(); // Swipe Right -> Prev Slide
+    }
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
+
   useEffect(() => {
     // Fast parallel background fetch
     const fetchHomeCatalog = async () => {
@@ -266,14 +290,17 @@ export default function Home() {
       : allMedia.filter((item) => item.type === 'tv');
 
   return (
-    <div className="space-y-12 pb-20 animate-fade-in">
+    <div className="space-y-8 sm:space-y-12 pb-20 animate-fade-in">
       
-      {/* CineB-Style Cinematic Hero Slider */}
+      {/* CineB-Style Cinematic Hero Slider with Touch-Swipe Support */}
       {currentHero && (
         <section
-          className="relative w-full h-[520px] sm:h-[600px] lg:h-[680px] overflow-hidden bg-slate-950 select-none group"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
+          className="relative w-full h-[480px] sm:h-[580px] lg:h-[680px] overflow-hidden bg-slate-950 select-none group"
         >
           {/* Background Backdrop Image with Smooth Crossfade */}
           <div className="absolute inset-0 z-0 overflow-hidden">
@@ -285,28 +312,28 @@ export default function Home() {
               loading="eager"
             />
             {/* CineB Crystal-Clear Full-Light Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent max-w-xl sm:max-w-2xl" />
-            <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#0b0c10] via-[#0b0c10]/30 to-transparent" />
-            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent max-w-xl sm:max-w-2xl" />
+            <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#0b0c10] via-[#0b0c10]/40 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/60 to-transparent" />
           </div>
 
           {/* Left Hero Content Info */}
-          <div className="relative z-10 max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col justify-center pt-20 sm:pt-24 pb-12 sm:pb-16 space-y-4 sm:space-y-6">
+          <div className="relative z-10 max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col justify-center pt-20 sm:pt-24 pb-12 sm:pb-16 space-y-3 sm:space-y-6">
             
             {/* Big Bold Movie Title */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight max-w-3xl drop-shadow-lg tracking-tight">
+            <h1 className="text-2xl sm:text-4xl lg:text-6xl font-black text-white leading-tight max-w-3xl drop-shadow-lg tracking-tight line-clamp-2">
               {currentHero.title}
             </h1>
 
             {/* Meta Tags Row: HD Badge | Duration | IMDB Rating */}
-            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
-              <span className="px-2 py-0.5 rounded bg-[#00e054] text-black font-black text-xs tracking-wider shadow">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-sm">
+              <span className="px-2 py-0.5 rounded bg-[#00e054] text-black font-black text-[10px] sm:text-xs tracking-wider shadow">
                 HD
               </span>
               <span className="text-slate-300 font-medium">
                 Duration: <strong className="text-white">{currentHero.runtimeOrSeasons || '145min'}</strong>
               </span>
-              <span className="flex items-center gap-1.5 font-semibold">
+              <span className="flex items-center gap-1 font-semibold">
                 <span className="text-[#f5c518] font-black">IMDB:</span>
                 <span className="text-white font-bold">{currentHero.ratingAverage || 7.9}</span>
               </span>
@@ -317,22 +344,22 @@ export default function Home() {
 
             {/* Storyline / Overview snippet */}
             {currentHero.storyline && (
-              <p className="text-xs sm:text-sm text-slate-300/90 line-clamp-2 sm:line-clamp-3 max-w-2xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-300/90 line-clamp-2 sm:line-clamp-3 max-w-2xl leading-relaxed hidden sm:block">
                 {currentHero.storyline}
               </p>
             )}
 
             {/* Action Buttons: Watch Now & Details */}
-            <div className="pt-2 flex flex-wrap items-center gap-3.5">
+            <div className="pt-1 sm:pt-2 flex items-center gap-3">
               <Link
                 href={currentHero.type === 'tv' ? `/tv/${currentHero.slug || currentHero._id}` : `/movie/${currentHero.slug || currentHero._id}`}
-                className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-[#00e054] hover:bg-[#00c74a] text-black font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-all shadow-lg shadow-[#00e054]/30 hover:scale-105 active:scale-95"
+                className="px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full bg-[#00e054] hover:bg-[#00c74a] text-black font-extrabold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg shadow-[#00e054]/30 hover:scale-105 active:scale-95"
               >
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /> Watch now
+                <Play className="w-4 h-4 fill-current" /> Watch now
               </Link>
               <Link
                 href={currentHero.type === 'tv' ? `/tv/${currentHero.slug || currentHero._id}` : `/movie/${currentHero.slug || currentHero._id}`}
-                className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm backdrop-blur-md border border-white/10 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                className="px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm backdrop-blur-md border border-white/10 transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
               >
                 <Info className="w-4 h-4" /> Details
               </Link>
@@ -356,13 +383,13 @@ export default function Home() {
           </button>
 
           {/* Bottom Right Pagination Dots (CineB Style) */}
-          <div className="absolute bottom-6 right-4 sm:right-8 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+          <div className="absolute bottom-5 right-4 sm:right-8 z-20 flex items-center gap-1.5 sm:gap-2 bg-black/50 backdrop-blur-md px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-white/10">
             {heroSlides.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
                 aria-label={`Go to slide ${idx + 1}`}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-all duration-300 ${
                   idx === currentSlide
                     ? 'bg-white scale-125 ring-2 ring-[#00e054]'
                     : 'bg-white/40 hover:bg-white/80'
@@ -374,45 +401,45 @@ export default function Home() {
       )}
 
       {/* Main Combined Feed: Featured Movies & TV Shows */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
         
         {/* Section Header with Category Tabs */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-border pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-dark-border pb-3">
           <div className="flex items-center gap-2">
-            <Flame className="w-6 h-6 text-brand-500 fill-brand-500 animate-pulse" />
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-brand-500 fill-brand-500 animate-pulse" />
+            <h2 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">
               Featured Movies & TV Shows
             </h2>
           </div>
 
           {/* Quick Filter Tabs: All / Movies / TV Shows */}
-          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-card p-1 rounded-xl border border-slate-200 dark:border-dark-border shadow-inner">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-card p-1 rounded-xl border border-slate-200 dark:border-dark-border shadow-inner overflow-x-auto scrollbar-none">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 ${
                 activeTab === 'all'
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 scale-105'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               🔥 All Titles
             </button>
             <button
               onClick={() => setActiveTab('movie')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 ${
                 activeTab === 'movie'
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 scale-105'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               🍿 Movies
             </button>
             <button
               onClick={() => setActiveTab('tv')}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 ${
                 activeTab === 'tv'
-                  ? 'bg-sky-600 text-white shadow-md shadow-sky-600/30 scale-105'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
+                  ? 'bg-sky-600 text-white shadow-md shadow-sky-600/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               📺 TV Series
@@ -420,8 +447,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Media Grid: Displays Both Movies & TV Series with Type Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        {/* Media Grid: 2 Columns on Mobile, 6 Columns on Desktop */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-6">
           {displayedMedia.map((item) => {
             const targetUrl = item.type === 'movie' ? `/movie/${item.slug || item._id}` : `/tv/${item.slug || item._id}`;
             const isTv = item.type === 'tv';
@@ -430,47 +457,47 @@ export default function Home() {
               <Link
                 key={`${item.type}-${item._id}`}
                 href={targetUrl}
-                className="media-card group flex flex-col space-y-2.5 rounded-2xl overflow-hidden bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-2 shadow-md"
+                className="media-card group flex flex-col space-y-2 rounded-xl sm:rounded-2xl overflow-hidden bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-1.5 sm:p-2 shadow-md"
               >
-                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-900">
+                <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-slate-900">
                   <img
                     src={item.posterUrl}
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
                     loading="lazy"
                   />
 
-                  {/* Type Badge: Rose for Movie, Sky Blue for TV Series */}
+                  {/* Type Badge */}
                   <div
-                    className={`absolute top-2 left-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-md transition-transform duration-300 group-hover:scale-105 ${
+                    className={`absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold text-white uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-md ${
                       isTv ? 'bg-sky-600/90' : 'bg-brand-600/90'
                     }`}
                   >
                     {isTv ? <Tv className="w-2.5 h-2.5" /> : <Film className="w-2.5 h-2.5" />}
-                    {isTv ? 'TV Series' : 'Movie'}
+                    {isTv ? 'TV' : 'Movie'}
                   </div>
 
                   {/* Rating Badge */}
-                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-bold text-amber-400 flex items-center gap-1 shadow">
-                    <Star className="w-3 h-3 fill-amber-400" /> {item.ratingAverage || 8.0}
+                  <div className="absolute top-1.5 right-1.5 px-1.5 sm:px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[9px] sm:text-[10px] font-bold text-amber-400 flex items-center gap-0.5 sm:gap-1 shadow">
+                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400" /> {item.ratingAverage || 8.0}
                   </div>
 
                   {/* Hover Play Icon Overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-600/50 transform scale-50 group-hover:scale-100 transition-transform duration-300 ease-out">
-                      <Play className="w-5 h-5 fill-current ml-0.5" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-600/50 transform scale-75 group-hover:scale-100 transition-transform duration-200">
+                      <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
                     </div>
                   </div>
                 </div>
 
                 <div className="px-1">
-                  <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1 group-hover:text-brand-500 transition-colors">
+                  <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover:text-brand-500 transition-colors">
                     {item.title}
                   </h3>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                     <span>{item.releaseYear || 2024}</span>
                     <span>•</span>
-                    <span>{item.runtimeOrSeasons}</span>
+                    <span className="truncate">{item.runtimeOrSeasons}</span>
                   </div>
                 </div>
               </Link>
@@ -480,34 +507,34 @@ export default function Home() {
       </section>
 
       {/* Feature Highlights Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           
-          <div className="media-card p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm hover:border-amber-500/50">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-              <Star className="w-6 h-6" />
+          <div className="media-card p-5 sm:p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3">
+              <Star className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Curated Ratings & Reviews</h3>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">Curated Ratings & Reviews</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400">
               Engage with film critics and enthusiasts. Share star ratings, replies, and helpful feedback.
             </p>
           </div>
 
-          <div className="media-card p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm hover:border-brand-500/50">
-            <div className="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-              <Flame className="w-6 h-6" />
+          <div className="media-card p-5 sm:p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-3">
+              <Flame className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">TMDB Live Sync</h3>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">TMDB Live Sync</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400">
               Stream live popular blockbusters and TV series fetched directly from TMDB API with real posters.
             </p>
           </div>
 
-          <div className="media-card p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm hover:border-sky-500/50">
-            <div className="w-12 h-12 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-              <MonitorPlay className="w-6 h-6" />
+          <div className="media-card p-5 sm:p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center mb-3">
+              <MonitorPlay className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Multi-Server HD Streaming</h3>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">Multi-Server HD Streaming</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400">
               Stream movies & TV series with fast server switching, subtitles, resume memory, and fullscreen support.
             </p>

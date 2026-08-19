@@ -439,50 +439,83 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          <nav className="flex flex-col space-y-2 text-sm font-semibold text-slate-200">
+          <nav className="flex flex-col space-y-1.5 text-sm font-semibold text-slate-200">
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
             >
               <Home className="w-4 h-4 text-brand-500" /> Home
             </Link>
             <Link
               href="/trending"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
             >
               <Clapperboard className="w-4 h-4 text-rose-500" /> Movies Catalog
             </Link>
             <Link
               href="/tv"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
             >
               <Tv className="w-4 h-4 text-sky-500" /> TV Shows & Series
             </Link>
             <Link
               href="/trending"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
             >
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Top IMDB
             </Link>
             <Link
               href="/favorites"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
             >
               <Bookmark className="w-4 h-4 text-amber-500" /> My Favorites & Watchlist
             </Link>
             <Link
               href="/history"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
             >
               <History className="w-4 h-4 text-emerald-500" /> Watch History
             </Link>
           </nav>
+
+          {/* Mobile User Actions */}
+          <div className="pt-2 border-t border-white/10">
+            {isAuthenticated && user ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 px-3 py-2 bg-white/5 rounded-xl">
+                  <img
+                    src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full object-cover ring-1 ring-brand-500"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{user.name}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-rose-400 bg-rose-500/10 rounded-xl hover:bg-rose-500/20 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md transition-all active:scale-95"
+              >
+                <User className="w-4 h-4" /> Sign In to Account
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </header>
