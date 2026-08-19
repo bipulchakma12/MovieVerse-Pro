@@ -511,38 +511,65 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Feature Highlights Grid */}
+      {/* Feature Highlights Grid with Left-to-Right Sliding Background Animation */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           
-          <div className="media-card p-5 sm:p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3">
-              <Star className="w-5 h-5 sm:w-6 sm:h-6" />
+          {/* Card 1: Curated Ratings & Reviews */}
+          <div className="relative overflow-hidden group p-6 sm:p-7 rounded-3xl bg-[#14151c] border border-white/10 shadow-lg hover:border-amber-500/40 hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 cursor-pointer select-none">
+            {/* Sliding Background from Left to Right */}
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/25 via-amber-500/10 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out pointer-events-none" />
+            <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-amber-500 via-amber-400 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-amber-500 group-hover:text-black transition-all duration-300 shadow-md">
+                <Star className="w-6 h-6" />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 group-hover:text-amber-300 transition-colors">
+                Curated Ratings & Reviews
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-200 transition-colors">
+                Engage with film critics and enthusiasts. Share star ratings, replies, and helpful feedback.
+              </p>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">Curated Ratings & Reviews</h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Engage with film critics and enthusiasts. Share star ratings, replies, and helpful feedback.
-            </p>
           </div>
 
-          <div className="media-card p-5 sm:p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-3">
-              <Flame className="w-5 h-5 sm:w-6 sm:h-6" />
+          {/* Card 2: TMDB Live Sync */}
+          <div className="relative overflow-hidden group p-6 sm:p-7 rounded-3xl bg-[#14151c] border border-white/10 shadow-lg hover:border-brand-500/40 hover:shadow-2xl hover:shadow-brand-500/10 transition-all duration-500 cursor-pointer select-none">
+            {/* Sliding Background from Left to Right */}
+            <div className="absolute inset-0 bg-gradient-to-r from-brand-600/30 via-rose-600/15 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out pointer-events-none" />
+            <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand-500 via-rose-500 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-brand-600 group-hover:text-white transition-all duration-300 shadow-md">
+                <Flame className="w-6 h-6" />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 group-hover:text-brand-300 transition-colors">
+                TMDB Live Sync
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-200 transition-colors">
+                Stream live popular blockbusters and TV series fetched directly from TMDB API with real posters.
+              </p>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">TMDB Live Sync</h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Stream live popular blockbusters and TV series fetched directly from TMDB API with real posters.
-            </p>
           </div>
 
-          <div className="media-card p-5 sm:p-6 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center mb-3">
-              <MonitorPlay className="w-5 h-5 sm:w-6 sm:h-6" />
+          {/* Card 3: Multi-Server HD Streaming */}
+          <div className="relative overflow-hidden group p-6 sm:p-7 rounded-3xl bg-[#14151c] border border-white/10 shadow-lg hover:border-sky-500/40 hover:shadow-2xl hover:shadow-sky-500/10 transition-all duration-500 cursor-pointer select-none">
+            {/* Sliding Background from Left to Right */}
+            <div className="absolute inset-0 bg-gradient-to-r from-sky-500/25 via-sky-500/10 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out pointer-events-none" />
+            <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-sky-500 via-sky-400 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 group-hover:bg-sky-500 group-hover:text-black transition-all duration-300 shadow-md">
+                <MonitorPlay className="w-6 h-6" />
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-white mb-1.5 group-hover:text-sky-300 transition-colors">
+                Multi-Server HD Streaming
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-200 transition-colors">
+                Stream movies & TV series with fast server switching, subtitles, resume memory, and fullscreen support.
+              </p>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">Multi-Server HD Streaming</h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Stream movies & TV series with fast server switching, subtitles, resume memory, and fullscreen support.
-            </p>
           </div>
 
         </div>
