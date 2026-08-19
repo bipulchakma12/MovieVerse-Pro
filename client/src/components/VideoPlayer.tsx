@@ -219,30 +219,20 @@ export default function VideoPlayer({
     return (
       <div className="space-y-3 select-none">
         
-        {/* Ad-Shield Header Status Bar */}
+        {/* Player Status & Streaming Tip Bar */}
         <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
           <div className="flex items-center gap-2">
-            <div className={`p-1 rounded-lg ${adShieldActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+            <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <span className="font-semibold text-white">
-              {adShieldActive ? '🛡️ Ad-Shield Protection: Active' : 'Ad-Shield: Paused'}
-            </span>
-            <span className="text-[11px] text-slate-400 hidden sm:inline-block">
-              {adShieldActive ? '(Blocks popup tabs & redirects without stopping movie)' : '(Allows popups)'}
+              🎬 HD Streaming Player: Active
             </span>
           </div>
 
-          <button
-            onClick={() => setAdShieldActive(!adShieldActive)}
-            className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
-              adShieldActive
-                ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/30'
-                : 'bg-white/10 text-slate-300 hover:bg-white/20'
-            }`}
-          >
-            {adShieldActive ? 'Protected ✓' : 'Enable Ad-Shield'}
-          </button>
+          <span className="text-[11px] text-slate-400">
+            💡 টিপস: যেকোনো সার্ভারে সমস্যা হলে ওপরে <strong className="text-brand-400">Server 1</strong> বা <strong className="text-brand-400">Server 2</strong> পরিবর্তন করুন।
+          </span>
         </div>
 
         {/* Video Player Embed Frame */}
@@ -252,7 +242,6 @@ export default function VideoPlayer({
         >
           <iframe
             ref={iframeRef}
-            key={`${embedUrl}-${adShieldActive ? 'shield-on' : 'shield-off'}`}
             src={embedUrl}
             title={title || 'MovieVerse Stream Player'}
             className="w-full h-full border-0"
@@ -263,11 +252,6 @@ export default function VideoPlayer({
             // @ts-ignore
             mozallowfullscreen="true"
             referrerPolicy="no-referrer"
-            sandbox={
-              adShieldActive
-                ? "allow-scripts allow-same-origin allow-forms allow-presentation"
-                : "allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
-            }
           />
 
           {/* Quick Floating Fullscreen & Landscape button on mobile */}
