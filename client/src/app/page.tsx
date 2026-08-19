@@ -20,28 +20,140 @@ interface MediaItem {
   storyline?: string;
 }
 
+// Instant Pre-rendered Blockbuster Heroes (0ms instant display on refresh)
+const INITIAL_HERO_BLOCKBUSTERS: MediaItem[] = [
+  {
+    _id: '634649',
+    tmdbId: '634649',
+    title: 'Spider-Man: No Way Home',
+    slug: 'spider-man-no-way-home-634649',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/original/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg',
+    releaseYear: 2021,
+    runtimeMinutes: 148,
+    runtimeOrSeasons: '148min',
+    ratingAverage: 8.2,
+    type: 'movie',
+    storyline: 'Peter Parker seeks the help of Doctor Strange to make people forget his identity as Spider-Man, leading to dangerous multiverse collisions.',
+  },
+  {
+    _id: '533535',
+    tmdbId: '533535',
+    title: 'Deadpool & Wolverine',
+    slug: 'deadpool-and-wolverine-533535',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/original/yDHYTjA3R0jFYba16jBB1jv82E9.jpg',
+    releaseYear: 2024,
+    runtimeMinutes: 128,
+    runtimeOrSeasons: '128min',
+    ratingAverage: 8.0,
+    type: 'movie',
+    storyline: 'A listless Wade Wilson toils in civilian life until a threat to his universe forces him to team up with an even more reluctant Wolverine.',
+  },
+  {
+    _id: '693134',
+    tmdbId: '693134',
+    title: 'Dune: Part Two',
+    slug: 'dune-part-two-693134',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s520b4q.jpg',
+    releaseYear: 2024,
+    runtimeMinutes: 166,
+    runtimeOrSeasons: '166min',
+    ratingAverage: 8.6,
+    type: 'movie',
+    storyline: 'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators who destroyed his family.',
+  },
+  {
+    _id: '872585',
+    tmdbId: '872585',
+    title: 'Oppenheimer',
+    slug: 'oppenheimer-872585',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/original/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg',
+    releaseYear: 2023,
+    runtimeMinutes: 180,
+    runtimeOrSeasons: '180min',
+    ratingAverage: 8.9,
+    type: 'movie',
+    storyline: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb during World War II.',
+  },
+  {
+    _id: '1399',
+    tmdbId: '1399',
+    title: 'Game of Thrones',
+    slug: 'game-of-thrones-1399',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/7WUHnWGx5OO145IRxPDUkQSh4C7.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/original/suopoADq0k8YZr4dQXcU6p0k3xH.jpg',
+    releaseYear: 2011,
+    runtimeOrSeasons: '8 Seasons',
+    ratingAverage: 8.4,
+    type: 'tv',
+    storyline: 'Nine noble families fight for control over the lands of Westeros, while an ancient enemy returns after being dormant for millennia.',
+  },
+  {
+    _id: '76600',
+    tmdbId: '76600',
+    title: 'Avatar: The Way of Water',
+    slug: 'avatar-the-way-of-water-76600',
+    posterUrl: 'https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/original/ovM06PdF36CfeK0upcN0G986VWn.jpg',
+    releaseYear: 2022,
+    runtimeMinutes: 192,
+    runtimeOrSeasons: '192min',
+    ratingAverage: 7.8,
+    type: 'movie',
+    storyline: 'Jake Sully lives with his newfound family on the extrasolar moon Pandora. Once a familiar threat returns, Jake must work with the army of the Na\'vi.',
+  }
+];
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'all' | 'movie' | 'tv'>('all');
-  const [allMedia, setAllMedia] = useState<MediaItem[]>([]);
-  const [heroSlides, setHeroSlides] = useState<MediaItem[]>([]);
+  const [allMedia, setAllMedia] = useState<MediaItem[]>(INITIAL_HERO_BLOCKBUSTERS);
+  const [heroSlides, setHeroSlides] = useState<MediaItem[]>(INITIAL_HERO_BLOCKBUSTERS);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const slideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Fast parallel background fetch
     const fetchHomeCatalog = async () => {
       try {
-        setLoading(true);
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-        // 1. Fetch Movies
+        // Parallel TMDB & API fetch with 2s timeout
+        const fetchMoviesPromise = fetch(`${apiUrl}/movies?limit=24`, { signal: AbortSignal.timeout(2000) })
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null);
+
+        const fetchTvPromise = fetch(`${apiUrl}/tv?limit=24`, { signal: AbortSignal.timeout(2000) })
+          .then((res) => (res.ok ? res.json() : null))
+          .catch(() => null);
+
+        const [movieData, tvData] = await Promise.all([fetchMoviesPromise, fetchTvPromise]);
+
         let moviesList: MediaItem[] = [];
-        const movieRes = await fetch(`${apiUrl}/movies?limit=24`).catch(() => null);
-        if (movieRes && movieRes.ok) {
-          const data = await movieRes.json();
-          if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-            moviesList = data.data.map((m: any) => ({
+        if (movieData && movieData.success && Array.isArray(movieData.data) && movieData.data.length > 0) {
+          moviesList = movieData.data.map((m: any) => ({
+            _id: m._id,
+            tmdbId: m.tmdbId,
+            title: m.title,
+            slug: m.slug,
+            posterUrl: m.posterUrl,
+            bannerUrl: m.bannerUrl || m.posterUrl,
+            releaseYear: m.releaseYear || 2024,
+            ratingAverage: m.ratingAverage || 7.9,
+            type: 'movie' as const,
+            runtimeOrSeasons: `${m.runtimeMinutes || 135}min`,
+            genres: m.genres,
+            storyline: m.storyline,
+          }));
+        } else {
+          const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
+          const fallbackMovies = await fetchTMDBPopularMovies();
+          if (fallbackMovies && fallbackMovies.length > 0) {
+            moviesList = fallbackMovies.slice(0, 24).map((m: any) => ({
               _id: m._id,
               tmdbId: m.tmdbId,
               title: m.title,
@@ -57,32 +169,28 @@ export default function Home() {
             }));
           }
         }
-        if (moviesList.length === 0) {
-          const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
-          const fallbackMovies = await fetchTMDBPopularMovies();
-          moviesList = fallbackMovies.slice(0, 24).map((m: any) => ({
-            _id: m._id,
-            tmdbId: m.tmdbId,
-            title: m.title,
-            slug: m.slug,
-            posterUrl: m.posterUrl,
-            bannerUrl: m.bannerUrl || m.posterUrl,
-            releaseYear: m.releaseYear || 2024,
-            ratingAverage: m.ratingAverage || 7.9,
-            type: 'movie' as const,
-            runtimeOrSeasons: `${m.runtimeMinutes || 135}min`,
-            genres: m.genres,
-            storyline: m.storyline,
-          }));
-        }
 
-        // 2. Fetch TV Shows
         let tvList: MediaItem[] = [];
-        const tvRes = await fetch(`${apiUrl}/tv?limit=24`).catch(() => null);
-        if (tvRes && tvRes.ok) {
-          const data = await tvRes.json();
-          if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-            tvList = data.data.map((t: any) => ({
+        if (tvData && tvData.success && Array.isArray(tvData.data) && tvData.data.length > 0) {
+          tvList = tvData.data.map((t: any) => ({
+            _id: t._id,
+            tmdbId: t.tmdbId,
+            title: t.name,
+            slug: t.slug,
+            posterUrl: t.posterUrl,
+            bannerUrl: t.bannerUrl || t.posterUrl,
+            releaseYear: t.firstAirYear || 2024,
+            ratingAverage: t.ratingAverage || 8.1,
+            type: 'tv' as const,
+            runtimeOrSeasons: `${t.numberOfSeasons || 1} Seasons`,
+            genres: t.genres,
+            storyline: t.storyline,
+          }));
+        } else {
+          const { fetchTMDBPopularTvShows } = await import('@/utils/tmdbClient');
+          const fallbackTv = await fetchTMDBPopularTvShows();
+          if (fallbackTv && fallbackTv.length > 0) {
+            tvList = fallbackTv.slice(0, 24).map((t: any) => ({
               _id: t._id,
               tmdbId: t.tmdbId,
               title: t.name,
@@ -98,30 +206,11 @@ export default function Home() {
             }));
           }
         }
-        if (tvList.length === 0) {
-          const { fetchTMDBPopularTvShows } = await import('@/utils/tmdbClient');
-          const fallbackTv = await fetchTMDBPopularTvShows();
-          tvList = fallbackTv.slice(0, 24).map((t: any) => ({
-            _id: t._id,
-            tmdbId: t.tmdbId,
-            title: t.name,
-            slug: t.slug,
-            posterUrl: t.posterUrl,
-            bannerUrl: t.bannerUrl || t.posterUrl,
-            releaseYear: t.firstAirYear || 2024,
-            ratingAverage: t.ratingAverage || 8.1,
-            type: 'tv' as const,
-            runtimeOrSeasons: `${t.numberOfSeasons || 1} Seasons`,
-            genres: t.genres,
-            storyline: t.storyline,
-          }));
+
+        if (moviesList.length > 0) {
+          setHeroSlides(moviesList.slice(0, 6));
         }
 
-        // Top 6 Blockbusters for Hero Slider Carousel
-        const topHeroItems = moviesList.slice(0, 6);
-        setHeroSlides(topHeroItems);
-
-        // Interleave / Combine both Movies and TV Shows alternately for "All" feed
         const combined: MediaItem[] = [];
         const maxLen = Math.max(moviesList.length, tvList.length);
         for (let i = 0; i < maxLen; i++) {
@@ -129,11 +218,11 @@ export default function Home() {
           if (i < tvList.length) combined.push(tvList[i]);
         }
 
-        setAllMedia(combined);
+        if (combined.length > 0) {
+          setAllMedia(combined);
+        }
       } catch (e) {
-        console.error('Failed to fetch home media:', e);
-      } finally {
-        setLoading(false);
+        console.error('Fast catalog sync:', e);
       }
     };
 
@@ -163,7 +252,7 @@ export default function Home() {
     setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
   };
 
-  const currentHero = heroSlides[currentSlide] || null;
+  const currentHero = heroSlides[currentSlide] || heroSlides[0];
 
   const displayedMedia =
     activeTab === 'all'
@@ -176,7 +265,7 @@ export default function Home() {
     <div className="space-y-12 pb-20 animate-fade-in">
       
       {/* CineB-Style Cinematic Hero Slider */}
-      {currentHero ? (
+      {currentHero && (
         <section
           className="relative w-full h-[520px] sm:h-[600px] lg:h-[680px] overflow-hidden bg-slate-950 select-none group"
           onMouseEnter={() => setIsPaused(true)}
@@ -189,6 +278,7 @@ export default function Home() {
               src={currentHero.bannerUrl || currentHero.posterUrl}
               alt={currentHero.title}
               className="w-full h-full object-cover object-center animate-fade-in transform scale-105 duration-1000 ease-out"
+              loading="eager"
             />
             {/* CineB Crystal-Clear Full-Light Overlays */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent max-w-xl sm:max-w-2xl" />
@@ -231,16 +321,16 @@ export default function Home() {
             {/* Action Buttons: Watch Now & Details */}
             <div className="pt-2 flex flex-wrap items-center gap-3.5">
               <Link
-                href={`/movie/${currentHero.slug || currentHero._id}`}
+                href={currentHero.type === 'tv' ? `/tv/${currentHero.slug || currentHero._id}` : `/movie/${currentHero.slug || currentHero._id}`}
                 className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-[#00e054] hover:bg-[#00c74a] text-black font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-all shadow-lg shadow-[#00e054]/30 hover:scale-105 active:scale-95"
               >
                 <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /> Watch now
               </Link>
               <Link
-                href={`/movie/${currentHero.slug || currentHero._id}`}
+                href={currentHero.type === 'tv' ? `/tv/${currentHero.slug || currentHero._id}` : `/movie/${currentHero.slug || currentHero._id}`}
                 className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm backdrop-blur-md border border-white/10 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
               >
-                <Info className="w-4 h-4" /> Movie Info
+                <Info className="w-4 h-4" /> Details
               </Link>
             </div>
           </div>
@@ -277,11 +367,6 @@ export default function Home() {
             ))}
           </div>
         </section>
-      ) : (
-        /* Loading Skeleton for Hero */
-        <div className="w-full h-[520px] sm:h-[600px] bg-slate-900 animate-pulse flex items-center justify-center">
-          <div className="text-slate-500 text-xs font-semibold">Loading blockbuster cinematic premiere...</div>
-        </div>
       )}
 
       {/* Main Combined Feed: Featured Movies & TV Shows */}
@@ -332,69 +417,62 @@ export default function Home() {
         </div>
 
         {/* Media Grid: Displays Both Movies & TV Series with Type Badges */}
-        {loading && displayedMedia.length === 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {Array.from({ length: 12 }).map((_, idx) => (
-              <div key={idx} className="aspect-[2/3] rounded-2xl bg-slate-200 dark:bg-dark-card shimmer-loading animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {displayedMedia.map((item) => {
-              const targetUrl = item.type === 'movie' ? `/movie/${item.slug || item._id}` : `/tv/${item.slug || item._id}`;
-              const isTv = item.type === 'tv';
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          {displayedMedia.map((item) => {
+            const targetUrl = item.type === 'movie' ? `/movie/${item.slug || item._id}` : `/tv/${item.slug || item._id}`;
+            const isTv = item.type === 'tv';
 
-              return (
-                <Link
-                  key={`${item.type}-${item._id}`}
-                  href={targetUrl}
-                  className="media-card group flex flex-col space-y-2.5 rounded-2xl overflow-hidden bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-2 shadow-md"
-                >
-                  <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-900">
-                    <img
-                      src={item.posterUrl}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-                    />
+            return (
+              <Link
+                key={`${item.type}-${item._id}`}
+                href={targetUrl}
+                className="media-card group flex flex-col space-y-2.5 rounded-2xl overflow-hidden bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-2 shadow-md"
+              >
+                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-900">
+                  <img
+                    src={item.posterUrl}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                    loading="lazy"
+                  />
 
-                    {/* Type Badge: Rose for Movie, Sky Blue for TV Series */}
-                    <div
-                      className={`absolute top-2 left-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-md transition-transform duration-300 group-hover:scale-105 ${
-                        isTv ? 'bg-sky-600/90' : 'bg-brand-600/90'
-                      }`}
-                    >
-                      {isTv ? <Tv className="w-2.5 h-2.5" /> : <Film className="w-2.5 h-2.5" />}
-                      {isTv ? 'TV Series' : 'Movie'}
-                    </div>
-
-                    {/* Rating Badge */}
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-bold text-amber-400 flex items-center gap-1 shadow">
-                      <Star className="w-3 h-3 fill-amber-400" /> {item.ratingAverage || 8.0}
-                    </div>
-
-                    {/* Hover Play Icon Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-600/50 transform scale-50 group-hover:scale-100 transition-transform duration-300 ease-out">
-                        <Play className="w-5 h-5 fill-current ml-0.5" />
-                      </div>
-                    </div>
+                  {/* Type Badge: Rose for Movie, Sky Blue for TV Series */}
+                  <div
+                    className={`absolute top-2 left-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white uppercase tracking-wider backdrop-blur-md flex items-center gap-1 shadow-md transition-transform duration-300 group-hover:scale-105 ${
+                      isTv ? 'bg-sky-600/90' : 'bg-brand-600/90'
+                    }`}
+                  >
+                    {isTv ? <Tv className="w-2.5 h-2.5" /> : <Film className="w-2.5 h-2.5" />}
+                    {isTv ? 'TV Series' : 'Movie'}
                   </div>
 
-                  <div className="px-1">
-                    <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1 group-hover:text-brand-500 transition-colors">
-                      {item.title}
-                    </h3>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                      <span>{item.releaseYear || 2024}</span>
-                      <span>•</span>
-                      <span>{item.runtimeOrSeasons}</span>
+                  {/* Rating Badge */}
+                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-bold text-amber-400 flex items-center gap-1 shadow">
+                    <Star className="w-3 h-3 fill-amber-400" /> {item.ratingAverage || 8.0}
+                  </div>
+
+                  {/* Hover Play Icon Overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-600/50 transform scale-50 group-hover:scale-100 transition-transform duration-300 ease-out">
+                      <Play className="w-5 h-5 fill-current ml-0.5" />
                     </div>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
+                </div>
+
+                <div className="px-1">
+                  <h3 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1 group-hover:text-brand-500 transition-colors">
+                    {item.title}
+                  </h3>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                    <span>{item.releaseYear || 2024}</span>
+                    <span>•</span>
+                    <span>{item.runtimeOrSeasons}</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </section>
 
       {/* Feature Highlights Grid */}
