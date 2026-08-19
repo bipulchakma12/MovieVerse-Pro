@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Film,
   Search,
@@ -19,12 +19,14 @@ import {
   History,
   Star,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -123,31 +125,68 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Left: Brand Logo & Main Nav Links */}
+          {/* Left: Brand Logo & Interactive Animated Nav Links */}
           <div className="flex items-center gap-5 xl:gap-8 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform duration-200">
-                <Film className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                <Film className="w-6 h-6 text-white transition-transform group-hover:scale-110" />
               </div>
               <span className="text-xl font-bold text-white transition-colors drop-shadow whitespace-nowrap">
                 MovieVerse<span className="text-brand-500 font-extrabold">Pro</span>
               </span>
             </Link>
 
-            {/* Nav Links - Guaranteed No Wrap */}
-            <nav className="hidden lg:flex items-center gap-4 xl:gap-6 text-sm font-semibold whitespace-nowrap flex-shrink-0">
-              <Link href="/" className="flex items-center gap-1.5 px-2 py-1 text-white hover:text-brand-400 transition-colors whitespace-nowrap">
-                <Home className="w-4 h-4 text-brand-500 flex-shrink-0" /> Home
+            {/* Nav Links - Interactive Glass Pills with Hover & Active Animations */}
+            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2 text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-black/25 p-1 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
+              
+              {/* Home */}
+              <Link
+                href="/"
+                className={`group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                  pathname === '/'
+                    ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-lg shadow-brand-600/30 font-bold scale-105'
+                    : 'text-slate-300 hover:text-white hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95'
+                }`}
+              >
+                <Home className="w-4 h-4 text-brand-400 group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300 flex-shrink-0" />
+                <span>Home</span>
               </Link>
-              <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-brand-400 transition-colors whitespace-nowrap">
-                <Clapperboard className="w-4 h-4 text-rose-500 flex-shrink-0" /> Movies
+
+              {/* Movies */}
+              <Link
+                href="/trending"
+                className={`group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                  pathname === '/trending'
+                    ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/30 font-bold scale-105'
+                    : 'text-slate-300 hover:text-rose-300 hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95'
+                }`}
+              >
+                <Clapperboard className="w-4 h-4 text-rose-400 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
+                <span>Movies</span>
               </Link>
-              <Link href="/tv" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-sky-400 transition-colors whitespace-nowrap">
-                <Tv className="w-4 h-4 text-sky-400 flex-shrink-0" /> TV Shows
+
+              {/* TV Shows */}
+              <Link
+                href="/tv"
+                className={`group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                  pathname === '/tv'
+                    ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-lg shadow-sky-600/30 font-bold scale-105'
+                    : 'text-slate-300 hover:text-sky-300 hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95'
+                }`}
+              >
+                <Tv className="w-4 h-4 text-sky-400 group-hover:scale-125 group-hover:-translate-y-0.5 transition-transform duration-300 flex-shrink-0" />
+                <span>TV Shows</span>
               </Link>
-              <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-amber-400 transition-colors whitespace-nowrap">
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400 flex-shrink-0" /> Top IMDB
+
+              {/* Top IMDB */}
+              <Link
+                href="/trending"
+                className="group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none text-slate-300 hover:text-amber-300 hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95"
+              >
+                <Star className="w-4 h-4 text-amber-400 fill-amber-400 group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300 flex-shrink-0" />
+                <span>Top IMDB</span>
               </Link>
+
             </nav>
           </div>
 
