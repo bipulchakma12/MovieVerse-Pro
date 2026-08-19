@@ -28,7 +28,21 @@ export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Detect window scroll to toggle navbar transparency
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -59,7 +73,13 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-dark-border bg-white/90 dark:bg-dark-bg/90 backdrop-blur-md transition-colors duration-200">
+    <header
+      className={`fixed top-0 inset-x-0 z-50 w-full transition-all duration-300 ${
+        isScrolled
+          ? 'bg-slate-950/90 backdrop-blur-md border-b border-white/10 shadow-2xl py-0'
+          : 'bg-gradient-to-b from-black/85 via-black/40 to-transparent border-b border-transparent py-1'
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
@@ -69,24 +89,24 @@ export const Navbar: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-rose-400 flex items-center justify-center shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform duration-200">
                 <Film className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white transition-colors">
+              <span className="text-xl font-bold text-white transition-colors drop-shadow">
                 MovieVerse<span className="text-brand-500 font-extrabold">Pro</span>
               </span>
             </Link>
 
-            {/* Desktop Search Bar - Connected & Functional */}
+            {/* Desktop Search Bar - CineB Translucent Glass Style */}
             <form onSubmit={handleSearch} className="hidden md:block w-56 lg:w-72">
               <div className="relative w-full flex items-center">
                 <input
                   type="text"
-                  placeholder="Search movies & TV shows..."
+                  placeholder="Enter keywords..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-1.5 text-xs rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 transition-all"
+                  className="w-full pl-9 pr-8 py-1.5 text-xs rounded-full bg-white/10 hover:bg-white/15 focus:bg-slate-900/90 backdrop-blur-md border border-white/15 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 text-white placeholder:text-slate-400 transition-all shadow-inner"
                 />
                 <button
                   type="submit"
-                  className="absolute left-2.5 top-2 text-slate-400 hover:text-brand-500 transition-colors"
+                  className="absolute left-2.5 top-2 text-slate-300 hover:text-white transition-colors"
                   title="Search"
                 >
                   <Search className="w-3.5 h-3.5" />
@@ -95,7 +115,7 @@ export const Navbar: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    className="absolute right-2.5 top-2 text-slate-400 hover:text-white"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -105,17 +125,17 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Nav Links */}
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            <Link href="/" className="flex items-center gap-1.5 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold">
+            <Link href="/" className="flex items-center gap-1.5 px-2 py-1 text-white hover:text-brand-400 transition-colors">
               <Home className="w-4 h-4 text-brand-500" /> Home
             </Link>
-            <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+            <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-brand-400 transition-colors">
               <Clapperboard className="w-4 h-4 text-rose-500" /> Movies
             </Link>
-            <Link href="/tv" className="flex items-center gap-1.5 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-              <Tv className="w-4 h-4 text-sky-500" /> TV Shows
+            <Link href="/tv" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-sky-400 transition-colors">
+              <Tv className="w-4 h-4 text-sky-400" /> TV Shows
             </Link>
-            <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+            <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 text-slate-200 hover:text-amber-400 transition-colors">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Top IMDB
             </Link>
           </nav>

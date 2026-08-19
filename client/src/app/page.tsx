@@ -197,7 +197,7 @@ export default function Home() {
           </div>
 
           {/* Left Hero Content Info */}
-          <div className="relative z-10 max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col justify-center pb-12 sm:pb-16 space-y-4 sm:space-y-6">
+          <div className="relative z-10 max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col justify-center pt-20 sm:pt-24 pb-12 sm:pb-16 space-y-4 sm:space-y-6">
             
             {/* Big Bold Movie Title */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight max-w-3xl drop-shadow-lg tracking-tight">
