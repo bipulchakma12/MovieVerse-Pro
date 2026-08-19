@@ -36,24 +36,30 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
   const fetchMovieDetail = async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/movies/${params.id}`).catch(() => null);
-      if (res && res.ok) {
-        const data = await res.json();
-        if (data.success && data.data) {
-          setMovie(data.data);
-          checkUserLists(data.data);
-          recordWatchHistory(data.data);
-          setLoading(false);
-          return;
-        }
-      }
       const { fetchTMDBMovieDetail } = await import('@/utils/tmdbClient');
-      const fallbackMovie = await fetchTMDBMovieDetail(params.id);
-      if (fallbackMovie) {
-        setMovie(fallbackMovie);
-        checkUserLists(fallbackMovie);
-        recordWatchHistory(fallbackMovie);
+      
+      // Fast parallel fetch: Don't wait for offline backend timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 600);
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const backendPromise = fetch(`${apiUrl}/movies/${params.id}`, { signal: controller.signal })
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null);
+
+      const tmdbPromise = fetchTMDBMovieDetail(params.id);
+
+      const [backendRes, tmdbMovie] = await Promise.all([
+        backendPromise.finally(() => clearTimeout(timeoutId)),
+        tmdbPromise
+      ]);
+
+      const resolvedMovie = (backendRes?.success && backendRes?.data) ? backendRes.data : tmdbMovie;
+
+      if (resolvedMovie) {
+        setMovie(resolvedMovie);
+        checkUserLists(resolvedMovie);
+        recordWatchHistory(resolvedMovie);
       }
     } catch (e) {
       console.error('Failed to fetch movie detail:', e);
@@ -154,9 +160,22 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-10 h-10 text-brand-500 animate-spin" />
-        <p className="text-xs text-slate-400">Loading movie details...</p>
+      <div className="min-h-[75vh] flex flex-col items-center justify-center select-none animate-fade-in">
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
+          {/* Outer glowing pulsing ring */}
+          <div className="absolute inset-0 rounded-full border-2 border-brand-500/30 animate-ping opacity-60" />
+          
+          {/* Main fast rotating gradient ring */}
+          <div className="absolute inset-0 rounded-full border-3 sm:border-4 border-t-brand-500 border-r-rose-500 border-b-transparent border-l-transparent animate-spin duration-700 shadow-lg shadow-brand-500/30" />
+          
+          {/* Inner counter-rotating neon ring */}
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-3 border-r-sky-400 border-b-brand-400 border-t-transparent border-l-transparent animate-spin duration-500" />
+          
+          {/* Center glowing Film Icon */}
+          <div className="absolute flex items-center justify-center text-brand-500 animate-pulse">
+            <Film className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+        </div>
       </div>
     );
   }
