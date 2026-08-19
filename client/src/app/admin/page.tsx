@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, Film, MessageSquare, TrendingUp, Plus, Trash2, Ban,
   ShieldCheck, Check, Search, Sparkles, Loader2, CheckCircle2,
-  Tv, ExternalLink, ArrowRight, Download, Play, Pause, Database, Layers
+  Tv, ExternalLink, ArrowRight, Download, Play, Pause, Database, Layers,
+  Lock, AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
 interface TmdbSearchResult {
   tmdbId: string;
@@ -147,6 +149,52 @@ export default function AdminDashboardPage() {
   const deleteMovie = (id: string) => {
     setMoviesList(moviesList.filter(m => m.id !== id));
   };
+
+  const { user, isAdmin, loading: authLoading } = useAuth();
+
+  // Loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+        <p className="text-xs text-slate-400 font-semibold">Verifying administrative credentials...</p>
+      </div>
+    );
+  }
+
+  // Access Denied Protection: Only verified Admins can view this dashboard
+  if (!isAdmin) {
+    return (
+      <div className="min-h-[75vh] flex flex-col items-center justify-center text-center px-4 py-16 animate-fade-in">
+        <div className="w-20 h-20 rounded-3xl bg-rose-500/10 border-2 border-rose-500/30 text-rose-500 flex items-center justify-center mb-6 shadow-xl shadow-rose-500/10">
+          <Lock className="w-10 h-10" />
+        </div>
+        <span className="px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-black uppercase tracking-wider border border-rose-500/20 mb-3">
+          403 Forbidden • Admin Only
+        </span>
+        <h1 className="text-2xl sm:text-4xl font-black text-white mb-3">
+          Administrator Access Required
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-400 max-w-md mb-8 leading-relaxed">
+          This dashboard is strictly reserved for authorized MovieVerse Pro staff and administrators. Regular customer accounts do not have permission to view or manage backend systems.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/login"
+            className="px-6 py-3 rounded-full font-bold text-xs text-white bg-brand-600 hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/30 hover:scale-105 active:scale-95 flex items-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4" /> Sign In as Admin
+          </Link>
+          <Link
+            href="/"
+            className="px-6 py-3 rounded-full font-bold text-xs text-slate-300 bg-white/10 hover:bg-white/20 transition-all hover:scale-105 active:scale-95"
+          >
+            Return to Homepage
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">

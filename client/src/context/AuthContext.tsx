@@ -17,6 +17,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try {
@@ -35,6 +37,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (e) {
       console.error('Failed to parse cached user data');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -69,6 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
+        loading,
       }}
     >
       {children}
@@ -86,6 +91,7 @@ export const useAuth = () => {
       logout: () => {},
       isAuthenticated: false,
       isAdmin: false,
+      loading: false,
     };
   }
   return context;

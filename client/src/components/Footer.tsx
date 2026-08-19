@@ -14,10 +14,15 @@ import {
   Bookmark,
   History,
   ShieldCheck,
-  Film
+  Film,
+  HelpCircle,
+  FileText
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export const Footer: React.FC = () => {
+  const { isAdmin, isAuthenticated } = useAuth();
+
   return (
     <footer className="mt-auto border-t border-white/5 bg-[#0b0c10] text-slate-400 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -87,7 +92,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Account Links */}
+          {/* Account Links (Admin Dashboard only visible for verified Admins) */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 pb-1 border-b border-white/10">
               <User className="w-4 h-4 text-sky-400" />
@@ -96,7 +101,7 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2 text-xs font-semibold">
               <li>
                 <Link
-                  href="/profile"
+                  href={isAuthenticated ? "/profile" : "/login"}
                   className="group flex items-center gap-1.5 py-1 text-slate-400 hover:text-white transition-all duration-200 hover:translate-x-2"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-sky-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 flex-shrink-0" />
@@ -121,15 +126,30 @@ export const Footer: React.FC = () => {
                   <span className="group-hover:text-emerald-400 transition-colors">Watch History</span>
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/admin"
-                  className="group flex items-center gap-1.5 py-1 text-slate-400 hover:text-white transition-all duration-200 hover:translate-x-2"
-                >
-                  <ChevronRight className="w-3.5 h-3.5 text-rose-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 flex-shrink-0" />
-                  <span className="group-hover:text-rose-400 transition-colors">Admin Dashboard</span>
-                </Link>
-              </li>
+              {/* Only shown if user is logged in as an Admin */}
+              {isAdmin ? (
+                <li>
+                  <Link
+                    href="/admin"
+                    className="group flex items-center gap-1.5 py-1 text-slate-400 hover:text-white transition-all duration-200 hover:translate-x-2"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5 text-rose-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 flex-shrink-0" />
+                    <span className="group-hover:text-rose-400 transition-colors flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-rose-500" /> Admin Dashboard
+                    </span>
+                  </Link>
+                </li>
+              ) : (
+                <li>
+                  <Link
+                    href="/search"
+                    className="group flex items-center gap-1.5 py-1 text-slate-400 hover:text-white transition-all duration-200 hover:translate-x-2"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5 text-rose-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 flex-shrink-0" />
+                    <span className="group-hover:text-rose-400 transition-colors">Search All Movies</span>
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 
