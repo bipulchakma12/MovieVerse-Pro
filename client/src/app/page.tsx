@@ -412,37 +412,42 @@ export default function Home() {
             </h2>
           </div>
 
-          {/* Quick Filter Tabs: All / Movies / TV Shows */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-dark-card p-1 rounded-xl border border-slate-200 dark:border-dark-border shadow-inner overflow-x-auto scrollbar-none">
+          {/* Quick Filter Tabs: All / Movies / TV Shows with Modern Animated Hover Pills */}
+          <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md shadow-inner overflow-x-auto scrollbar-none select-none">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 ${
+              className={`group px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 ${
                 activeTab === 'all'
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-lg shadow-brand-600/40 scale-105'
+                  : 'text-slate-300 hover:text-white hover:bg-white/15 hover:scale-105 active:scale-95'
               }`}
             >
-              🔥 All Titles
+              <span className="group-hover:scale-125 transition-transform duration-300">🔥</span>
+              <span>All Titles</span>
             </button>
+
             <button
               onClick={() => setActiveTab('movie')}
-              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 ${
+              className={`group px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 ${
                 activeTab === 'movie'
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/40 scale-105'
+                  : 'text-slate-300 hover:text-rose-300 hover:bg-white/15 hover:scale-105 active:scale-95'
               }`}
             >
-              🍿 Movies
+              <span className="group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300">🍿</span>
+              <span>Movies</span>
             </button>
+
             <button
               onClick={() => setActiveTab('tv')}
-              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 ${
+              className={`group px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 ${
                 activeTab === 'tv'
-                  ? 'bg-sky-600 text-white shadow-md shadow-sky-600/30'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-lg shadow-sky-600/40 scale-105'
+                  : 'text-slate-300 hover:text-sky-300 hover:bg-white/15 hover:scale-105 active:scale-95'
               }`}
             >
-              📺 TV Series
+              <span className="group-hover:scale-125 group-hover:-translate-y-0.5 transition-transform duration-300">📺</span>
+              <span>TV Series</span>
             </button>
           </div>
         </div>
