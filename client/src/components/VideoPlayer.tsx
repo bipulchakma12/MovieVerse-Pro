@@ -3,7 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Play, Pause, Volume2, VolumeX, Maximize, Subtitles,
-  Loader2, AlertCircle, RefreshCw, RotateCcw, Smartphone
+  Loader2, AlertCircle, RefreshCw, RotateCcw, Smartphone,
+  ShieldCheck, ShieldAlert, Sparkles, CheckCircle2
 } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -34,6 +35,9 @@ export default function VideoPlayer({
   const [showSubtitles, setShowSubtitles] = useState(false);
   const [quality, setQuality] = useState('Auto (1080p)');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // Intelligent Ad-Shield Engine (Blocks Popup Ads & Redirects while keeping stream 100% active)
+  const [adShieldActive, setAdShieldActive] = useState(true);
 
   // Determine if URL is an iframe embed vs direct video stream (MP4/HLS)
   const isEmbed = src && (
@@ -127,7 +131,6 @@ export default function VideoPlayer({
           try {
             await (window.screen.orientation as any).lock('landscape');
           } catch (orientErr) {
-            // Try fallback orientation format
             try {
               await (window.screen.orientation as any).lock('landscape-primary');
             } catch (e) {
@@ -211,16 +214,45 @@ export default function VideoPlayer({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  // If source is an iframe embed, render responsive embed container with fullscreen rotation support
+  // If source is an iframe embed, render responsive embed container with Ad-Shielding
   if (isEmbed) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3 select-none">
+        
+        {/* Ad-Shield Header Status Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+          <div className="flex items-center gap-2">
+            <div className={`p-1 rounded-lg ${adShieldActive ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <span className="font-semibold text-white">
+              {adShieldActive ? '🛡️ Ad-Shield Protection: Active' : 'Ad-Shield: Paused'}
+            </span>
+            <span className="text-[11px] text-slate-400 hidden sm:inline-block">
+              {adShieldActive ? '(Blocks popup tabs & redirects without stopping movie)' : '(Allows popups)'}
+            </span>
+          </div>
+
+          <button
+            onClick={() => setAdShieldActive(!adShieldActive)}
+            className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+              adShieldActive
+                ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/30'
+                : 'bg-white/10 text-slate-300 hover:bg-white/20'
+            }`}
+          >
+            {adShieldActive ? 'Protected ✓' : 'Enable Ad-Shield'}
+          </button>
+        </div>
+
+        {/* Video Player Embed Frame */}
         <div
           ref={containerRef}
           className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 shadow-2xl border border-slate-800/80 group"
         >
           <iframe
             ref={iframeRef}
+            key={`${embedUrl}-${adShieldActive ? 'shield-on' : 'shield-off'}`}
             src={embedUrl}
             title={title || 'MovieVerse Stream Player'}
             className="w-full h-full border-0"
@@ -231,9 +263,14 @@ export default function VideoPlayer({
             // @ts-ignore
             mozallowfullscreen="true"
             referrerPolicy="no-referrer"
+            sandbox={
+              adShieldActive
+                ? "allow-scripts allow-same-origin allow-forms allow-presentation"
+                : "allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
+            }
           />
 
-          {/* Quick Floating Fullscreen & Landscape button on top right of video player */}
+          {/* Quick Floating Fullscreen & Landscape button on mobile */}
           <button
             onClick={toggleFullscreenRotate}
             className="absolute bottom-3 right-3 sm:hidden p-2 rounded-xl bg-black/80 backdrop-blur-md text-white hover:text-brand-500 border border-white/20 shadow-lg active:scale-95 transition-all flex items-center gap-1 text-[10px] font-bold z-20"
@@ -245,7 +282,7 @@ export default function VideoPlayer({
 
         {/* Mobile Quick Rotate & Fullscreen Bar */}
         <div className="flex sm:hidden items-center justify-between px-1">
-          <span className="text-[11px] text-slate-400">💡 মোবাইল ফুলস্ক্রিন ও রোটেট করতে বাটনে চাপুন:</span>
+          <span className="text-[11px] text-slate-400">💡 মোবাইল ফুলস্ক্রিন ও রোটেট করতে চাপুন:</span>
           <button
             onClick={toggleFullscreenRotate}
             className="px-3 py-1.5 rounded-xl bg-brand-600/20 text-brand-500 border border-brand-500/30 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
@@ -260,7 +297,7 @@ export default function VideoPlayer({
 
   // Native HTML5 Video Stream Player (Supports HTTP 206 Range Requests & Screen Rotation)
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 select-none">
       <div
         ref={containerRef}
         className="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 group shadow-2xl border border-slate-800 select-none"
@@ -368,7 +405,7 @@ export default function VideoPlayer({
 
       {/* Mobile Quick Rotate & Fullscreen Bar */}
       <div className="flex sm:hidden items-center justify-between px-1">
-        <span className="text-[11px] text-slate-400">💡 মোবাইল ফুলস্ক্রিন ও রোটেট করতে বাটনে চাপুন:</span>
+        <span className="text-[11px] text-slate-400">💡 মোবাইল ফুলস্ক্রিন ও রোটেট করতে চাপুন:</span>
         <button
           onClick={toggleFullscreenRotate}
           className="px-3 py-1.5 rounded-xl bg-brand-600/20 text-brand-500 border border-brand-500/30 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"

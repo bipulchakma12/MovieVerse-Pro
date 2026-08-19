@@ -177,10 +177,10 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
   const trailerUrl = movie.trailerUrl || 'https://www.youtube.com/embed/YoHD9XEInc0';
 
   // Multi-server endpoints for full movie streaming
-  const server1Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
-  const server2Url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
-  const server3Url = `https://autoembed.co/movie/tmdb/${tmdbId}`;
-  const server4Url = `https://vidsrc.to/embed/movie/${tmdbId}`;
+  const server1Url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
+  const server2Url = `https://autoembed.co/movie/tmdb/${tmdbId}`;
+  const server3Url = `https://vidsrc.to/embed/movie/${tmdbId}`;
+  const server4Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
 
   const currentStreamUrl =
     streamServer === 'server1'
@@ -367,7 +367,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
                   streamServer === 'server1' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Server 1 (MultiEmbed)
+                Server 1 (CineSrc Clean)
               </button>
               <button
                 onClick={() => setStreamServer('server2')}
@@ -375,7 +375,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
                   streamServer === 'server2' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Server 2 (CineSrc)
+                Server 2 (AutoEmbed HD)
               </button>
               <button
                 onClick={() => setStreamServer('server3')}
@@ -383,7 +383,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
                   streamServer === 'server3' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Server 3 (AutoEmbed)
+                Server 3 (VidSrc.to)
               </button>
               <button
                 onClick={() => setStreamServer('server4')}
@@ -391,7 +391,7 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
                   streamServer === 'server4' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Server 4 (VidSrc.to)
+                Server 4 (MultiEmbed)
               </button>
             </div>
           )}

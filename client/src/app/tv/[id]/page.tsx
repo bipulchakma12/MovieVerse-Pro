@@ -176,10 +176,10 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
   const totalEpisodes = 16;
 
   // Fast TV Stream URLs with Season & Episode support
-  const server1Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${selectedSeason}&e=${selectedEpisode}`;
+  const server1Url = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
   const server2Url = `https://vidsrc.xyz/embed/tv?tmdb=${tmdbId}&season=${selectedSeason}&episode=${selectedEpisode}`;
   const server3Url = `https://player.smashy.stream/tv/${tmdbId}?s=${selectedSeason}&e=${selectedEpisode}`;
-  const server4Url = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
+  const server4Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${selectedSeason}&e=${selectedEpisode}`;
 
   const currentStreamUrl =
     streamServer === 'server1'
@@ -390,7 +390,7 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
                 streamServer === 'server1' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Server 1 (MultiEmbed)
+              Server 1 (VidSrc.cc Clean)
             </button>
             <button
               onClick={() => setStreamServer('server2')}
@@ -414,7 +414,7 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
                 streamServer === 'server4' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Server 4 (VidSrc.cc)
+              Server 4 (MultiEmbed)
             </button>
           </div>
         </div>
