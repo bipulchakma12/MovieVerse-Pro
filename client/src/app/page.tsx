@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Play, Flame, Star, Sparkles, MonitorPlay, Tv, Film, Bookmark } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Play, Flame, Star, Sparkles, MonitorPlay, Tv, Film, Bookmark, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import Link from 'next/link';
 
 interface MediaItem {
@@ -10,28 +10,24 @@ interface MediaItem {
   title: string;
   slug: string;
   posterUrl: string;
+  bannerUrl?: string;
   releaseYear?: number;
+  runtimeMinutes?: number;
   ratingAverage?: number;
   type: 'movie' | 'tv';
   runtimeOrSeasons?: string;
   genres?: any[];
+  storyline?: string;
 }
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'all' | 'movie' | 'tv'>('all');
   const [allMedia, setAllMedia] = useState<MediaItem[]>([]);
+  const [heroSlides, setHeroSlides] = useState<MediaItem[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  // Rotating dynamic hero title animation
-  const rotatingWords = ['Movies', 'TV Shows', 'Blockbusters', 'Series & Cinema'];
-  const [wordIndex, setWordIndex] = useState(0);
-
-  useEffect(() => {
-    const wordInterval = setInterval(() => {
-      setWordIndex((prev) => (prev + 1) % rotatingWords.length);
-    }, 2800);
-    return () => clearInterval(wordInterval);
-  }, []);
+  const [isPaused, setIsPaused] = useState(false);
+  const slideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchHomeCatalog = async () => {
@@ -51,11 +47,13 @@ export default function Home() {
               title: m.title,
               slug: m.slug,
               posterUrl: m.posterUrl,
+              bannerUrl: m.bannerUrl || m.posterUrl,
               releaseYear: m.releaseYear || 2024,
               ratingAverage: m.ratingAverage || 7.9,
               type: 'movie' as const,
-              runtimeOrSeasons: `${m.runtimeMinutes || 120} min`,
+              runtimeOrSeasons: `${m.runtimeMinutes || 135}min`,
               genres: m.genres,
+              storyline: m.storyline,
             }));
           }
         }
@@ -68,11 +66,13 @@ export default function Home() {
             title: m.title,
             slug: m.slug,
             posterUrl: m.posterUrl,
+            bannerUrl: m.bannerUrl || m.posterUrl,
             releaseYear: m.releaseYear || 2024,
             ratingAverage: m.ratingAverage || 7.9,
             type: 'movie' as const,
-            runtimeOrSeasons: `${m.runtimeMinutes || 120} min`,
+            runtimeOrSeasons: `${m.runtimeMinutes || 135}min`,
             genres: m.genres,
+            storyline: m.storyline,
           }));
         }
 
@@ -88,11 +88,13 @@ export default function Home() {
               title: t.name,
               slug: t.slug,
               posterUrl: t.posterUrl,
+              bannerUrl: t.bannerUrl || t.posterUrl,
               releaseYear: t.firstAirYear || 2024,
               ratingAverage: t.ratingAverage || 8.1,
               type: 'tv' as const,
               runtimeOrSeasons: `${t.numberOfSeasons || 1} Seasons`,
               genres: t.genres,
+              storyline: t.storyline,
             }));
           }
         }
@@ -105,13 +107,19 @@ export default function Home() {
             title: t.name,
             slug: t.slug,
             posterUrl: t.posterUrl,
+            bannerUrl: t.bannerUrl || t.posterUrl,
             releaseYear: t.firstAirYear || 2024,
             ratingAverage: t.ratingAverage || 8.1,
             type: 'tv' as const,
             runtimeOrSeasons: `${t.numberOfSeasons || 1} Seasons`,
             genres: t.genres,
+            storyline: t.storyline,
           }));
         }
+
+        // Top 6 Blockbusters for Hero Slider Carousel
+        const topHeroItems = moviesList.slice(0, 6);
+        setHeroSlides(topHeroItems);
 
         // Interleave / Combine both Movies and TV Shows alternately for "All" feed
         const combined: MediaItem[] = [];
@@ -132,6 +140,31 @@ export default function Home() {
     fetchHomeCatalog();
   }, []);
 
+  // Automatic Hero Carousel Slider Interval (every 5 seconds)
+  useEffect(() => {
+    if (heroSlides.length <= 1 || isPaused) return;
+
+    slideTimerRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+
+    return () => {
+      if (slideTimerRef.current) clearInterval(slideTimerRef.current);
+    };
+  }, [heroSlides, isPaused, currentSlide]);
+
+  const nextSlide = () => {
+    if (heroSlides.length === 0) return;
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  };
+
+  const prevSlide = () => {
+    if (heroSlides.length === 0) return;
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+  };
+
+  const currentHero = heroSlides[currentSlide] || null;
+
   const displayedMedia =
     activeTab === 'all'
       ? allMedia
@@ -140,48 +173,116 @@ export default function Home() {
       : allMedia.filter((item) => item.type === 'tv');
 
   return (
-    <div className="space-y-16 pb-20 animate-fade-in">
+    <div className="space-y-12 pb-20 animate-fade-in">
       
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-16 pb-20 md:pt-24 md:pb-28 bg-gradient-to-b from-slate-900/60 to-transparent dark:from-dark-nav/80">
-        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-900/30 via-transparent to-transparent pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-500 border border-brand-500/20 mb-6 shadow-sm animate-pulse-glow">
-            <Sparkles className="w-3.5 h-3.5" /> Next-Gen Movies & TV Streaming Platform
+      {/* CineB-Style Cinematic Hero Slider */}
+      {currentHero ? (
+        <section
+          className="relative w-full h-[520px] sm:h-[600px] lg:h-[680px] overflow-hidden bg-slate-950 select-none group"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          {/* Background Backdrop Image with Smooth Crossfade */}
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            <img
+              key={currentHero._id}
+              src={currentHero.bannerUrl || currentHero.posterUrl}
+              alt={currentHero.title}
+              className="w-full h-full object-cover object-center animate-fade-in transform scale-105 duration-1000 ease-out"
+            />
+            {/* Cinematic Gradient Overlays (left dark vignette + bottom blend to page background) */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-black/30 md:to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0b0c10] via-black/40 to-black/40" />
+            <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-black/80 to-transparent" />
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tight leading-tight max-w-5xl mx-auto">
-            Unlimited{' '}
-            <span className="inline-block min-w-[180px] sm:min-w-[320px] text-brand-500 transition-all duration-300 transform">
-              {rotatingWords[wordIndex]}
-            </span>
-            <br className="hidden sm:inline" /> & Custom{' '}
-            <span className="animated-gradient-text drop-shadow-[0_0_30px_rgba(225,29,72,0.35)]">
-              Watchlists
-            </span>
-          </h1>
+          {/* Left Hero Content Info */}
+          <div className="relative z-10 max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex flex-col justify-center pb-12 sm:pb-16 space-y-4 sm:space-y-6">
+            
+            {/* Big Bold Movie Title */}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight max-w-3xl drop-shadow-lg tracking-tight">
+              {currentHero.title}
+            </h1>
 
-          <p className="mt-6 text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            Welcome to <strong className="text-slate-800 dark:text-slate-200">MovieVerse Pro</strong>.
-          </p>
+            {/* Meta Tags Row: HD Badge | Duration | IMDB Rating */}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+              <span className="px-2 py-0.5 rounded bg-[#00e054] text-black font-black text-xs tracking-wider shadow">
+                HD
+              </span>
+              <span className="text-slate-300 font-medium">
+                Duration: <strong className="text-white">{currentHero.runtimeOrSeasons || '145min'}</strong>
+              </span>
+              <span className="flex items-center gap-1.5 font-semibold">
+                <span className="text-[#f5c518] font-black">IMDB:</span>
+                <span className="text-white font-bold">{currentHero.ratingAverage || 7.9}</span>
+              </span>
+              <span className="text-slate-400">
+                Year: <span className="text-slate-200">{currentHero.releaseYear || 2024}</span>
+              </span>
+            </div>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/trending"
-              className="px-8 py-3.5 rounded-full font-bold text-white bg-brand-600 hover:bg-brand-700 transition-all duration-300 shadow-lg shadow-brand-600/30 hover:shadow-brand-600/50 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm"
-            >
-              <Film className="w-4 h-4" /> Explore All Movies
-            </Link>
-            <Link
-              href="/tv"
-              className="px-8 py-3.5 rounded-full font-bold text-white bg-sky-600 hover:bg-sky-700 transition-all duration-300 shadow-lg shadow-sky-600/30 hover:shadow-sky-600/50 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 text-sm"
-            >
-              <Tv className="w-4 h-4" /> Browse TV Shows
-            </Link>
+            {/* Storyline / Overview snippet */}
+            {currentHero.storyline && (
+              <p className="text-xs sm:text-sm text-slate-300/90 line-clamp-2 sm:line-clamp-3 max-w-2xl leading-relaxed">
+                {currentHero.storyline}
+              </p>
+            )}
+
+            {/* Action Buttons: Watch Now & Details */}
+            <div className="pt-2 flex flex-wrap items-center gap-3.5">
+              <Link
+                href={`/movie/${currentHero.slug || currentHero._id}`}
+                className="px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl bg-[#00e054] hover:bg-[#00c74a] text-black font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-all shadow-lg shadow-[#00e054]/30 hover:scale-105 active:scale-95"
+              >
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /> Watch now
+              </Link>
+              <Link
+                href={`/movie/${currentHero.slug || currentHero._id}`}
+                className="px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm backdrop-blur-md border border-white/10 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+              >
+                <Info className="w-4 h-4" /> Movie Info
+              </Link>
+            </div>
           </div>
+
+          {/* Left & Right Arrow Navigation Controls */}
+          <button
+            onClick={prevSlide}
+            aria-label="Previous Slide"
+            className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-white opacity-0 group-hover:opacity-100 transition-all backdrop-blur-md border border-white/10 z-20 active:scale-90 hidden sm:block"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <button
+            onClick={nextSlide}
+            aria-label="Next Slide"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-white opacity-0 group-hover:opacity-100 transition-all backdrop-blur-md border border-white/10 z-20 active:scale-90 hidden sm:block"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+
+          {/* Bottom Right Pagination Dots (CineB Style) */}
+          <div className="absolute bottom-6 right-4 sm:right-8 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+            {heroSlides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  idx === currentSlide
+                    ? 'bg-white scale-125 ring-2 ring-[#00e054]'
+                    : 'bg-white/40 hover:bg-white/80'
+                }`}
+              />
+            ))}
+          </div>
+        </section>
+      ) : (
+        /* Loading Skeleton for Hero */
+        <div className="w-full h-[520px] sm:h-[600px] bg-slate-900 animate-pulse flex items-center justify-center">
+          <div className="text-slate-500 text-xs font-semibold">Loading blockbuster cinematic premiere...</div>
         </div>
-      </section>
+      )}
 
       {/* Main Combined Feed: Featured Movies & TV Shows */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">

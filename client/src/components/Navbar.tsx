@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   ChevronDown,
   History,
+  Star,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
@@ -104,15 +105,18 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Nav Links */}
-          <nav className="hidden lg:flex items-center gap-9 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            <Link href="/" className="flex items-center gap-2 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+          <nav className="hidden lg:flex items-center gap-7 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <Link href="/" className="flex items-center gap-1.5 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
               <Home className="w-4 h-4 text-brand-500" /> Home
             </Link>
-            <Link href="/trending" className="flex items-center gap-2 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+            <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
               <Clapperboard className="w-4 h-4 text-rose-500" /> Movies
             </Link>
-            <Link href="/tv" className="flex items-center gap-2 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+            <Link href="/tv" className="flex items-center gap-1.5 px-2 py-1 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
               <Tv className="w-4 h-4 text-sky-500" /> TV Shows
+            </Link>
+            <Link href="/trending" className="flex items-center gap-1.5 px-2 py-1 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Top IMDB
             </Link>
           </nav>
 
@@ -253,6 +257,9 @@ export const Navbar: React.FC = () => {
             </Link>
             <Link href="/tv" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-brand-500">
               <Tv className="w-5 h-5 text-sky-500" /> TV Shows
+            </Link>
+            <Link href="/trending" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 p-2 hover:text-amber-500">
+              <Star className="w-5 h-5 text-amber-400 fill-amber-400" /> Top IMDB
             </Link>
 
             {isAuthenticated && user ? (
