@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { getVisitorAnalytics, clearRealVisitorAnalytics, VisitorAnalyticsData } from '@/utils/visitorTracker';
+import { fetchLiveVisitorAnalytics, getVisitorAnalytics, clearRealVisitorAnalytics, VisitorAnalyticsData } from '@/utils/visitorTracker';
 
 interface TmdbSearchResult {
   tmdbId: string;
@@ -26,7 +26,7 @@ interface TmdbSearchResult {
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'importer' | 'analytics' | 'movies' | 'users'>('analytics');
 
-  // Real-Time Visitor Analytics State (100% Real Live Metrics)
+  // Real-Time Visitor Analytics State (100% Real Live Cloud Metrics)
   const [visitorStats, setVisitorStats] = useState<VisitorAnalyticsData>(() => getVisitorAnalytics());
 
   // TMDB Importer Pipeline state
@@ -77,18 +77,27 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     fetchExportStatus();
-    // Clean old test keys if present
-    if (typeof window !== 'undefined') {
-      ['mv_analytics_total_visits', 'mv_analytics_unique_visitors', 'mv_analytics_today_visits', 'mv_analytics_recent_logs'].forEach((k) => {
-        localStorage.removeItem(k);
-      });
-    }
-    setVisitorStats(getVisitorAnalytics());
-    const interval = setInterval(() => {
-      setVisitorStats(getVisitorAnalytics());
-    }, 3000);
+    // Fetch live central stats & poll every 2.5 seconds
+    fetchLiveVisitorAnalytics().then((stats) => setVisitorStats(stats));
+    const interval = setInterval(async () => {
+      const stats = await fetchLiveVisitorAnalytics();
+      setVisitorStats(stats);
+    }, 2500);
     return () => clearInterval(interval);
   }, []);
+
+  const handleRefreshStats = async () => {
+    const stats = await fetchLiveVisitorAnalytics();
+    setVisitorStats(stats);
+  };
+
+  const handleResetStats = async () => {
+    if (confirm('Are you sure you want to reset all visitor counters back to 0?')) {
+      await clearRealVisitorAnalytics();
+      const stats = await fetchLiveVisitorAnalytics();
+      setVisitorStats(stats);
+    }
+  };
 
   const fetchExportStatus = async () => {
     try {
@@ -708,19 +717,14 @@ export default function AdminDashboardPage() {
                 <span>100% Real Live Counter</span>
               </span>
               <button
-                onClick={() => setVisitorStats(getVisitorAnalytics())}
+                onClick={handleRefreshStats}
                 className="px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
                 title="Refresh Live Metrics"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Refresh
               </button>
               <button
-                onClick={() => {
-                  if (confirm('Are you sure you want to reset all visitor counters back to 0?')) {
-                    clearRealVisitorAnalytics();
-                    setVisitorStats(getVisitorAnalytics());
-                  }
-                }}
+                onClick={handleResetStats}
                 className="px-3.5 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
                 title="Reset Counter to Zero"
               >
