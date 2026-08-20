@@ -133,75 +133,87 @@ export const Navbar: React.FC = () => {
               </span>
             </Link>
 
-            {/* Nav Links - Interactive Glass Pills with Left-to-Right Background Sweep Animations */}
-            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2 text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-black/35 p-1 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
+            {/* Nav Links - Interactive Glass Pills with Left-to-Right Feature Cards Style Animations */}
+            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2 text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-black/40 p-1.5 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
               
               {/* Home */}
               <Link
                 href="/"
-                className={`group relative overflow-hidden px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                className={`group relative overflow-hidden px-4 py-1.5 rounded-full transition-all duration-500 flex items-center gap-2 text-xs xl:text-sm select-none ${
                   pathname === '/'
-                    ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-lg shadow-brand-600/30 font-bold scale-105'
-                    : 'text-slate-300 border border-transparent hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/10 hover:scale-105 active:scale-95'
+                    ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-lg shadow-brand-600/40 font-bold scale-105'
+                    : 'text-slate-300 border border-transparent hover:border-brand-500/40 hover:shadow-lg hover:shadow-brand-500/20 hover:scale-105 active:scale-95'
                 }`}
               >
-                {/* Left-to-Right Red/Rose Sweep */}
+                {/* Sliding Background from Left to Right */}
                 {pathname !== '/' && (
-                  <span className="absolute inset-0 bg-gradient-to-r from-brand-600 via-rose-600 to-brand-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand-600/30 via-rose-600/15 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand-500 via-rose-500 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out pointer-events-none" />
+                  </>
                 )}
                 <Home className="relative z-10 w-4 h-4 text-brand-400 group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300 flex-shrink-0" />
-                <span className="relative z-10 group-hover:text-white transition-colors duration-300">Home</span>
+                <span className="relative z-10 group-hover:text-brand-300 transition-colors duration-300">Home</span>
               </Link>
 
               {/* Movies */}
               <Link
                 href="/trending"
-                className={`group relative overflow-hidden px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                className={`group relative overflow-hidden px-4 py-1.5 rounded-full transition-all duration-500 flex items-center gap-2 text-xs xl:text-sm select-none ${
                   pathname === '/trending'
-                    ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/30 font-bold scale-105'
-                    : 'text-slate-300 border border-transparent hover:border-rose-500/40 hover:shadow-md hover:shadow-rose-500/10 hover:scale-105 active:scale-95'
+                    ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/40 font-bold scale-105'
+                    : 'text-slate-300 border border-transparent hover:border-rose-500/40 hover:shadow-lg hover:shadow-rose-500/20 hover:scale-105 active:scale-95'
                 }`}
               >
-                {/* Left-to-Right Rose/Pink Sweep */}
+                {/* Sliding Background from Left to Right */}
                 {pathname !== '/trending' && (
-                  <span className="absolute inset-0 bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-rose-600/30 via-pink-600/15 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-rose-500 via-pink-500 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out pointer-events-none" />
+                  </>
                 )}
                 <Clapperboard className="relative z-10 w-4 h-4 text-rose-400 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
-                <span className="relative z-10 group-hover:text-white transition-colors duration-300">Movies</span>
+                <span className="relative z-10 group-hover:text-rose-300 transition-colors duration-300">Movies</span>
               </Link>
 
               {/* TV Shows */}
               <Link
                 href="/tv"
-                className={`group relative overflow-hidden px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                className={`group relative overflow-hidden px-4 py-1.5 rounded-full transition-all duration-500 flex items-center gap-2 text-xs xl:text-sm select-none ${
                   pathname === '/tv'
-                    ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-lg shadow-sky-600/30 font-bold scale-105'
-                    : 'text-slate-300 border border-transparent hover:border-sky-500/40 hover:shadow-md hover:shadow-sky-500/10 hover:scale-105 active:scale-95'
+                    ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-lg shadow-sky-600/40 font-bold scale-105'
+                    : 'text-slate-300 border border-transparent hover:border-sky-500/40 hover:shadow-lg hover:shadow-sky-500/20 hover:scale-105 active:scale-95'
                 }`}
               >
-                {/* Left-to-Right Sky/Blue Sweep */}
+                {/* Sliding Background from Left to Right */}
                 {pathname !== '/tv' && (
-                  <span className="absolute inset-0 bg-gradient-to-r from-sky-600 via-blue-600 to-sky-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-sky-500/25 via-sky-500/10 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-sky-500 via-sky-400 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out pointer-events-none" />
+                  </>
                 )}
                 <Tv className="relative z-10 w-4 h-4 text-sky-400 group-hover:scale-125 group-hover:-translate-y-0.5 transition-transform duration-300 flex-shrink-0" />
-                <span className="relative z-10 group-hover:text-white transition-colors duration-300">TV Shows</span>
+                <span className="relative z-10 group-hover:text-sky-300 transition-colors duration-300">TV Shows</span>
               </Link>
 
               {/* Top IMDB */}
               <Link
                 href="/top-imdb"
-                className={`group relative overflow-hidden px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                className={`group relative overflow-hidden px-4 py-1.5 rounded-full transition-all duration-500 flex items-center gap-2 text-xs xl:text-sm select-none ${
                   pathname === '/top-imdb'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/30 font-bold scale-105'
-                    : 'text-slate-300 border border-transparent hover:border-amber-400/50 hover:shadow-md hover:shadow-amber-500/10 hover:scale-105 active:scale-95'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/40 font-bold scale-105'
+                    : 'text-slate-300 border border-transparent hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/20 hover:scale-105 active:scale-95'
                 }`}
               >
-                {/* Left-to-Right Amber/Orange Sweep */}
+                {/* Sliding Background from Left to Right */}
                 {pathname !== '/top-imdb' && (
-                  <span className="absolute inset-0 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-amber-500/25 via-amber-500/10 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-amber-500 via-amber-400 to-transparent -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-out pointer-events-none" />
+                  </>
                 )}
                 <Star className="relative z-10 w-4 h-4 text-amber-400 fill-amber-400 group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300 flex-shrink-0" />
-                <span className={`relative z-10 transition-colors duration-300 ${pathname !== '/top-imdb' ? 'group-hover:text-black font-semibold' : ''}`}>Top IMDB</span>
+                <span className="relative z-10 group-hover:text-amber-300 transition-colors duration-300">Top IMDB</span>
               </Link>
 
             </nav>
