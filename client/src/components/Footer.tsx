@@ -82,7 +82,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  href="/trending"
+                  href="/top-imdb"
                   className="group flex items-center gap-1.5 py-1 text-slate-400 hover:text-white transition-all duration-200 hover:translate-x-2"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-amber-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 flex-shrink-0" />

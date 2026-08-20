@@ -177,8 +177,12 @@ export const Navbar: React.FC = () => {
 
               {/* Top IMDB */}
               <Link
-                href="/trending"
-                className="group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none text-slate-300 hover:text-amber-300 hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95"
+                href="/top-imdb"
+                className={`group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                  pathname === '/top-imdb'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/30 font-bold scale-105'
+                    : 'text-slate-300 hover:text-amber-300 hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95'
+                }`}
               >
                 <Star className="w-4 h-4 text-amber-400 fill-amber-400 group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300 flex-shrink-0" />
                 <span>Top IMDB</span>
@@ -462,7 +466,7 @@ export const Navbar: React.FC = () => {
               <Tv className="w-4 h-4 text-sky-500" /> TV Shows & Series
             </Link>
             <Link
-              href="/trending"
+              href="/top-imdb"
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
             >

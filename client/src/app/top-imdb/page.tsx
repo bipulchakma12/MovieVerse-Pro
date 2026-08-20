@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Film, Play, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Star, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MovieItem } from '@/components/MovieCard';
 
-export default function MoviesPage() {
+export default function TopImdbPage() {
   const [movies, setMovies] = useState<MovieItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGenre, setSelectedGenre] = useState('all');
@@ -24,7 +24,7 @@ export default function MoviesPage() {
   const fetchMovies = async (pageNum = currentPage) => {
     try {
       setLoading(true);
-      const { fetchTMDBPopularMovies } = await import('@/utils/tmdbClient');
+      const { fetchTMDBTopRatedMovies } = await import('@/utils/tmdbClient');
       
       const queryParams = new URLSearchParams();
       if (searchTerm) queryParams.append('search', searchTerm);
@@ -36,28 +36,34 @@ export default function MoviesPage() {
       const timeoutId = setTimeout(() => controller.abort(), 600);
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const backendPromise = fetch(`${apiUrl}/movies?${queryParams.toString()}`, { signal: controller.signal })
+      const backendPromise = fetch(`${apiUrl}/movies?${queryParams.toString()}&sort=rating`, { signal: controller.signal })
         .then(r => r.ok ? r.json() : null)
         .catch(() => null);
 
-      const tmdbPromise = fetchTMDBPopularMovies(pageNum, selectedGenre, searchTerm);
+      const tmdbPromise = fetchTMDBTopRatedMovies(pageNum, selectedGenre, searchTerm);
 
       const [backendRes, tmdbData] = await Promise.all([
         backendPromise.finally(() => clearTimeout(timeoutId)),
         tmdbPromise
       ]);
 
+      let resultList: MovieItem[] = [];
+
       if (backendRes?.success && Array.isArray(backendRes?.data) && backendRes.data.length > 0) {
-        setMovies(backendRes.data);
+        resultList = backendRes.data;
         setTotalPages(backendRes.pages || 1);
         setTotalCount(backendRes.total || backendRes.data.length);
       } else {
-        setMovies(tmdbData);
+        resultList = tmdbData;
         setTotalPages(500);
         setTotalCount(50000);
       }
+
+      // Sort strictly in descending order of IMDb rating so #1 has the highest rating
+      const sorted = [...resultList].sort((a, b) => (b.ratingAverage || 0) - (a.ratingAverage || 0));
+      setMovies(sorted);
     } catch (error) {
-      console.error('Failed to fetch live movies:', error);
+      console.error('Failed to fetch live Top IMDb movies:', error);
     } finally {
       setLoading(false);
     }
@@ -78,7 +84,7 @@ export default function MoviesPage() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
           <h1 className="text-2xl sm:text-4xl font-black text-white flex items-center gap-2.5">
-            <Film className="w-7 h-7 sm:w-8 sm:h-8 text-rose-500 fill-rose-500/20" /> Movies
+            <Star className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400 fill-amber-400" /> Top IMDb
           </h1>
         </div>
 
@@ -87,10 +93,10 @@ export default function MoviesPage() {
           <div className="relative flex-1 md:w-72">
             <input
               type="text"
-              placeholder="Search movies..."
+              placeholder="Search Top IMDb movies..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-xs rounded-full bg-black/60 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"
+              className="w-full pl-10 pr-4 py-2.5 text-xs rounded-full bg-black/60 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           </div>
@@ -108,17 +114,17 @@ export default function MoviesPage() {
               onClick={() => setSelectedGenre(g)}
               className={`relative overflow-hidden group px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 transform hover:scale-105 active:scale-95 ${
                 isActive
-                  ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/30 font-black scale-105'
-                  : 'bg-white/5 text-slate-300 border border-white/10 hover:border-rose-500/50 hover:shadow-md hover:shadow-rose-500/10'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/30 font-black scale-105'
+                  : 'bg-white/5 text-slate-300 border border-white/10 hover:border-amber-400/50 hover:shadow-md hover:shadow-amber-500/10'
               }`}
             >
-              {/* Left-to-Right Rose/Pink Sweep Animation */}
+              {/* Left-to-Right Gradient Background Sweep Animation */}
               {!isActive && (
-                <span className="absolute inset-0 bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                <span className="absolute inset-0 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
               )}
 
               {/* Pill Text Content */}
-              <span className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${!isActive ? 'group-hover:text-white font-semibold' : ''}`}>
+              <span className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${!isActive ? 'group-hover:text-black font-semibold' : ''}`}>
                 {g === 'all' ? 'All Genres' : g}
               </span>
             </button>
@@ -126,33 +132,35 @@ export default function MoviesPage() {
         })}
       </div>
 
-      {/* Movie Grid */}
+      {/* Movie Grid with Top IMDb Ranking Badges (#1, #2, #3...) */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-28 select-none animate-fade-in">
           <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
             {/* Outer glowing pulsing ring */}
-            <div className="absolute inset-0 rounded-full border-2 border-rose-500/30 animate-ping opacity-60" />
+            <div className="absolute inset-0 rounded-full border-2 border-amber-400/30 animate-ping opacity-60" />
             
             {/* Main fast rotating gradient ring */}
-            <div className="absolute inset-0 rounded-full border-3 sm:border-4 border-t-rose-500 border-r-pink-500 border-b-transparent border-l-transparent animate-spin duration-700 shadow-lg shadow-rose-500/30" />
+            <div className="absolute inset-0 rounded-full border-3 sm:border-4 border-t-amber-400 border-r-amber-600 border-b-transparent border-l-transparent animate-spin duration-700 shadow-lg shadow-amber-500/30" />
             
             {/* Inner counter-rotating neon ring */}
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-3 border-r-amber-400 border-b-rose-400 border-t-transparent border-l-transparent animate-spin duration-500" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-3 border-r-rose-400 border-b-amber-400 border-t-transparent border-l-transparent animate-spin duration-500" />
             
-            {/* Center glowing Film Icon */}
-            <div className="absolute flex items-center justify-center text-rose-500 animate-pulse">
-              <Film className="w-5 h-5 sm:w-6 sm:h-6" />
+            {/* Center glowing Star Icon */}
+            <div className="absolute flex items-center justify-center text-amber-400 animate-pulse">
+              <Star className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
             </div>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-6">
-          {movies.map((movie) => {
+          {movies.map((movie, idx) => {
+            const rankNumber = (currentPage - 1) * 20 + idx + 1;
+
             return (
               <Link
                 key={movie._id || movie.slug}
                 href={`/movie/${movie.slug || movie._id}`}
-                className="media-card group flex flex-col space-y-2 rounded-xl sm:rounded-2xl overflow-hidden bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-1.5 sm:p-2 shadow-md hover:border-rose-500/50 hover:shadow-xl hover:shadow-rose-500/10 transition-all duration-300"
+                className="media-card group flex flex-col space-y-2 rounded-xl sm:rounded-2xl overflow-hidden bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-1.5 sm:p-2 shadow-md hover:border-amber-500/50 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300"
               >
                 <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-slate-900">
                   <img
@@ -162,9 +170,9 @@ export default function MoviesPage() {
                     loading="lazy"
                   />
 
-                  {/* Movie Type Badge */}
-                  <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold text-white uppercase tracking-wider bg-rose-600/90 backdrop-blur-md flex items-center gap-1 shadow-md">
-                    <Film className="w-2.5 h-2.5" /> Movie
+                  {/* Yellow/Gold Top Rank Badge (#1, #2, #3...) */}
+                  <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-[#ffd233] text-black font-black text-[10px] sm:text-xs shadow-md flex items-center gap-0.5">
+                    <span>#{rankNumber}</span>
                   </div>
 
                   {/* Green HD Badge */}
@@ -174,14 +182,14 @@ export default function MoviesPage() {
 
                   {/* Hover Play Icon Overlay */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-600/50 transform scale-75 group-hover:scale-100 transition-transform duration-200">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-600 text-white flex items-center justify-center shadow-lg shadow-brand-600/50 transform scale-75 group-hover:scale-100 transition-transform duration-200">
                       <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
                     </div>
                   </div>
                 </div>
 
                 <div className="px-1">
-                  <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover:text-rose-500 transition-colors">
+                  <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 group-hover:text-amber-400 transition-colors">
                     {movie.title}
                   </h3>
                   <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -210,13 +218,13 @@ export default function MoviesPage() {
           </button>
 
           <span className="text-xs font-bold text-slate-400">
-            Page <strong className="text-rose-500">{currentPage}</strong> of {totalPages}
+            Page <strong className="text-amber-400">{currentPage}</strong> of {totalPages}
           </span>
 
           <button
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white font-extrabold shadow-md shadow-rose-600/20 disabled:opacity-50 flex items-center gap-1 transition-all"
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-black font-extrabold shadow-md shadow-amber-500/20 disabled:opacity-50 flex items-center gap-1 transition-all"
           >
             Next Page <ChevronRight className="w-4 h-4" />
           </button>
