@@ -1,4 +1,4 @@
-// MovieVerse Pro — 100% Genuine Real-Time Persistent Visitor Tracking Engine
+// MovieVerse Pro — 100% Genuine Real-Time Persistent Visitor Tracking & User Ledger Engine
 
 export interface VisitorLog {
   id: string;
@@ -59,6 +59,7 @@ export interface VisitorAnalyticsData {
 const STORAGE_KEY_VISITOR_ID = 'mv_real_visitor_uuid';
 const STORAGE_KEY_CACHED_STATS = 'mv_real_cached_stats_v2';
 const STORAGE_KEY_PERMANENT_BACKUP = 'mv_analytics_permanent_history';
+const STORAGE_KEY_USER_LEDGER = 'mv_users_master_ledger_v1';
 
 // Get or assign real unique visitor UUID
 export const getOrCreateVisitorId = (): { id: string; isNew: boolean } => {
@@ -227,4 +228,54 @@ export const clearRealVisitorAnalytics = async () => {
   } catch (e) {}
   localStorage.removeItem(STORAGE_KEY_CACHED_STATS);
   localStorage.removeItem(STORAGE_KEY_PERMANENT_BACKUP);
+};
+
+// Permanent Multi-Device User Accounts Ledger Sync
+export const fetchAndSyncAdminUsers = async () => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    let localLedger: any = { users: [], totalLogins: 0 };
+    try {
+      localLedger = JSON.parse(localStorage.getItem(STORAGE_KEY_USER_LEDGER) || '{"users":[],"totalLogins":0}');
+    } catch {}
+
+    const res = await fetch('/api/admin/users', { cache: 'no-store' });
+    const data = await res.json();
+
+    if (data.success && data.data) {
+      // If client ledger has users not on server (e.g. after cold restart), sync up
+      if (localLedger.users && localLedger.users.length > (data.data.users?.length || 0)) {
+        const syncRes = await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'sync_ledger',
+            clientUsers: localLedger.users,
+            clientTotalLogins: localLedger.totalLogins,
+          }),
+        });
+        const syncData = await syncRes.json();
+        if (syncData.success && syncData.data) {
+          localStorage.setItem(STORAGE_KEY_USER_LEDGER, JSON.stringify({
+            users: syncData.data.users,
+            totalLogins: syncData.data.totalLogins,
+          }));
+          return syncData.data;
+        }
+      }
+
+      // Update client ledger with authoritative server data
+      localStorage.setItem(STORAGE_KEY_USER_LEDGER, JSON.stringify({
+        users: data.data.users || [],
+        totalLogins: data.data.totalLogins || 0,
+      }));
+
+      return data.data;
+    }
+  } catch (e) {
+    console.error('Fetch users error:', e);
+  }
+
+  return null;
 };

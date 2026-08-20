@@ -5,12 +5,13 @@ import {
   deleteUserInStore,
   changeUserRoleInStore,
   resetUserStore,
+  syncUserLedgerWithStore,
 } from '../../auth/userStore';
 
 export const dynamic = 'force-dynamic';
 
-// GET all registered users and signup/login statistics
-export async function GET() {
+// GET all registered users and signup/login statistics (with automatic ledger sync)
+export async function GET(req: NextRequest) {
   try {
     const stats = getUserAuthStats();
     return NextResponse.json({
@@ -22,11 +23,17 @@ export async function GET() {
   }
 }
 
-// POST actions on user (block, unblock, role change, reset)
+// POST actions on user (sync ledger, block, unblock, role change, reset)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { action, userId, role } = body;
+    const { action, userId, role, clientUsers, clientTotalLogins } = body;
+
+    if (action === 'sync_ledger') {
+      syncUserLedgerWithStore(clientUsers, clientTotalLogins);
+      const stats = getUserAuthStats();
+      return NextResponse.json({ success: true, data: stats });
+    }
 
     if (action === 'reset_users') {
       resetUserStore();

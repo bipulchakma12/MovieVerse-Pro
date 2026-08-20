@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { fetchLiveVisitorAnalytics, getVisitorAnalytics, clearRealVisitorAnalytics, VisitorAnalyticsData } from '@/utils/visitorTracker';
+import { fetchLiveVisitorAnalytics, getVisitorAnalytics, clearRealVisitorAnalytics, fetchAndSyncAdminUsers, VisitorAnalyticsData } from '@/utils/visitorTracker';
 
 interface TmdbSearchResult {
   tmdbId: string;
@@ -141,15 +141,32 @@ export default function AdminDashboardPage() {
 
   const fetchAdminUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users', { cache: 'no-store' });
-      const data = await res.json();
-      if (data.success && data.data) {
-        setUserAuthStats(data.data);
-        if (data.data.users) {
-          setAdminUsersList(data.data.users);
+      const data = await fetchAndSyncAdminUsers();
+      if (data) {
+        setUserAuthStats(data);
+        if (data.users) {
+          setAdminUsersList(data.users);
         }
       }
     } catch (e) {}
+  };
+
+  const handleExportFullBackup = () => {
+    const backupData = {
+      exportedAt: new Date().toISOString(),
+      visitorStats,
+      userAuthStats,
+      adminUsersList,
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `movieverse_admin_master_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setMovieActionMessage('Full Admin Backup successfully downloaded to your device!');
+    setTimeout(() => setMovieActionMessage(null), 4000);
   };
 
   const handleResetUserStats = async () => {
@@ -834,11 +851,18 @@ export default function AdminDashboardPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5">
               <span className="px-4 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 shadow-inner">
                 <Radio className="w-4 h-4 animate-pulse" />
                 <span>100% Real Live Counter</span>
               </span>
+              <button
+                onClick={handleExportFullBackup}
+                className="px-3.5 py-2 rounded-2xl bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/30 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                title="Download Master Ledger Backup JSON"
+              >
+                <Download className="w-3.5 h-3.5" /> Backup JSON
+              </button>
               <button
                 onClick={handleRefreshStats}
                 className="px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
@@ -851,7 +875,7 @@ export default function AdminDashboardPage() {
                 className="px-3.5 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
                 title="Reset Counter to Zero"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Reset Count
+                <Trash2 className="w-3.5 h-3.5" /> Reset
               </button>
             </div>
           </div>
@@ -1332,11 +1356,18 @@ export default function AdminDashboardPage() {
               </p>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="px-3.5 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 shadow-inner">
                 <Radio className="w-3.5 h-3.5 animate-pulse" />
                 <span>100% Real User Tracking</span>
               </span>
+              <button
+                onClick={handleExportFullBackup}
+                className="px-3.5 py-2 rounded-2xl bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/30 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                title="Download Master Ledger Backup JSON"
+              >
+                <Download className="w-3.5 h-3.5" /> Backup JSON
+              </button>
               <button
                 onClick={fetchAdminUsers}
                 className="px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"

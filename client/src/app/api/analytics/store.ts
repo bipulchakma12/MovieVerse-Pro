@@ -1,4 +1,6 @@
-// Central In-Memory & Cloud-Synced Analytics Store for MovieVerse Pro with Today, 7 Days, 15 Days, 1 Month & 1 Year Breakdown
+// Central In-Memory & Cloud-Synced Analytics Store for MovieVerse Pro with Permanent Multi-Layer Persistence
+import fs from 'fs';
+import path from 'path';
 
 export interface VisitorLog {
   id: string;
@@ -57,30 +59,127 @@ declare global {
   var __mv_analytics_store: AnalyticsStore | undefined;
 }
 
+// File path for serverless persistent disk storage
+const getDiskStoragePath = () => {
+  try {
+    const tmpDir = process.env.NODE_ENV === 'production' ? '/tmp' : process.cwd();
+    return path.join(tmpDir, 'mv_analytics_persistent_v1.json');
+  } catch {
+    return '/tmp/mv_analytics_persistent_v1.json';
+  }
+};
+
+const loadFromDisk = (): AnalyticsStore | null => {
+  try {
+    const filePath = getDiskStoragePath();
+    if (fs.existsSync(filePath)) {
+      const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      if (raw && typeof raw.totalVisits === 'number') {
+        const store: AnalyticsStore = {
+          totalVisits: raw.totalVisits || 0,
+          uniqueVisitorIds: new Set(raw.uniqueVisitorIds || []),
+          todayDate: raw.todayDate || new Date().toISOString().split('T')[0],
+          todayVisits: raw.todayVisits || 0,
+          activeSessions: new Map(),
+          pageHits: new Map(Object.entries(raw.pageHits || {})),
+          recentLogs: raw.recentLogs || [],
+          dailyMap: new Map(),
+          hourlyMap: new Map(),
+          monthlyMap: new Map(Object.entries(raw.monthlyMap || {})),
+          yearlyMap: new Map(Object.entries(raw.yearlyMap || {})),
+        };
+
+        if (raw.dailyMap) {
+          Object.entries(raw.dailyMap).forEach(([k, v]: [string, any]) => {
+            store.dailyMap.set(k, {
+              visits: v.visits || 0,
+              uniqueSet: new Set(v.uniqueIds || []),
+            });
+          });
+        }
+
+        if (raw.hourlyMap) {
+          Object.entries(raw.hourlyMap).forEach(([k, v]: [string, any]) => {
+            store.hourlyMap.set(Number(k), {
+              visits: v.visits || 0,
+              uniqueSet: new Set(v.uniqueIds || []),
+            });
+          });
+        }
+
+        return store;
+      }
+    }
+  } catch {}
+  return null;
+};
+
+const saveToDisk = (store: AnalyticsStore) => {
+  try {
+    const filePath = getDiskStoragePath();
+    const serializedDaily: Record<string, { visits: number; uniqueIds: string[] }> = {};
+    store.dailyMap.forEach((v, k) => {
+      serializedDaily[k] = {
+        visits: v.visits,
+        uniqueIds: Array.from(v.uniqueSet),
+      };
+    });
+
+    const serializedHourly: Record<string, { visits: number; uniqueIds: string[] }> = {};
+    store.hourlyMap.forEach((v, k) => {
+      serializedHourly[String(k)] = {
+        visits: v.visits,
+        uniqueIds: Array.from(v.uniqueSet),
+      };
+    });
+
+    const serialized = {
+      totalVisits: store.totalVisits,
+      uniqueVisitorIds: Array.from(store.uniqueVisitorIds),
+      todayDate: store.todayDate,
+      todayVisits: store.todayVisits,
+      pageHits: Object.fromEntries(store.pageHits),
+      recentLogs: store.recentLogs.slice(0, 50),
+      dailyMap: serializedDaily,
+      hourlyMap: serializedHourly,
+      monthlyMap: Object.fromEntries(store.monthlyMap),
+      yearlyMap: Object.fromEntries(store.yearlyMap),
+    };
+
+    fs.writeFileSync(filePath, JSON.stringify(serialized), 'utf-8');
+  } catch {}
+};
+
 const getStore = (): AnalyticsStore => {
   const todayStr = new Date().toISOString().split('T')[0];
 
   if (!global.__mv_analytics_store) {
-    global.__mv_analytics_store = {
-      totalVisits: 0,
-      uniqueVisitorIds: new Set<string>(),
-      todayDate: todayStr,
-      todayVisits: 0,
-      activeSessions: new Map<string, number>(),
-      pageHits: new Map<string, number>(),
-      recentLogs: [],
-      dailyMap: new Map<string, { visits: number; uniqueSet: Set<string> }>(),
-      hourlyMap: new Map<number, { visits: number; uniqueSet: Set<string> }>(),
-      monthlyMap: new Map<string, number>(),
-      yearlyMap: new Map<string, number>(),
-    };
+    const diskData = loadFromDisk();
+    if (diskData) {
+      global.__mv_analytics_store = diskData;
+    } else {
+      global.__mv_analytics_store = {
+        totalVisits: 0,
+        uniqueVisitorIds: new Set<string>(),
+        todayDate: todayStr,
+        todayVisits: 0,
+        activeSessions: new Map<string, number>(),
+        pageHits: new Map<string, number>(),
+        recentLogs: [],
+        dailyMap: new Map<string, { visits: number; uniqueSet: Set<string> }>(),
+        hourlyMap: new Map<number, { visits: number; uniqueSet: Set<string> }>(),
+        monthlyMap: new Map<string, number>(),
+        yearlyMap: new Map<string, number>(),
+      };
+    }
   }
 
-  // Auto-reset today's visits if new day has started
+  // Shift todayDate when calendar day changes, but NEVER touch past daily, monthly, yearly history
   if (global.__mv_analytics_store.todayDate !== todayStr) {
     global.__mv_analytics_store.todayDate = todayStr;
     global.__mv_analytics_store.todayVisits = 0;
     global.__mv_analytics_store.hourlyMap.clear();
+    saveToDisk(global.__mv_analytics_store);
   }
 
   return global.__mv_analytics_store;
@@ -108,8 +207,8 @@ export const trackVisitorEvent = (data: {
   const yearStr = todayStr.substring(0, 4);
   const currentHour = now.getHours();
 
-  // Sync client backup if server is fresh after cold start
-  if (data.clientHistory && store.totalVisits < (data.clientHistory.totalVisits || 0)) {
+  // Merge client distributed backup so history is permanently cumulative
+  if (data.clientHistory) {
     if (data.clientHistory.dailyMap) {
       Object.entries(data.clientHistory.dailyMap).forEach(([d, v]) => {
         const existing = store.dailyMap.get(d) || { visits: 0, uniqueSet: new Set<string>() };
@@ -127,7 +226,9 @@ export const trackVisitorEvent = (data: {
         store.yearlyMap.set(y, Math.max(store.yearlyMap.get(y) || 0, v));
       });
     }
-    store.totalVisits = Math.max(store.totalVisits, data.clientHistory.totalVisits || 0);
+    if (data.clientHistory.totalVisits && data.clientHistory.totalVisits > store.totalVisits) {
+      store.totalVisits = data.clientHistory.totalVisits;
+    }
   }
 
   // Increment genuine visits
@@ -136,7 +237,7 @@ export const trackVisitorEvent = (data: {
   store.uniqueVisitorIds.add(data.visitorId);
   store.activeSessions.set(data.visitorId, now.getTime());
 
-  // Update Daily Map
+  // Update Daily Map (Permanent cumulative store)
   const dayEntry = store.dailyMap.get(todayStr) || { visits: 0, uniqueSet: new Set<string>() };
   dayEntry.visits += 1;
   dayEntry.uniqueSet.add(data.visitorId);
@@ -148,11 +249,11 @@ export const trackVisitorEvent = (data: {
   hourEntry.uniqueSet.add(data.visitorId);
   store.hourlyMap.set(currentHour, hourEntry);
 
-  // Update Monthly Map
+  // Update Monthly Map (Permanent cumulative store)
   const currentMonthVisits = store.monthlyMap.get(monthStr) || 0;
   store.monthlyMap.set(monthStr, currentMonthVisits + 1);
 
-  // Update Yearly Map
+  // Update Yearly Map (Permanent cumulative store)
   const currentYearVisits = store.yearlyMap.get(yearStr) || 0;
   store.yearlyMap.set(yearStr, currentYearVisits + 1);
 
@@ -177,7 +278,8 @@ export const trackVisitorEvent = (data: {
     ),
   };
 
-  store.recentLogs = [newLog, ...store.recentLogs.slice(0, 24)];
+  store.recentLogs = [newLog, ...store.recentLogs.slice(0, 49)];
+  saveToDisk(store);
 };
 
 export const getAnalyticsSummary = () => {
@@ -212,7 +314,7 @@ export const getAnalyticsSummary = () => {
   const desktopPercent = Math.round((desktopCount / totalLogs) * 100);
   const mobilePercent = 100 - desktopPercent;
 
-  // 1. TODAY: 12 intervals (Every 2 hours: 12 AM, 2 AM, 4 AM, 6 AM, 8 AM, 10 AM, 12 PM, 2 PM, 4 PM, 6 PM, 8 PM, 10 PM)
+  // 1. TODAY: 12 intervals (Every 2 hours)
   const todayBreakdown: ChartBarStat[] = [];
   const hourLabels = [
     { start: 0, label: '12 AM', range: '12 AM - 2 AM' },
@@ -243,7 +345,7 @@ export const getAnalyticsSummary = () => {
     });
   });
 
-  // Helper generator for daily ranges
+  // Helper generator for daily ranges (strictly cumulative from permanent dailyMap)
   const generateDailyRange = (daysCount: number): ChartBarStat[] => {
     const result: ChartBarStat[] = [];
     for (let i = daysCount - 1; i >= 0; i--) {
@@ -370,4 +472,5 @@ export const resetAnalyticsStore = () => {
     monthlyMap: new Map<string, number>(),
     yearlyMap: new Map<string, number>(),
   };
+  saveToDisk(global.__mv_analytics_store);
 };
