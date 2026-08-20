@@ -222,38 +222,48 @@ export const Navbar: React.FC = () => {
           {/* Right: CineB Live Search Bar + User Controls */}
           <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
             
-            {/* Desktop Search Bar with Live Floating Dropdown (CineB Style) */}
+            {/* Desktop Search Bar with 4-Color Right-to-Left Animated Border on Hover & Focus */}
             <div ref={searchContainerRef} className="relative hidden md:block w-48 sm:w-56 lg:w-64 xl:w-72 flex-shrink-0">
-              <form onSubmit={handleSearch} className="relative w-full flex items-center">
-                <input
-                  type="text"
-                  placeholder="Enter keywords..."
-                  value={searchQuery}
-                  onFocus={() => {
-                    if (searchQuery.trim().length >= 2) setShowDropdown(true);
-                  }}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-white/10 hover:bg-white/15 focus:bg-slate-900/95 backdrop-blur-md border border-white/15 focus:border-[#ffd233] focus:outline-none focus:ring-1 focus:ring-[#ffd233] text-white placeholder:text-slate-400 transition-all shadow-inner"
-                />
-                <button
-                  type="submit"
-                  className="absolute left-3 top-2.5 text-slate-300 hover:text-white transition-colors"
-                  title="Search"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                </button>
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setShowDropdown(false);
+              <form onSubmit={handleSearch} className="relative w-full group/search">
+                
+                {/* 4-Color Gradient Outer Border that streams from Right to Left on Mouse Hover / Focus */}
+                <div className="absolute -inset-[1.5px] rounded-full bg-gradient-to-r from-rose-500 via-amber-400 via-emerald-400 via-sky-400 to-rose-500 opacity-0 group-hover/search:opacity-100 group-focus-within/search:opacity-100 animate-border-sweep-rtl transition-opacity duration-300 pointer-events-none" />
+                
+                {/* Ambient Soft Glow underneath */}
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-rose-500 via-amber-400 via-emerald-400 via-sky-400 to-rose-500 opacity-0 group-hover/search:opacity-40 group-focus-within/search:opacity-60 blur-sm animate-border-sweep-rtl transition-opacity duration-300 pointer-events-none" />
+
+                {/* Inner Search Box */}
+                <div className="relative w-full rounded-full bg-black/70 backdrop-blur-md border border-white/15 group-hover/search:border-transparent transition-colors">
+                  <input
+                    type="text"
+                    placeholder="Enter keywords..."
+                    value={searchQuery}
+                    onFocus={() => {
+                      if (searchQuery.trim().length >= 2) setShowDropdown(true);
                     }}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-white/10 group-hover/search:bg-transparent focus:bg-slate-950/90 text-white placeholder:text-slate-400 focus:outline-none transition-all"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute left-3 top-2.5 text-slate-300 group-hover/search:text-white transition-colors"
+                    title="Search"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <Search className="w-3.5 h-3.5" />
                   </button>
-                )}
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery('');
+                        setShowDropdown(false);
+                      }}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </form>
 
               {/* CineB Live Auto-Suggest Dropdown Modal */}
@@ -424,22 +434,25 @@ export const Navbar: React.FC = () => {
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-white/10 px-4 pt-3 pb-6 space-y-4 bg-slate-950/95 backdrop-blur-xl transition-colors">
           
-          {/* Mobile Search Form */}
+          {/* Mobile Search Form with 4-Color Right-to-Left Border */}
           <div ref={mobileSearchRef} className="relative">
-            <form onSubmit={handleSearch} className="relative w-full flex items-center">
-              <input
-                type="text"
-                placeholder="Search movies & TV series..."
-                value={searchQuery}
-                onFocus={() => {
-                  if (searchQuery.trim().length >= 2) setShowDropdown(true);
-                }}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-white/10 text-white placeholder-slate-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-              <button type="submit" className="absolute left-3 top-2.5 text-slate-400">
-                <Search className="w-3.5 h-3.5" />
-              </button>
+            <form onSubmit={handleSearch} className="relative w-full group/search">
+              <div className="absolute -inset-[1.5px] rounded-full bg-gradient-to-r from-rose-500 via-amber-400 via-emerald-400 via-sky-400 to-rose-500 opacity-0 group-hover/search:opacity-100 group-focus-within/search:opacity-100 animate-border-sweep-rtl transition-opacity duration-300 pointer-events-none" />
+              <div className="relative w-full rounded-full bg-black/70 backdrop-blur-md border border-white/20 group-hover/search:border-transparent transition-colors">
+                <input
+                  type="text"
+                  placeholder="Search movies & TV series..."
+                  value={searchQuery}
+                  onFocus={() => {
+                    if (searchQuery.trim().length >= 2) setShowDropdown(true);
+                  }}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-white/10 group-hover/search:bg-transparent focus:bg-slate-950/90 text-white placeholder-slate-400 focus:outline-none transition-all"
+                />
+                <button type="submit" className="absolute left-3 top-2.5 text-slate-400 group-hover/search:text-white">
+                  <Search className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </form>
 
             {/* Mobile Live Dropdown */}

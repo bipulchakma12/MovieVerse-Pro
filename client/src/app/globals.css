@@ -99,6 +99,21 @@
   animation: shimmer 1.8s infinite;
 }
 
+/* 4-Color Glowing Border Right-to-Left Sweep Animation */
+@keyframes borderSweepRTL {
+  0% {
+    background-position: 200% 50%;
+  }
+  100% {
+    background-position: -100% 50%;
+  }
+}
+
+.animate-border-sweep-rtl {
+  background-size: 300% 300%;
+  animation: borderSweepRTL 3s linear infinite;
+}
+
 /* Custom Fast-Rendering Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
