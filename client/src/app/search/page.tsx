@@ -335,10 +335,13 @@ function SearchContent() {
               >
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-900">
                   <img
-                    src={item.posterUrl}
-                    alt={item.title}
+                    src={item.posterUrl ? item.posterUrl.replace('/original/', '/w342/') : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=342&q=80'}
+                    alt={`${item.title} poster`}
+                    width={342}
+                    height={513}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                     loading="lazy"
+                    decoding="async"
                   />
 
                   {/* Type Badge */}

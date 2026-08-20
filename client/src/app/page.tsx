@@ -20,7 +20,7 @@ interface MediaItem {
   storyline?: string;
 }
 
-// Instant Pre-rendered Blockbuster Heroes (0ms instant display on refresh)
+// Instant Pre-rendered Blockbuster Heroes (0ms instant display on refresh with optimized high-speed image sizes)
 const INITIAL_HERO_BLOCKBUSTERS: MediaItem[] = [
   {
     _id: '634649',
@@ -28,7 +28,7 @@ const INITIAL_HERO_BLOCKBUSTERS: MediaItem[] = [
     title: 'Spider-Man: No Way Home',
     slug: 'spider-man-no-way-home-634649',
     posterUrl: 'https://image.tmdb.org/t/p/w500/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg',
-    bannerUrl: 'https://image.tmdb.org/t/p/original/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/w1280/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg',
     releaseYear: 2021,
     runtimeMinutes: 148,
     runtimeOrSeasons: '148min',
@@ -42,7 +42,7 @@ const INITIAL_HERO_BLOCKBUSTERS: MediaItem[] = [
     title: 'Deadpool & Wolverine',
     slug: 'deadpool-and-wolverine-533535',
     posterUrl: 'https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg',
-    bannerUrl: 'https://image.tmdb.org/t/p/original/yDHYTjA3R0jFYba16jBB1jv82E9.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/w1280/yDHYTjA3R0jFYba16jBB1jv82E9.jpg',
     releaseYear: 2024,
     runtimeMinutes: 128,
     runtimeOrSeasons: '128min',
@@ -56,7 +56,7 @@ const INITIAL_HERO_BLOCKBUSTERS: MediaItem[] = [
     title: 'Dune: Part Two',
     slug: 'dune-part-two-693134',
     posterUrl: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
-    bannerUrl: 'https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s520b4q.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/w1280/xOMo8BRK7PfcJv9JCnx7s520b4q.jpg',
     releaseYear: 2024,
     runtimeMinutes: 166,
     runtimeOrSeasons: '166min',
@@ -70,7 +70,7 @@ const INITIAL_HERO_BLOCKBUSTERS: MediaItem[] = [
     title: 'Oppenheimer',
     slug: 'oppenheimer-872585',
     posterUrl: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',
-    bannerUrl: 'https://image.tmdb.org/t/p/original/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/w1280/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg',
     releaseYear: 2023,
     runtimeMinutes: 180,
     runtimeOrSeasons: '180min',
@@ -84,7 +84,7 @@ const INITIAL_HERO_BLOCKBUSTERS: MediaItem[] = [
     title: 'Game of Thrones',
     slug: 'game-of-thrones-1399',
     posterUrl: 'https://image.tmdb.org/t/p/w500/7WUHnWGx5OO145IRxPDUkQSh4C7.jpg',
-    bannerUrl: 'https://image.tmdb.org/t/p/original/suopoADq0k8YZr4dQXcU6p0k3xH.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/w1280/suopoADq0k8YZr4dQXcU6p0k3xH.jpg',
     releaseYear: 2011,
     runtimeOrSeasons: '8 Seasons',
     ratingAverage: 8.4,
@@ -97,7 +97,7 @@ const INITIAL_HERO_BLOCKBUSTERS: MediaItem[] = [
     title: 'Avatar: The Way of Water',
     slug: 'avatar-the-way-of-water-76600',
     posterUrl: 'https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg',
-    bannerUrl: 'https://image.tmdb.org/t/p/original/ovM06PdF36CfeK0upcN0G986VWn.jpg',
+    bannerUrl: 'https://image.tmdb.org/t/p/w1280/ovM06PdF36CfeK0upcN0G986VWn.jpg',
     releaseYear: 2022,
     runtimeMinutes: 192,
     runtimeOrSeasons: '192min',
@@ -302,14 +302,18 @@ export default function Home() {
           onMouseLeave={() => setIsPaused(false)}
           className="relative w-full h-[480px] sm:h-[580px] lg:h-[680px] overflow-hidden bg-slate-950 select-none group"
         >
-          {/* Background Backdrop Image with Smooth Crossfade */}
+          {/* Background Backdrop Image with Smooth Crossfade & High-Speed LCP Delivery */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             <img
               key={currentHero._id}
-              src={currentHero.bannerUrl || currentHero.posterUrl}
-              alt={currentHero.title}
+              src={currentHero.bannerUrl ? currentHero.bannerUrl.replace('/original/', '/w1280/') : (currentHero.posterUrl || '').replace('/original/', '/w780/')}
+              alt={`${currentHero.title} backdrop`}
+              width={1280}
+              height={720}
               className="w-full h-full object-cover object-center animate-fade-in transform scale-105 duration-1000 ease-out"
               loading="eager"
+              fetchPriority="high"
+              decoding="async"
             />
             {/* CineB Crystal-Clear Full-Light Overlays */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent max-w-xl sm:max-w-2xl" />
@@ -416,6 +420,7 @@ export default function Home() {
           <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md shadow-inner overflow-x-auto scrollbar-none select-none">
             <button
               onClick={() => setActiveTab('all')}
+              aria-label="Filter All Featured Titles"
               className={`group px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 ${
                 activeTab === 'all'
                   ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-lg shadow-brand-600/40 scale-105'
@@ -428,6 +433,7 @@ export default function Home() {
 
             <button
               onClick={() => setActiveTab('movie')}
+              aria-label="Filter Movies Only"
               className={`group px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 ${
                 activeTab === 'movie'
                   ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/40 scale-105'
@@ -440,6 +446,7 @@ export default function Home() {
 
             <button
               onClick={() => setActiveTab('tv')}
+              aria-label="Filter TV Series Only"
               className={`group px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-1.5 ${
                 activeTab === 'tv'
                   ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-lg shadow-sky-600/40 scale-105'
@@ -457,19 +464,24 @@ export default function Home() {
           {displayedMedia.map((item) => {
             const targetUrl = item.type === 'movie' ? `/movie/${item.slug || item._id}` : `/tv/${item.slug || item._id}`;
             const isTv = item.type === 'tv';
+            const optimizedPoster = item.posterUrl ? item.posterUrl.replace('/original/', '/w342/') : 'https://image.tmdb.org/t/p/w342/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg';
 
             return (
               <Link
                 key={`${item.type}-${item._id}`}
                 href={targetUrl}
+                aria-label={`Stream ${item.title}`}
                 className="media-card group flex flex-col space-y-2 rounded-xl sm:rounded-2xl overflow-hidden bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border p-1.5 sm:p-2 shadow-md"
               >
                 <div className="relative aspect-[2/3] rounded-lg sm:rounded-xl overflow-hidden bg-slate-900">
                   <img
-                    src={item.posterUrl}
-                    alt={item.title}
+                    src={optimizedPoster}
+                    alt={`${item.title} poster`}
+                    width={342}
+                    height={513}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
                     loading="lazy"
+                    decoding="async"
                   />
 
                   {/* Type Badge */}

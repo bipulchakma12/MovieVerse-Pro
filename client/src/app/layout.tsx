@@ -59,6 +59,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
+        {/* Resource Preconnection for High-Speed Image & API Delivery */}
+        <link rel="preconnect" href="https://image.tmdb.org" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://image.tmdb.org" />
+        <link rel="preconnect" href="https://api.themoviedb.org" />
+        <link rel="dns-prefetch" href="https://api.themoviedb.org" />
+        
+        {/* Theme and Web App Config */}
+        <meta name="theme-color" content="#0b0c10" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
         {/* Google Search Console Verification — Hardcoded for 100% detection */}
         <meta name="google-site-verification" content="MH1Osikqntad8Po7T5cLX2qqGlwwi7gT3i02s8YRGHc" />
         {/* Browser Favicon Logo */}

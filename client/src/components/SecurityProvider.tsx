@@ -8,8 +8,14 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const pathname = usePathname();
 
   useEffect(() => {
-    // Record Visitor Analytics on each page load
-    recordPageVisit(pathname);
+    // Non-blocking asynchronous visitor analytics recording (0ms main thread delay)
+    if (typeof window !== 'undefined') {
+      if ('requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => recordPageVisit(pathname));
+      } else {
+        setTimeout(() => recordPageVisit(pathname), 100);
+      }
+    }
   }, [pathname]);
 
   useEffect(() => {

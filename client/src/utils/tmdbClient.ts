@@ -1,7 +1,7 @@
 export const TMDB_API_KEY = '6e7c00461b0e03333f481d7c61800e3d';
 export const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-export const TMDB_IMAGE_ORIGINAL = 'https://image.tmdb.org/t/p/original';
+export const TMDB_IMAGE_ORIGINAL = 'https://image.tmdb.org/t/p/w1280';
 
 // TMDB Genre ID Mappings
 export const MOVIE_GENRE_MAP: Record<string, number> = {

@@ -168,8 +168,12 @@ export default function TvShowsPage() {
             >
               <div className="relative aspect-[2/3] rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-dark-border shadow-md group-hover:border-sky-500 transition-all duration-300">
                 <img
-                  src={show.posterUrl}
-                  alt={show.name}
+                  src={show.posterUrl ? show.posterUrl.replace('/original/', '/w342/') : 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?auto=format&fit=crop&w=342&q=80'}
+                  alt={`${show.name} poster`}
+                  width={342}
+                  height={513}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 

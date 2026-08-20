@@ -237,6 +237,7 @@ export const Navbar: React.FC = () => {
                   <input
                     type="text"
                     placeholder="Enter keywords..."
+                    aria-label="Search movies and TV shows"
                     value={searchQuery}
                     onFocus={() => {
                       if (searchQuery.trim().length >= 2) setShowDropdown(true);
@@ -246,6 +247,7 @@ export const Navbar: React.FC = () => {
                   />
                   <button
                     type="submit"
+                    aria-label="Search"
                     className="absolute left-3 top-2.5 text-slate-300 group-hover/search:text-white transition-colors"
                     title="Search"
                   >
@@ -254,6 +256,7 @@ export const Navbar: React.FC = () => {
                   {searchQuery && (
                     <button
                       type="button"
+                      aria-label="Clear search input"
                       onClick={() => {
                         setSearchQuery('');
                         setShowDropdown(false);
@@ -420,6 +423,8 @@ export const Navbar: React.FC = () => {
             <div className="flex items-center gap-2 lg:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle navigation menu"
+                aria-expanded={mobileMenuOpen}
                 className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -442,6 +447,7 @@ export const Navbar: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Search movies & TV series..."
+                  aria-label="Search movies and TV series"
                   value={searchQuery}
                   onFocus={() => {
                     if (searchQuery.trim().length >= 2) setShowDropdown(true);
@@ -449,7 +455,7 @@ export const Navbar: React.FC = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-8 py-2 text-xs rounded-full bg-white/10 group-hover/search:bg-transparent focus:bg-slate-950/90 text-white placeholder-slate-400 focus:outline-none transition-all"
                 />
-                <button type="submit" className="absolute left-3 top-2.5 text-slate-400 group-hover/search:text-white">
+                <button type="submit" aria-label="Search" className="absolute left-3 top-2.5 text-slate-400 group-hover/search:text-white">
                   <Search className="w-3.5 h-3.5" />
                 </button>
               </div>
