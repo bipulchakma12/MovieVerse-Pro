@@ -81,14 +81,11 @@ export default function TrendingTopImdbPage() {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-24 pb-12 space-y-6 sm:space-y-8 animate-fade-in select-none">
       
       {/* Title Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
           <h1 className="text-2xl sm:text-4xl font-black text-white flex items-center gap-2.5">
-            <Star className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400 fill-amber-400" /> Top IMDb Ranked Movies
+            <Star className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400 fill-amber-400" /> Movies
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Highest-rated all-time masterworks and blockbusters, ranked in exact descending order of IMDb score.
-          </p>
         </div>
 
         {/* Filter Search Bar */}

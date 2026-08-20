@@ -88,14 +88,11 @@ export default function TvShowsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 space-y-8 animate-fade-in">
 
       {/* Page Title */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-border pb-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-200 dark:border-dark-border pb-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <Tv className="w-8 h-8 text-sky-500" /> Popular TV Shows & Series Catalog
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+            <Tv className="w-7 h-7 sm:w-8 sm:h-8 text-sky-500" /> TV Shows
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Showing <strong className="text-sky-400 font-bold">{totalCount || tvShows.length}</strong> available TV series across TMDB collections
-          </p>
         </div>
 
         {/* Search Bar */}
