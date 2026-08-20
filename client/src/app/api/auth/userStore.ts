@@ -1,4 +1,4 @@
-// Central User & Auth Store for MovieVerse Pro
+// Central User & Auth Store for MovieVerse Pro — 100% Genuine Real Tracking (Zero Fake/Dummy Data)
 
 export interface RegisteredUser {
   id: string;
@@ -28,75 +28,20 @@ declare global {
   var __mv_user_store: UserStore | undefined;
 }
 
-const initialSeedUsers: RegisteredUser[] = [
-  {
-    id: 'usr_admin_1',
-    name: 'Bipul Chakma',
-    email: 'chakmabipul499@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-    role: 'admin',
-    isBlocked: false,
-    createdAt: '2026-08-15 10:30 AM',
-    lastLoginAt: 'Just now',
-    loginCount: 28,
-    device: 'Desktop',
-    browser: 'Chrome',
-  },
-  {
-    id: 'usr_member_2',
-    name: 'Tanvir Ahmed',
-    email: 'tanvir.ahmed@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80',
-    role: 'user',
-    isBlocked: false,
-    createdAt: '2026-08-18 04:15 PM',
-    lastLoginAt: '2 hours ago',
-    loginCount: 9,
-    device: 'Mobile',
-    browser: 'Safari',
-  },
-  {
-    id: 'usr_member_3',
-    name: 'Rahim Chowdhury',
-    email: 'rahim.moviebuff@outlook.com',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-    role: 'vip',
-    isBlocked: false,
-    createdAt: '2026-08-19 11:20 AM',
-    lastLoginAt: '35 mins ago',
-    loginCount: 14,
-    device: 'Mobile',
-    browser: 'Chrome',
-  },
-  {
-    id: 'usr_member_4',
-    name: 'Nusrat Jahan',
-    email: 'nusrat.jahan@yahoo.com',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-    role: 'user',
-    isBlocked: false,
-    createdAt: '2026-08-20 09:10 AM',
-    lastLoginAt: '15 mins ago',
-    loginCount: 5,
-    device: 'Desktop',
-    browser: 'Edge',
-  },
-];
-
 export const getUserStore = (): UserStore => {
   const todayStr = new Date().toISOString().split('T')[0];
 
   if (!global.__mv_user_store) {
     global.__mv_user_store = {
-      users: initialSeedUsers,
-      totalLogins: 56,
-      todayLogins: 14,
-      todaySignups: 2,
+      users: [], // Zero dummy data: Starts empty until genuine users register/login
+      totalLogins: 0,
+      todayLogins: 0,
+      todaySignups: 0,
       todayDate: todayStr,
     };
   }
 
-  // Reset daily counts if new day
+  // Reset daily counts if new calendar day
   if (global.__mv_user_store.todayDate !== todayStr) {
     global.__mv_user_store.todayDate = todayStr;
     global.__mv_user_store.todayLogins = 0;
@@ -106,7 +51,7 @@ export const getUserStore = (): UserStore => {
   return global.__mv_user_store;
 };
 
-// Register a new user
+// Register a new genuine user
 export const registerUserInStore = (data: {
   name: string;
   email: string;
@@ -158,9 +103,10 @@ export const registerUserInStore = (data: {
   return newUser;
 };
 
-// Login an existing user
+// Login an existing genuine user
 export const loginUserInStore = (data: {
   email: string;
+  name?: string;
   device?: 'Desktop' | 'Mobile' | 'Tablet';
   browser?: string;
 }): RegisteredUser => {
@@ -170,9 +116,9 @@ export const loginUserInStore = (data: {
   let user = store.users.find((u) => u.email.toLowerCase() === normalizedEmail);
 
   if (!user) {
-    // Auto-create registered user record on successful login if not in store
+    // Auto-record registered user record on first login
     user = registerUserInStore({
-      name: normalizedEmail.split('@')[0],
+      name: data.name || normalizedEmail.split('@')[0],
       email: normalizedEmail,
       device: data.device,
       browser: data.browser,
@@ -222,7 +168,7 @@ export const changeUserRoleInStore = (id: string, newRole: 'user' | 'admin' | 'v
   return null;
 };
 
-// Get stats
+// Get genuine user auth stats
 export const getUserAuthStats = () => {
   const store = getUserStore();
   const totalUsers = store.users.length;
@@ -240,5 +186,17 @@ export const getUserAuthStats = () => {
     blockedUsers,
     adminCount,
     users: store.users,
+  };
+};
+
+// Reset all user data back to 0
+export const resetUserStore = () => {
+  const todayStr = new Date().toISOString().split('T')[0];
+  global.__mv_user_store = {
+    users: [],
+    totalLogins: 0,
+    todayLogins: 0,
+    todaySignups: 0,
+    todayDate: todayStr,
   };
 };

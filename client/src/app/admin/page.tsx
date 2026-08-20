@@ -56,22 +56,34 @@ export default function AdminDashboardPage() {
   // Real-Time Visitor Analytics State (100% Real Live Cloud Metrics)
   const [visitorStats, setVisitorStats] = useState<VisitorAnalyticsData>(() => getVisitorAnalytics());
 
-  // Real-Time Registered Users & Auth State
+  // Real-Time Registered Users & Auth State (100% Genuine Tracking, Zero Dummy Data)
   const [userAuthStats, setUserAuthStats] = useState<UserAuthStats>({
-    totalUsers: 4,
-    totalSignups: 4,
-    totalLogins: 56,
-    todaySignups: 2,
-    todayLogins: 14,
-    activeUsers: 4,
+    totalUsers: 0,
+    totalSignups: 0,
+    totalLogins: 0,
+    todaySignups: 0,
+    todayLogins: 0,
+    activeUsers: 0,
     blockedUsers: 0,
-    adminCount: 1,
+    adminCount: 0,
   });
   const [adminUsersList, setAdminUsersList] = useState<AdminUser[]>([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'admin' | 'user' | 'vip'>('all');
   const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'active' | 'blocked'>('all');
   const [selectedUserModal, setSelectedUserModal] = useState<AdminUser | null>(null);
+
+  const filteredUsers = adminUsersList.filter((u) => {
+    const matchesSearch =
+      (u.name || '').toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(userSearchQuery.toLowerCase());
+    const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
+    const matchesStatus =
+      userStatusFilter === 'all' ||
+      (userStatusFilter === 'active' && !u.isBlocked) ||
+      (userStatusFilter === 'blocked' && u.isBlocked);
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   // TMDB Importer Pipeline state
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,12 +124,7 @@ export default function AdminDashboardPage() {
     { id: '1399', title: 'Game of Thrones', releaseYear: 2011, rating: 8.4, views: 92000, status: 'published', slug: 'game-of-thrones-1399' },
   ]);
 
-  const [usersList, setUsersList] = useState([
-    { id: 'u1', name: 'Bipul Chakma', email: 'chakmabipul499@gmail.com', role: 'admin', isBlocked: false },
-    { id: 'u2', name: 'John Doe', email: 'john@example.com', role: 'user', isBlocked: false },
-    { id: 'u3', name: 'Admin Staff', email: 'admin@movieverse.com', role: 'admin', isBlocked: false },
-    { id: 'u4', name: 'Spam Bot', email: 'spambot@test.com', role: 'user', isBlocked: true },
-  ]);
+  const [usersList, setUsersList] = useState<AdminUser[]>([]);
 
   useEffect(() => {
     fetchExportStatus();
@@ -134,7 +141,7 @@ export default function AdminDashboardPage() {
 
   const fetchAdminUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await fetch('/api/admin/users', { cache: 'no-store' });
       const data = await res.json();
       if (data.success && data.data) {
         setUserAuthStats(data.data);
@@ -143,6 +150,21 @@ export default function AdminDashboardPage() {
         }
       }
     } catch (e) {}
+  };
+
+  const handleResetUserStats = async () => {
+    if (confirm('Are you sure you want to reset all user account tracking data back to 0?')) {
+      try {
+        await fetch('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'reset_users' }),
+        });
+        fetchAdminUsers();
+        setMovieActionMessage('User data reset to 0.');
+        setTimeout(() => setMovieActionMessage(null), 3000);
+      } catch (e) {}
+    }
   };
 
   const handleToggleBlockUser = async (userId: string) => {
@@ -430,10 +452,6 @@ export default function AdminDashboardPage() {
     setCustomVideoUrl('');
     setMovieActionMessage(`"${customTitle}" successfully added to the catalog!`);
     setTimeout(() => setMovieActionMessage(null), 4000);
-  };
-
-  const toggleBlockUser = (id: string) => {
-    setUsersList(usersList.map(u => u.id === id ? { ...u, isBlocked: !u.isBlocked } : u));
   };
 
   const deleteMovie = (id: string) => {
@@ -1325,12 +1343,26 @@ export default function AdminDashboardPage() {
               </p>
             </div>
             
-            <button
-              onClick={fetchAdminUsers}
-              className="px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-2 hover:scale-105 active:scale-95 w-fit"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Refresh Users
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="px-3.5 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 shadow-inner">
+                <Radio className="w-3.5 h-3.5 animate-pulse" />
+                <span>100% Real User Tracking</span>
+              </span>
+              <button
+                onClick={fetchAdminUsers}
+                className="px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                title="Refresh User Data"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              </button>
+              <button
+                onClick={handleResetUserStats}
+                className="px-3.5 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                title="Reset All User Records to Zero"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Reset Data
+              </button>
+            </div>
           </div>
 
           {/* 4 Real-Time User Auth Stat Cards */}
@@ -1474,19 +1506,7 @@ export default function AdminDashboardPage() {
               <div>
                 <h4 className="text-base font-bold text-white">Registered Users Roster</h4>
                 <p className="text-xs text-slate-400">
-                  Showing {
-                    (adminUsersList.length > 0 ? adminUsersList : usersList).filter((u: any) => {
-                      const matchesSearch =
-                        (u.name || '').toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-                        (u.email || '').toLowerCase().includes(userSearchQuery.toLowerCase());
-                      const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
-                      const matchesStatus =
-                        userStatusFilter === 'all' ||
-                        (userStatusFilter === 'active' && !u.isBlocked) ||
-                        (userStatusFilter === 'blocked' && u.isBlocked);
-                      return matchesSearch && matchesRole && matchesStatus;
-                    }).length
-                  } user accounts
+                  Showing {filteredUsers.length} user accounts
                 </p>
               </div>
             </div>
@@ -1507,19 +1527,22 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-slate-300">
-                  {(adminUsersList.length > 0 ? adminUsersList : usersList)
-                    .filter((u: any) => {
-                      const matchesSearch =
-                        (u.name || '').toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-                        (u.email || '').toLowerCase().includes(userSearchQuery.toLowerCase());
-                      const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
-                      const matchesStatus =
-                        userStatusFilter === 'all' ||
-                        (userStatusFilter === 'active' && !u.isBlocked) ||
-                        (userStatusFilter === 'blocked' && u.isBlocked);
-                      return matchesSearch && matchesRole && matchesStatus;
-                    })
-                    .map((userItem: any) => (
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-16 px-4 text-center">
+                        <div className="max-w-md mx-auto space-y-3">
+                          <div className="w-14 h-14 rounded-3xl bg-brand-500/10 border border-brand-500/30 text-brand-400 flex items-center justify-center mx-auto shadow-xl shadow-brand-500/10">
+                            <Users className="w-7 h-7" />
+                          </div>
+                          <h5 className="text-base font-bold text-white">No Registered Users Yet</h5>
+                          <p className="text-xs text-slate-400 leading-relaxed">
+                            100% Real Live Tracking is active with zero dummy data. As soon as visitors sign up or log in on the website (from mobile or desktop), their authentic accounts, login sessions, and last active devices will appear here automatically in real time!
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((userItem: any) => (
                     <tr key={userItem.id} className="hover:bg-white/5 transition-colors group">
                       
                       {/* Name & Avatar */}
@@ -1651,7 +1674,7 @@ export default function AdminDashboardPage() {
                       </td>
 
                     </tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             </div>

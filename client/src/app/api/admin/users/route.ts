@@ -4,6 +4,7 @@ import {
   toggleBlockUserInStore,
   deleteUserInStore,
   changeUserRoleInStore,
+  resetUserStore,
 } from '../../auth/userStore';
 
 export const dynamic = 'force-dynamic';
@@ -21,11 +22,16 @@ export async function GET() {
   }
 }
 
-// POST actions on user (block, unblock, role change)
+// POST actions on user (block, unblock, role change, reset)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { action, userId, role } = body;
+
+    if (action === 'reset_users') {
+      resetUserStore();
+      return NextResponse.json({ success: true, message: 'All user data reset to 0' });
+    }
 
     if (action === 'toggle_block' && userId) {
       const updated = toggleBlockUserInStore(userId);
