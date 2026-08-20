@@ -113,22 +113,33 @@ export default function TvShowsPage() {
         </div>
       </div>
 
-      {/* Genre Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        <Filter className="w-4 h-4 text-slate-400 flex-shrink-0" />
-        {genres.map((g) => (
-          <button
-            key={g}
-            onClick={() => setSelectedGenre(g)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              selectedGenre === g
-                ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20'
-                : 'bg-white dark:bg-dark-card text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-dark-border'
-            }`}
-          >
-            {g === 'all' ? 'All Genres' : g}
-          </button>
-        ))}
+      {/* Genre Pills with Left-to-Right Background Sweep Animation */}
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-3 scrollbar-none">
+        {genres.map((g) => {
+          const isActive = selectedGenre.toLowerCase() === g.toLowerCase();
+
+          return (
+            <button
+              key={g}
+              onClick={() => setSelectedGenre(g)}
+              className={`relative overflow-hidden group px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+                isActive
+                  ? 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white shadow-lg shadow-sky-500/30 font-black scale-105'
+                  : 'bg-white dark:bg-dark-card text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-dark-border hover:border-sky-500/50 hover:shadow-md hover:shadow-sky-500/10'
+              }`}
+            >
+              {/* Left-to-Right Sky/Indigo Sweep */}
+              {!isActive && (
+                <span className="absolute inset-0 bg-gradient-to-r from-sky-500 via-indigo-500 to-sky-400 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+              )}
+
+              {/* Pill Text Content */}
+              <span className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${!isActive ? 'group-hover:text-white font-semibold' : ''}`}>
+                {g === 'all' ? 'All Genres' : g}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* TV Series Grid with User-Friendly Neon Orbital Spinner */}

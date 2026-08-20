@@ -106,21 +106,33 @@ export default function TrendingTopImdbPage() {
         </div>
       </div>
 
-      {/* Genre Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-        {genres.map((g) => (
-          <button
-            key={g}
-            onClick={() => setSelectedGenre(g)}
-            className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              selectedGenre.toLowerCase() === g.toLowerCase()
-                ? 'bg-amber-500 text-black font-bold shadow-md shadow-amber-500/20 scale-105'
-                : 'bg-white/5 text-slate-300 hover:bg-white/15 border border-white/10'
-            }`}
-          >
-            {g === 'all' ? 'All Genres' : g}
-          </button>
-        ))}
+      {/* Genre Pills with Left-to-Right Background Sweep Animation */}
+      <div className="flex items-center gap-2.5 overflow-x-auto pb-3 scrollbar-none">
+        {genres.map((g) => {
+          const isActive = selectedGenre.toLowerCase() === g.toLowerCase();
+
+          return (
+            <button
+              key={g}
+              onClick={() => setSelectedGenre(g)}
+              className={`relative overflow-hidden group px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+                isActive
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/30 font-black scale-105'
+                  : 'bg-white/5 text-slate-300 border border-white/10 hover:border-amber-400/50 hover:shadow-md hover:shadow-amber-500/10'
+              }`}
+            >
+              {/* Left-to-Right Gradient Background Sweep Animation */}
+              {!isActive && (
+                <span className="absolute inset-0 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+              )}
+
+              {/* Pill Text Content */}
+              <span className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${!isActive ? 'group-hover:text-black font-semibold' : ''}`}>
+                {g === 'all' ? 'All Genres' : g}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Movie Grid with Top IMDb Ranking Badges (#1, #2, #3...) */}
