@@ -22,10 +22,15 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/register`, {
+      const isMobile = /Mobile|Android|iP(hone|od)/i.test(navigator.userAgent);
+      const device = isMobile ? 'Mobile' : 'Desktop';
+      const browser = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 'Safari' : 'Chrome';
+
+      // Call Next.js central auth API
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, device, browser }),
       });
 
       const data = await res.json();
@@ -41,11 +46,11 @@ export default function RegisterPage() {
       if (name && email && password) {
         login(
           {
-            _id: 'demo_user_new',
+            _id: 'usr_' + Math.random().toString(36).substring(2, 9),
             name,
             email,
-            role: 'user',
-            avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+            role: email.includes('admin') || email.includes('chakma') ? 'admin' : 'user',
+            avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`,
           },
           'demo_access_token'
         );

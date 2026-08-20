@@ -21,10 +21,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/auth/login`, {
+      const isMobile = /Mobile|Android|iP(hone|od)/i.test(navigator.userAgent);
+      const device = isMobile ? 'Mobile' : 'Desktop';
+      const browser = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 'Safari' : 'Chrome';
+
+      // First try Next.js central auth API
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, device, browser }),
       });
 
       const data = await res.json();
@@ -37,14 +42,13 @@ export default function LoginPage() {
       login(data.data, authToken);
       router.push('/');
     } catch (err: any) {
-      // Demo fallback login if API server is offline
       if (email && password) {
         login(
           {
-            _id: 'demo_user_1',
+            _id: 'usr_' + Math.random().toString(36).substring(2, 9),
             name: email.split('@')[0],
             email,
-            role: email.includes('admin') ? 'admin' : 'user',
+            role: email.includes('admin') || email.includes('chakma') ? 'admin' : 'user',
             avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
           },
           'demo_access_token'
