@@ -7,7 +7,8 @@ import {
   Tv, ExternalLink, ArrowRight, Download, Play, Pause, Database, Layers,
   Lock, AlertTriangle, RefreshCw, Zap, X, Image as ImageIcon, Video, Calendar, Star,
   Globe, Activity, Smartphone, Laptop, Eye, UserCheck, Clock, ArrowUpRight, Radio,
-  BarChart3, UserPlus, LogIn, KeyRound, Shield, Filter, CheckCircle, XCircle, Info
+  BarChart3, UserPlus, LogIn, KeyRound, Shield, Filter, CheckCircle, XCircle, Info,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -84,6 +85,24 @@ export default function AdminDashboardPage() {
       (userStatusFilter === 'blocked' && u.isBlocked);
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  // Table Pagination States
+  const [activityPage, setActivityPage] = useState(1);
+  const activityPerPage = 6;
+
+  const [topPagesPage, setTopPagesPage] = useState(1);
+  const topPagesPerPage = 4;
+
+  const [usersPage, setUsersPage] = useState(1);
+  const usersPerPage = 6;
+
+  const [moviesPage, setMoviesPage] = useState(1);
+  const moviesPerPage = 6;
+
+  // Auto-reset user table page when search or filters change
+  useEffect(() => {
+    setUsersPage(1);
+  }, [userSearchQuery, userRoleFilter, userStatusFilter]);
 
   // TMDB Importer Pipeline state
   const [searchQuery, setSearchQuery] = useState('');
@@ -1209,31 +1228,69 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Top Visited Pages & Content */}
-            <div className="p-6 sm:p-7 rounded-3xl bg-[#14151c] border border-white/10 shadow-xl space-y-5">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Globe className="w-5 h-5 text-amber-400" /> Top Visited Sections
-                </h3>
-                <span className="text-xs font-semibold text-slate-400">Total Views</span>
-              </div>
-
-              <div className="space-y-3">
-                {visitorStats.topPages.map((p, idx) => (
-                  <div key={p.path} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 text-xs font-black flex items-center justify-center font-mono">
-                        #{idx + 1}
-                      </span>
-                      <div>
-                        <div className="text-xs font-bold text-white">{p.label}</div>
-                        <div className="text-[10px] font-mono text-slate-400">{p.path}</div>
+            <div className="p-6 sm:p-7 rounded-3xl bg-[#14151c] border border-white/10 shadow-xl space-y-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-amber-400" /> Top Visited Sections
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-slate-400">Total Views</span>
+                    {visitorStats.topPages.length > topPagesPerPage && (
+                      <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10">
+                        <button
+                          type="button"
+                          disabled={topPagesPage === 1}
+                          onClick={() => setTopPagesPage((p) => Math.max(1, p - 1))}
+                          className="p-1 rounded-lg text-slate-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all"
+                          title="Previous Page"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="text-[10px] font-mono text-slate-300 px-1">
+                          {topPagesPage}/{Math.ceil(visitorStats.topPages.length / topPagesPerPage)}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={topPagesPage >= Math.ceil(visitorStats.topPages.length / topPagesPerPage)}
+                          onClick={() => setTopPagesPage((p) => Math.min(Math.ceil(visitorStats.topPages.length / topPagesPerPage), p + 1))}
+                          className="p-1 rounded-lg text-slate-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all"
+                          title="Next Page"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                    </div>
-                    <span className="text-xs font-bold text-amber-400 font-mono">
-                      {p.views.toLocaleString()} views
-                    </span>
+                    )}
                   </div>
-                ))}
+                </div>
+
+                <div className="space-y-3 mt-4">
+                  {visitorStats.topPages.length === 0 ? (
+                    <div className="text-xs text-slate-500 text-center py-6">No page views recorded yet</div>
+                  ) : (
+                    visitorStats.topPages
+                      .slice((topPagesPage - 1) * topPagesPerPage, topPagesPage * topPagesPerPage)
+                      .map((p, idx) => {
+                        const rank = (topPagesPage - 1) * topPagesPerPage + idx + 1;
+                        return (
+                          <div key={p.path} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <span className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 text-xs font-black flex items-center justify-center font-mono">
+                                #{rank}
+                              </span>
+                              <div>
+                                <div className="text-xs font-bold text-white">{p.label}</div>
+                                <div className="text-[10px] font-mono text-slate-400">{p.path}</div>
+                              </div>
+                            </div>
+                            <span className="text-xs font-bold text-amber-400 font-mono">
+                              {p.views.toLocaleString()} views
+                            </span>
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1247,7 +1304,7 @@ export default function AdminDashboardPage() {
                   <Clock className="w-5 h-5 text-brand-500" /> Live Visitor Activity Stream
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Real-time events of users watching movies, browsing categories and searching titles
+                  Real-time events of users watching movies, browsing categories and searching titles ({visitorStats.recentLogs.length} total events)
                 </p>
               </div>
               <span className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
@@ -1267,35 +1324,90 @@ export default function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-slate-300">
-                  {visitorStats.recentLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-white/5 transition-colors group">
-                      <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">
-                        {log.timestamp}
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-white whitespace-nowrap">
-                        {log.action}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono text-brand-400 group-hover:underline">
-                        <Link href={log.path} target="_blank" className="flex items-center gap-1.5">
-                          <span className="max-w-[200px] truncate">{log.path}</span>
-                          <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </Link>
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded-md bg-white/10 text-slate-200 text-[10px] font-semibold">
-                          {log.device} • {log.browser}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active
-                        </span>
+                  {visitorStats.recentLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-500 text-xs font-medium">
+                        No visitor activities recorded yet. Browse pages on the website to see real-time events!
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    visitorStats.recentLogs
+                      .slice((activityPage - 1) * activityPerPage, activityPage * activityPerPage)
+                      .map((log) => (
+                        <tr key={log.id} className="hover:bg-white/5 transition-colors group">
+                          <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                            {log.timestamp}
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-white whitespace-nowrap">
+                            {log.action}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-brand-400 group-hover:underline">
+                            <Link href={log.path} target="_blank" className="flex items-center gap-1.5">
+                              <span className="max-w-[200px] truncate">{log.path}</span>
+                              <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </Link>
+                          </td>
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <span className="px-2 py-0.5 rounded-md bg-white/10 text-slate-200 text-[10px] font-semibold">
+                              {log.device} • {log.browser}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                  )}
                 </tbody>
               </table>
             </div>
+
+            {/* Activity Table Pagination Controls */}
+            {visitorStats.recentLogs.length > activityPerPage && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10 text-xs text-slate-400">
+                <span>
+                  Showing {Math.min((activityPage - 1) * activityPerPage + 1, visitorStats.recentLogs.length)} to{' '}
+                  {Math.min(activityPage * activityPerPage, visitorStats.recentLogs.length)} of {visitorStats.recentLogs.length} events
+                </span>
+                
+                <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10">
+                  <button
+                    type="button"
+                    disabled={activityPage === 1}
+                    onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                    className="px-3 py-1 rounded-xl font-bold bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                  </button>
+
+                  {Array.from({ length: Math.ceil(visitorStats.recentLogs.length / activityPerPage) }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setActivityPage(i + 1)}
+                      className={`w-7 h-7 rounded-xl font-bold font-mono text-xs transition-all ${
+                        activityPage === i + 1
+                          ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-md shadow-brand-600/30'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    disabled={activityPage >= Math.ceil(visitorStats.recentLogs.length / activityPerPage)}
+                    onClick={() => setActivityPage((p) => Math.min(Math.ceil(visitorStats.recentLogs.length / activityPerPage), p + 1))}
+                    className="px-3 py-1 rounded-xl font-bold bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1"
+                  >
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
@@ -1329,7 +1441,9 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-slate-300">
-                {moviesList.map((movie) => (
+                {moviesList
+                  .slice((moviesPage - 1) * moviesPerPage, moviesPage * moviesPerPage)
+                  .map((movie) => (
                   <tr key={movie.id} className="hover:bg-white/5 transition-colors group">
                     <td className="py-3.5 px-4 font-bold text-white group-hover:text-brand-400 transition-colors">
                       <Link href={`/movie/${movie.slug || movie.id}`} className="hover:underline flex items-center gap-2">
@@ -1354,6 +1468,51 @@ export default function AdminDashboardPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Movies Table Pagination Controls */}
+          {moviesList.length > moviesPerPage && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10 text-xs text-slate-400">
+              <span>
+                Showing {Math.min((moviesPage - 1) * moviesPerPage + 1, moviesList.length)} to{' '}
+                {Math.min(moviesPage * moviesPerPage, moviesList.length)} of {moviesList.length} movies
+              </span>
+              
+              <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10">
+                <button
+                  type="button"
+                  disabled={moviesPage === 1}
+                  onClick={() => setMoviesPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1 rounded-xl font-bold bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                </button>
+
+                {Array.from({ length: Math.ceil(moviesList.length / moviesPerPage) }).map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setMoviesPage(i + 1)}
+                    className={`w-7 h-7 rounded-xl font-bold font-mono text-xs transition-all ${
+                      moviesPage === i + 1
+                        ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-md shadow-brand-600/30'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  disabled={moviesPage >= Math.ceil(moviesList.length / moviesPerPage)}
+                  onClick={() => setMoviesPage((p) => Math.min(Math.ceil(moviesList.length / moviesPerPage), p + 1))}
+                  className="px-3 py-1 rounded-xl font-bold bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1578,7 +1737,9 @@ export default function AdminDashboardPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map((userItem: any) => (
+                    filteredUsers
+                      .slice((usersPage - 1) * usersPerPage, usersPage * usersPerPage)
+                      .map((userItem: any) => (
                     <tr key={userItem.id} className="hover:bg-white/5 transition-colors group">
                       
                       {/* Name & Avatar */}
@@ -1710,11 +1871,56 @@ export default function AdminDashboardPage() {
                       </td>
 
                     </tr>
-                  )))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
 
+            {/* Registered Users Table Pagination Controls */}
+            {filteredUsers.length > usersPerPage && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10 text-xs text-slate-400">
+                <span>
+                  Showing {Math.min((usersPage - 1) * usersPerPage + 1, filteredUsers.length)} to{' '}
+                  {Math.min(usersPage * usersPerPage, filteredUsers.length)} of {filteredUsers.length} user accounts
+                </span>
+                
+                <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10">
+                  <button
+                    type="button"
+                    disabled={usersPage === 1}
+                    onClick={() => setUsersPage((p) => Math.max(1, p - 1))}
+                    className="px-3 py-1 rounded-xl font-bold bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                  </button>
+
+                  {Array.from({ length: Math.ceil(filteredUsers.length / usersPerPage) }).map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setUsersPage(i + 1)}
+                      className={`w-7 h-7 rounded-xl font-bold font-mono text-xs transition-all ${
+                        usersPage === i + 1
+                          ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-md shadow-brand-600/30'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    disabled={usersPage >= Math.ceil(filteredUsers.length / usersPerPage)}
+                    onClick={() => setUsersPage((p) => Math.min(Math.ceil(filteredUsers.length / usersPerPage), p + 1))}
+                    className="px-3 py-1 rounded-xl font-bold bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1"
+                  >
+                    Next <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
