@@ -133,59 +133,75 @@ export const Navbar: React.FC = () => {
               </span>
             </Link>
 
-            {/* Nav Links - Interactive Glass Pills with Hover & Active Animations */}
-            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2 text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-black/25 p-1 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
+            {/* Nav Links - Interactive Glass Pills with Left-to-Right Background Sweep Animations */}
+            <nav className="hidden lg:flex items-center gap-1.5 xl:gap-2 text-sm font-semibold whitespace-nowrap flex-shrink-0 bg-black/35 p-1 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
               
               {/* Home */}
               <Link
                 href="/"
-                className={`group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                className={`group relative overflow-hidden px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
                   pathname === '/'
                     ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-lg shadow-brand-600/30 font-bold scale-105'
-                    : 'text-slate-300 hover:text-white hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95'
+                    : 'text-slate-300 border border-transparent hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/10 hover:scale-105 active:scale-95'
                 }`}
               >
-                <Home className="w-4 h-4 text-brand-400 group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300 flex-shrink-0" />
-                <span>Home</span>
+                {/* Left-to-Right Red/Rose Sweep */}
+                {pathname !== '/' && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-brand-600 via-rose-600 to-brand-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                )}
+                <Home className="relative z-10 w-4 h-4 text-brand-400 group-hover:scale-125 group-hover:-rotate-12 transition-transform duration-300 flex-shrink-0" />
+                <span className="relative z-10 group-hover:text-white transition-colors duration-300">Home</span>
               </Link>
 
               {/* Movies */}
               <Link
                 href="/trending"
-                className={`group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                className={`group relative overflow-hidden px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
                   pathname === '/trending'
                     ? 'bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-lg shadow-rose-600/30 font-bold scale-105'
-                    : 'text-slate-300 hover:text-rose-300 hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95'
+                    : 'text-slate-300 border border-transparent hover:border-rose-500/40 hover:shadow-md hover:shadow-rose-500/10 hover:scale-105 active:scale-95'
                 }`}
               >
-                <Clapperboard className="w-4 h-4 text-rose-400 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
-                <span>Movies</span>
+                {/* Left-to-Right Rose/Pink Sweep */}
+                {pathname !== '/trending' && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                )}
+                <Clapperboard className="relative z-10 w-4 h-4 text-rose-400 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 flex-shrink-0" />
+                <span className="relative z-10 group-hover:text-white transition-colors duration-300">Movies</span>
               </Link>
 
               {/* TV Shows */}
               <Link
                 href="/tv"
-                className={`group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                className={`group relative overflow-hidden px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
                   pathname === '/tv'
                     ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-lg shadow-sky-600/30 font-bold scale-105'
-                    : 'text-slate-300 hover:text-sky-300 hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95'
+                    : 'text-slate-300 border border-transparent hover:border-sky-500/40 hover:shadow-md hover:shadow-sky-500/10 hover:scale-105 active:scale-95'
                 }`}
               >
-                <Tv className="w-4 h-4 text-sky-400 group-hover:scale-125 group-hover:-translate-y-0.5 transition-transform duration-300 flex-shrink-0" />
-                <span>TV Shows</span>
+                {/* Left-to-Right Sky/Blue Sweep */}
+                {pathname !== '/tv' && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-sky-600 via-blue-600 to-sky-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                )}
+                <Tv className="relative z-10 w-4 h-4 text-sky-400 group-hover:scale-125 group-hover:-translate-y-0.5 transition-transform duration-300 flex-shrink-0" />
+                <span className="relative z-10 group-hover:text-white transition-colors duration-300">TV Shows</span>
               </Link>
 
               {/* Top IMDB */}
               <Link
                 href="/top-imdb"
-                className={`group relative px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
+                className={`group relative overflow-hidden px-3.5 py-1.5 rounded-full transition-all duration-300 flex items-center gap-2 text-xs xl:text-sm select-none ${
                   pathname === '/top-imdb'
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-lg shadow-amber-500/30 font-bold scale-105'
-                    : 'text-slate-300 hover:text-amber-300 hover:bg-white/15 hover:shadow-md hover:scale-105 active:scale-95'
+                    : 'text-slate-300 border border-transparent hover:border-amber-400/50 hover:shadow-md hover:shadow-amber-500/10 hover:scale-105 active:scale-95'
                 }`}
               >
-                <Star className="w-4 h-4 text-amber-400 fill-amber-400 group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300 flex-shrink-0" />
-                <span>Top IMDB</span>
+                {/* Left-to-Right Amber/Orange Sweep */}
+                {pathname !== '/top-imdb' && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+                )}
+                <Star className="relative z-10 w-4 h-4 text-amber-400 fill-amber-400 group-hover:scale-125 group-hover:rotate-45 transition-transform duration-300 flex-shrink-0" />
+                <span className={`relative z-10 transition-colors duration-300 ${pathname !== '/top-imdb' ? 'group-hover:text-black font-semibold' : ''}`}>Top IMDB</span>
               </Link>
 
             </nav>
@@ -447,30 +463,38 @@ export const Navbar: React.FC = () => {
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
+              className="group relative overflow-hidden flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-white/5 hover:border-brand-500/30 transition-all duration-300"
             >
-              <Home className="w-4 h-4 text-brand-500" /> Home
+              <span className="absolute inset-0 bg-gradient-to-r from-brand-600 via-rose-600 to-brand-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+              <Home className="relative z-10 w-4 h-4 text-brand-500 group-hover:text-white" />
+              <span className="relative z-10 group-hover:text-white transition-colors">Home</span>
             </Link>
             <Link
               href="/trending"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
+              className="group relative overflow-hidden flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-white/5 hover:border-rose-500/30 transition-all duration-300"
             >
-              <Clapperboard className="w-4 h-4 text-rose-500" /> Movies Catalog
+              <span className="absolute inset-0 bg-gradient-to-r from-rose-600 via-pink-600 to-rose-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+              <Clapperboard className="relative z-10 w-4 h-4 text-rose-500 group-hover:text-white" />
+              <span className="relative z-10 group-hover:text-white transition-colors">Movies Catalog</span>
             </Link>
             <Link
               href="/tv"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
+              className="group relative overflow-hidden flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-white/5 hover:border-sky-500/30 transition-all duration-300"
             >
-              <Tv className="w-4 h-4 text-sky-500" /> TV Shows & Series
+              <span className="absolute inset-0 bg-gradient-to-r from-sky-600 via-blue-600 to-sky-500 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+              <Tv className="relative z-10 w-4 h-4 text-sky-500 group-hover:text-white" />
+              <span className="relative z-10 group-hover:text-white transition-colors">TV Shows & Series</span>
             </Link>
             <Link
               href="/top-imdb"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
+              className="group relative overflow-hidden flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-white/5 hover:border-amber-400/30 transition-all duration-300"
             >
-              <Star className="w-4 h-4 text-amber-400 fill-amber-400" /> Top IMDB
+              <span className="absolute inset-0 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 opacity-90 -translate-x-full group-hover:translate-x-0 transition-transform duration-400 ease-out" />
+              <Star className="relative z-10 w-4 h-4 text-amber-400 fill-amber-400 group-hover:text-black group-hover:fill-black" />
+              <span className="relative z-10 group-hover:text-black font-semibold transition-colors">Top IMDB</span>
             </Link>
             <Link
               href="/favorites"
