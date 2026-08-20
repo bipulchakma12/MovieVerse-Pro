@@ -1,8 +1,17 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { recordPageVisit } from '@/utils/visitorTracker';
 
 export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Record Visitor Analytics on each page load
+    recordPageVisit(pathname);
+  }, [pathname]);
+
   useEffect(() => {
     // 1. Disable Right Click (Context Menu)
     const handleContextMenu = (e: MouseEvent) => {
