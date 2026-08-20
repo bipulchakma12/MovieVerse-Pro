@@ -51,7 +51,7 @@ export interface UserAuthStats {
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'importer' | 'analytics' | 'movies' | 'users'>('analytics');
-  const [chartPeriod, setChartPeriod] = useState<'daily' | 'monthly' | 'yearly'>('daily');
+  const [chartPeriod, setChartPeriod] = useState<'today' | '7days' | '15days' | '1month' | '1year'>('today');
 
   // Real-Time Visitor Analytics State (100% Real Live Cloud Metrics)
   const [visitorStats, setVisitorStats] = useState<VisitorAnalyticsData>(() => getVisitorAnalytics());
@@ -944,197 +944,186 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
 
-              {/* Period Switcher Buttons */}
-              <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-2xl border border-white/10 w-fit">
+              {/* Period Switcher Buttons (Today, 7 Days, 15 Days, 1 Month, 1 Year) */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10 w-fit">
                 <button
                   type="button"
-                  onClick={() => setChartPeriod('daily')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    chartPeriod === 'daily'
-                      ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-md shadow-brand-600/30'
+                  onClick={() => setChartPeriod('today')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    chartPeriod === 'today'
+                      ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-md shadow-brand-600/30 scale-105'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  📅 Daily (14 Days)
+                  ⚡ Today
                 </button>
                 <button
                   type="button"
-                  onClick={() => setChartPeriod('monthly')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    chartPeriod === 'monthly'
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md shadow-amber-500/30'
+                  onClick={() => setChartPeriod('7days')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    chartPeriod === '7days'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/30 scale-105'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  📆 Monthly (12 Months)
+                  📅 7 Days
                 </button>
                 <button
                   type="button"
-                  onClick={() => setChartPeriod('yearly')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                    chartPeriod === 'yearly'
-                      ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/30'
+                  onClick={() => setChartPeriod('15days')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    chartPeriod === '15days'
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md shadow-amber-500/30 scale-105'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  📊 Yearly
+                  📆 15 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartPeriod('1month')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    chartPeriod === '1month'
+                      ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/30 scale-105'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  📊 1 Month
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartPeriod('1year')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    chartPeriod === '1year'
+                      ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/30 scale-105'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  🌐 1 Year
                 </button>
               </div>
             </div>
 
-            {/* Daily Chart View */}
-            {chartPeriod === 'daily' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Showing daily unique visits for the last 14 days</span>
-                  <span className="font-mono text-brand-400 font-bold">
-                    Max: {Math.max(...(visitorStats.dailyBreakdown?.map((d) => d.visits) || [0]), 1)} visits/day
-                  </span>
-                </div>
+            {/* Dynamic 5-Period Traffic Chart View */}
+            {(() => {
+              const currentChartData = (() => {
+                switch (chartPeriod) {
+                  case 'today':
+                    return {
+                      title: "Showing today's hourly visitor activity across 24 hours (2-hr slots)",
+                      items: visitorStats.todayBreakdown || [],
+                      gradientActive: 'bg-gradient-to-t from-brand-600 via-rose-500 to-pink-400 shadow-lg shadow-brand-500/30',
+                      gradientNormal: 'bg-gradient-to-t from-brand-800/80 to-brand-500/80 group-hover:from-brand-600 group-hover:to-rose-400',
+                      textColor: 'text-brand-400',
+                      maxLabel: 'visits/slot',
+                    };
+                  case '7days':
+                    return {
+                      title: 'Showing daily authentic visits for the last 7 days',
+                      items: visitorStats.sevenDaysBreakdown || [],
+                      gradientActive: 'bg-gradient-to-t from-emerald-600 via-teal-500 to-cyan-300 shadow-lg shadow-emerald-500/30',
+                      gradientNormal: 'bg-gradient-to-t from-emerald-800/80 to-teal-500/80 group-hover:from-emerald-600 group-hover:to-teal-400',
+                      textColor: 'text-emerald-400',
+                      maxLabel: 'visits/day',
+                    };
+                  case '15days':
+                    return {
+                      title: 'Showing daily authentic visits for the last 15 days',
+                      items: visitorStats.fifteenDaysBreakdown || [],
+                      gradientActive: 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-400 shadow-lg shadow-amber-500/30',
+                      gradientNormal: 'bg-gradient-to-t from-amber-800/80 to-amber-500/80 group-hover:from-amber-600 group-hover:to-yellow-400',
+                      textColor: 'text-amber-400',
+                      maxLabel: 'visits/day',
+                    };
+                  case '1month':
+                    return {
+                      title: 'Showing daily authentic visits for the last 30 days (1 Month)',
+                      items: visitorStats.oneMonthBreakdown || [],
+                      gradientActive: 'bg-gradient-to-t from-violet-600 via-purple-500 to-fuchsia-400 shadow-lg shadow-violet-500/30',
+                      gradientNormal: 'bg-gradient-to-t from-violet-800/80 to-purple-500/80 group-hover:from-violet-600 group-hover:to-fuchsia-400',
+                      textColor: 'text-violet-400',
+                      maxLabel: 'visits/day',
+                    };
+                  case '1year':
+                  default:
+                    return {
+                      title: `Showing monthly authentic traffic distribution for ${new Date().getFullYear()} (1 Year)`,
+                      items: visitorStats.oneYearBreakdown || [],
+                      gradientActive: 'bg-gradient-to-t from-sky-600 via-sky-500 to-cyan-300 shadow-lg shadow-sky-500/30',
+                      gradientNormal: 'bg-gradient-to-t from-sky-800 to-sky-500 group-hover:from-sky-600 group-hover:to-cyan-400',
+                      textColor: 'text-sky-400',
+                      maxLabel: 'visits/mo',
+                    };
+                }
+              })();
 
-                <div className="h-56 w-full flex items-end gap-2 sm:gap-3 pt-6 pb-2 px-2 bg-black/40 rounded-2xl border border-white/5 overflow-x-auto">
-                  {(visitorStats.dailyBreakdown || []).map((day) => {
-                    const maxV = Math.max(...(visitorStats.dailyBreakdown?.map((d) => d.visits) || [0]), 1);
-                    const pct = Math.max(6, Math.round((day.visits / maxV) * 100));
-                    const isToday = day.date === new Date().toISOString().split('T')[0];
+              const items = currentChartData.items;
+              const maxV = Math.max(...items.map((i) => i.visits || 0), 1);
+              const todayKey = new Date().toISOString().split('T')[0];
+              const thisMonthKey = new Date().toISOString().substring(0, 7);
+              const currentHourSlot = `h_${Math.floor(new Date().getHours() / 2) * 2}`;
 
-                    return (
-                      <div key={day.date} className="flex-1 min-w-[2.2rem] h-full flex flex-col items-center justify-end group relative cursor-pointer">
-                        {/* Hover Tooltip */}
-                        <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-slate-900 border border-white/20 px-2.5 py-1 rounded-xl text-center shadow-2xl z-20 whitespace-nowrap">
-                          <div className="text-[10px] text-slate-300 font-semibold">{day.label}</div>
-                          <div className="text-xs font-black text-brand-400">{day.visits} visits ({day.uniqueVisitors} unique)</div>
-                        </div>
+              return (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 gap-1">
+                    <span>{currentChartData.title}</span>
+                    <span className={`font-mono font-bold ${currentChartData.textColor}`}>
+                      Max: {maxV} {currentChartData.maxLabel}
+                    </span>
+                  </div>
 
-                        {/* Bar */}
-                        <div className="w-full flex items-end justify-center h-[82%]">
-                          <div
-                            style={{ height: `${pct}%` }}
-                            className={`w-full max-w-[28px] rounded-t-xl transition-all duration-700 ${
-                              isToday
-                                ? 'bg-gradient-to-t from-brand-600 via-rose-500 to-pink-400 shadow-lg shadow-brand-500/30'
-                                : day.visits > 0
-                                ? 'bg-gradient-to-t from-brand-800/80 to-brand-500/80 group-hover:from-brand-600 group-hover:to-rose-400'
-                                : 'bg-white/10 group-hover:bg-white/20'
+                  <div className="h-56 w-full flex items-end gap-1.5 sm:gap-2.5 pt-6 pb-2 px-2 bg-black/40 rounded-2xl border border-white/5 overflow-x-auto">
+                    {items.map((item) => {
+                      const pct = Math.max(6, Math.round(((item.visits || 0) / maxV) * 100));
+                      const isHighlighted =
+                        item.key === todayKey ||
+                        item.key === thisMonthKey ||
+                        item.key === currentHourSlot;
+
+                      return (
+                        <div
+                          key={item.key}
+                          className="flex-1 min-w-[1.8rem] h-full flex flex-col items-center justify-end group relative cursor-pointer"
+                        >
+                          {/* Hover Tooltip */}
+                          <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-slate-900 border border-white/20 px-2.5 py-1 rounded-xl text-center shadow-2xl z-20 whitespace-nowrap">
+                            <div className="text-[10px] text-slate-300 font-semibold">{item.subLabel || item.label}</div>
+                            <div className={`text-xs font-black ${currentChartData.textColor}`}>
+                              {item.visits} visits {item.uniqueVisitors !== undefined ? `(${item.uniqueVisitors} unique)` : ''}
+                            </div>
+                          </div>
+
+                          {/* Bar */}
+                          <div className="w-full flex items-end justify-center h-[82%]">
+                            <div
+                              style={{ height: `${pct}%` }}
+                              className={`w-full max-w-[28px] rounded-t-xl transition-all duration-700 ${
+                                isHighlighted
+                                  ? currentChartData.gradientActive
+                                  : item.visits > 0
+                                  ? currentChartData.gradientNormal
+                                  : 'bg-white/10 group-hover:bg-white/20'
+                              }`}
+                            />
+                          </div>
+
+                          {/* X-Axis Label */}
+                          <span
+                            className={`text-[9px] sm:text-[10px] mt-2 font-mono whitespace-nowrap truncate max-w-full text-center ${
+                              isHighlighted
+                                ? `${currentChartData.textColor} font-bold`
+                                : 'text-slate-500 group-hover:text-slate-300'
                             }`}
-                          />
+                          >
+                            {item.label}
+                          </span>
                         </div>
-
-                        {/* X-Axis Label */}
-                        <span className={`text-[10px] mt-2 font-mono whitespace-nowrap truncate max-w-full text-center ${
-                          isToday ? 'text-brand-400 font-bold' : 'text-slate-500 group-hover:text-slate-300'
-                        }`}>
-                          {day.label.split(',')[0]}
-                        </span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Monthly Chart View */}
-            {chartPeriod === 'monthly' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Monthly traffic distribution for {new Date().getFullYear()}</span>
-                  <span className="font-mono text-amber-400 font-bold">
-                    Max: {Math.max(...(visitorStats.monthlyBreakdown?.map((m) => m.visits) || [0]), 1)} visits/mo
-                  </span>
-                </div>
-
-                <div className="h-56 w-full flex items-end gap-2 sm:gap-3 pt-6 pb-2 px-2 bg-black/40 rounded-2xl border border-white/5 overflow-x-auto">
-                  {(visitorStats.monthlyBreakdown || []).map((mo) => {
-                    const maxV = Math.max(...(visitorStats.monthlyBreakdown?.map((m) => m.visits) || [0]), 1);
-                    const pct = Math.max(6, Math.round((mo.visits / maxV) * 100));
-                    const currentMonthKey = new Date().toISOString().substring(0, 7);
-                    const isCurrent = mo.month === currentMonthKey;
-
-                    return (
-                      <div key={mo.month} className="flex-1 min-w-[2.2rem] h-full flex flex-col items-center justify-end group relative cursor-pointer">
-                        {/* Hover Tooltip */}
-                        <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-slate-900 border border-white/20 px-2.5 py-1 rounded-xl text-center shadow-2xl z-20 whitespace-nowrap">
-                          <div className="text-[10px] text-slate-300 font-semibold">{mo.label}</div>
-                          <div className="text-xs font-black text-amber-400">{mo.visits} total visits</div>
-                        </div>
-
-                        {/* Bar */}
-                        <div className="w-full flex items-end justify-center h-[82%]">
-                          <div
-                            style={{ height: `${pct}%` }}
-                            className={`w-full max-w-[28px] rounded-t-xl transition-all duration-700 ${
-                              isCurrent
-                                ? 'bg-gradient-to-t from-amber-600 via-amber-500 to-yellow-400 shadow-lg shadow-amber-500/30'
-                                : mo.visits > 0
-                                ? 'bg-gradient-to-t from-amber-800/80 to-amber-500/80 group-hover:from-amber-600 group-hover:to-yellow-400'
-                                : 'bg-white/10 group-hover:bg-white/20'
-                            }`}
-                          />
-                        </div>
-
-                        {/* X-Axis Label */}
-                        <span className={`text-[10px] mt-2 font-mono whitespace-nowrap truncate max-w-full text-center ${
-                          isCurrent ? 'text-amber-400 font-bold' : 'text-slate-500 group-hover:text-slate-300'
-                        }`}>
-                          {mo.label.split(' ')[0]}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Yearly Chart View */}
-            {chartPeriod === 'yearly' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Year-over-Year Authentic Visitor Growth</span>
-                  <span className="font-mono text-sky-400 font-bold">
-                    Total: {visitorStats.yearlyBreakdown?.reduce((acc, y) => acc + y.visits, 0) || 0} visits
-                  </span>
-                </div>
-
-                <div className="h-56 w-full flex items-end gap-6 sm:gap-12 pt-6 pb-2 px-6 bg-black/40 rounded-2xl border border-white/5 justify-around">
-                  {(visitorStats.yearlyBreakdown || []).map((yr) => {
-                    const maxV = Math.max(...(visitorStats.yearlyBreakdown?.map((y) => y.visits) || [0]), 1);
-                    const pct = Math.max(10, Math.round((yr.visits / maxV) * 100));
-                    const isCurrentYear = yr.year === String(new Date().getFullYear());
-
-                    return (
-                      <div key={yr.year} className="flex-1 max-w-[120px] h-full flex flex-col items-center justify-end group relative cursor-pointer">
-                        {/* Hover Tooltip */}
-                        <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-slate-900 border border-white/20 px-3 py-1 rounded-xl text-center shadow-2xl z-20 whitespace-nowrap">
-                          <div className="text-[10px] text-slate-300 font-semibold">Year {yr.label}</div>
-                          <div className="text-xs font-black text-sky-400">{yr.visits} total visits</div>
-                        </div>
-
-                        {/* Bar */}
-                        <div className="w-full flex items-end justify-center h-[82%]">
-                          <div
-                            style={{ height: `${pct}%` }}
-                            className={`w-full max-w-[48px] rounded-t-2xl transition-all duration-700 ${
-                              isCurrentYear
-                                ? 'bg-gradient-to-t from-sky-600 via-sky-500 to-cyan-300 shadow-lg shadow-sky-500/30'
-                                : yr.visits > 0
-                                ? 'bg-gradient-to-t from-sky-800 to-sky-500 group-hover:from-sky-600 group-hover:to-cyan-400'
-                                : 'bg-white/10 group-hover:bg-white/20'
-                            }`}
-                          />
-                        </div>
-
-                        {/* X-Axis Label */}
-                        <span className={`text-xs mt-2 font-mono whitespace-nowrap ${
-                          isCurrentYear ? 'text-sky-400 font-bold' : 'text-slate-400 group-hover:text-white'
-                        }`}>
-                          {yr.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
           </div>
 

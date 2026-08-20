@@ -10,6 +10,14 @@ export interface VisitorLog {
   action: string;
 }
 
+export interface ChartBarStat {
+  key: string;
+  label: string;
+  subLabel?: string;
+  visits: number;
+  uniqueVisitors?: number;
+}
+
 export interface DayStat {
   date: string;
   label: string;
@@ -38,6 +46,11 @@ export interface VisitorAnalyticsData {
   mobilePercent: number;
   topPages: { path: string; label: string; views: number }[];
   recentLogs: VisitorLog[];
+  todayBreakdown?: ChartBarStat[];
+  sevenDaysBreakdown?: ChartBarStat[];
+  fifteenDaysBreakdown?: ChartBarStat[];
+  oneMonthBreakdown?: ChartBarStat[];
+  oneYearBreakdown?: ChartBarStat[];
   dailyBreakdown: DayStat[];
   monthlyBreakdown: MonthStat[];
   yearlyBreakdown: YearStat[];
@@ -197,6 +210,11 @@ const getEmptyStats = (): VisitorAnalyticsData => ({
   mobilePercent: 0,
   topPages: [],
   recentLogs: [],
+  todayBreakdown: [],
+  sevenDaysBreakdown: [],
+  fifteenDaysBreakdown: [],
+  oneMonthBreakdown: [],
+  oneYearBreakdown: [],
   dailyBreakdown: [],
   monthlyBreakdown: [],
   yearlyBreakdown: [],

@@ -1,4 +1,4 @@
-// Central In-Memory & Cloud-Synced Analytics Store for MovieVerse Pro with Daily, Monthly & Yearly Breakdown
+// Central In-Memory & Cloud-Synced Analytics Store for MovieVerse Pro with Today, 7 Days, 15 Days, 1 Month & 1 Year Breakdown
 
 export interface VisitorLog {
   id: string;
@@ -8,6 +8,14 @@ export interface VisitorLog {
   browser: string;
   country: string;
   action: string;
+}
+
+export interface ChartBarStat {
+  key: string;
+  label: string;
+  subLabel?: string;
+  visits: number;
+  uniqueVisitors?: number;
 }
 
 export interface DayStat {
@@ -38,6 +46,7 @@ export interface AnalyticsStore {
   pageHits: Map<string, number>; // path -> viewsCount
   recentLogs: VisitorLog[];
   dailyMap: Map<string, { visits: number; uniqueSet: Set<string> }>; // 'YYYY-MM-DD' -> stats
+  hourlyMap: Map<number, { visits: number; uniqueSet: Set<string> }>; // 0-23 -> stats
   monthlyMap: Map<string, number>; // 'YYYY-MM' -> visits
   yearlyMap: Map<string, number>; // 'YYYY' -> visits
 }
@@ -61,6 +70,7 @@ const getStore = (): AnalyticsStore => {
       pageHits: new Map<string, number>(),
       recentLogs: [],
       dailyMap: new Map<string, { visits: number; uniqueSet: Set<string> }>(),
+      hourlyMap: new Map<number, { visits: number; uniqueSet: Set<string> }>(),
       monthlyMap: new Map<string, number>(),
       yearlyMap: new Map<string, number>(),
     };
@@ -70,6 +80,7 @@ const getStore = (): AnalyticsStore => {
   if (global.__mv_analytics_store.todayDate !== todayStr) {
     global.__mv_analytics_store.todayDate = todayStr;
     global.__mv_analytics_store.todayVisits = 0;
+    global.__mv_analytics_store.hourlyMap.clear();
   }
 
   return global.__mv_analytics_store;
@@ -91,10 +102,11 @@ export const trackVisitorEvent = (data: {
   };
 }) => {
   const store = getStore();
-  const now = Date.now();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
   const monthStr = todayStr.substring(0, 7);
   const yearStr = todayStr.substring(0, 4);
+  const currentHour = now.getHours();
 
   // Sync client backup if server is fresh after cold start
   if (data.clientHistory && store.totalVisits < (data.clientHistory.totalVisits || 0)) {
@@ -122,13 +134,19 @@ export const trackVisitorEvent = (data: {
   store.totalVisits += 1;
   store.todayVisits += 1;
   store.uniqueVisitorIds.add(data.visitorId);
-  store.activeSessions.set(data.visitorId, now);
+  store.activeSessions.set(data.visitorId, now.getTime());
 
   // Update Daily Map
   const dayEntry = store.dailyMap.get(todayStr) || { visits: 0, uniqueSet: new Set<string>() };
   dayEntry.visits += 1;
   dayEntry.uniqueSet.add(data.visitorId);
   store.dailyMap.set(todayStr, dayEntry);
+
+  // Update Hourly Map for Today
+  const hourEntry = store.hourlyMap.get(currentHour) || { visits: 0, uniqueSet: new Set<string>() };
+  hourEntry.visits += 1;
+  hourEntry.uniqueSet.add(data.visitorId);
+  store.hourlyMap.set(currentHour, hourEntry);
 
   // Update Monthly Map
   const currentMonthVisits = store.monthlyMap.get(monthStr) || 0;
@@ -145,7 +163,7 @@ export const trackVisitorEvent = (data: {
 
   const newLog: VisitorLog = {
     id: Math.random().toString(36).substring(2, 9),
-    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    timestamp: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
     path: cleanPath,
     device: data.device || 'Desktop',
     browser: data.browser || 'Browser',
@@ -194,39 +212,86 @@ export const getAnalyticsSummary = () => {
   const desktopPercent = Math.round((desktopCount / totalLogs) * 100);
   const mobilePercent = 100 - desktopPercent;
 
-  // Generate last 14 days breakdown
-  const dailyBreakdown: DayStat[] = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    const stat = store.dailyMap.get(dateStr);
-    dailyBreakdown.push({
-      date: dateStr,
-      label,
-      visits: stat?.visits || 0,
-      uniqueVisitors: stat?.uniqueSet?.size || 0,
-    });
-  }
+  // 1. TODAY: 12 intervals (Every 2 hours: 12 AM, 2 AM, 4 AM, 6 AM, 8 AM, 10 AM, 12 PM, 2 PM, 4 PM, 6 PM, 8 PM, 10 PM)
+  const todayBreakdown: ChartBarStat[] = [];
+  const hourLabels = [
+    { start: 0, label: '12 AM', range: '12 AM - 2 AM' },
+    { start: 2, label: '2 AM', range: '2 AM - 4 AM' },
+    { start: 4, label: '4 AM', range: '4 AM - 6 AM' },
+    { start: 6, label: '6 AM', range: '6 AM - 8 AM' },
+    { start: 8, label: '8 AM', range: '8 AM - 10 AM' },
+    { start: 10, label: '10 AM', range: '10 AM - 12 PM' },
+    { start: 12, label: '12 PM', range: '12 PM - 2 PM' },
+    { start: 14, label: '2 PM', range: '2 PM - 4 PM' },
+    { start: 16, label: '4 PM', range: '4 PM - 6 PM' },
+    { start: 18, label: '6 PM', range: '6 PM - 8 PM' },
+    { start: 20, label: '8 PM', range: '8 PM - 10 PM' },
+    { start: 22, label: '10 PM', range: '10 PM - 12 AM' },
+  ];
 
-  // Generate 12 months breakdown of current year
+  hourLabels.forEach((slot) => {
+    const h1 = store.hourlyMap.get(slot.start);
+    const h2 = store.hourlyMap.get(slot.start + 1);
+    const visits = (h1?.visits || 0) + (h2?.visits || 0);
+    const uniqueCount = (h1?.uniqueSet?.size || 0) + (h2?.uniqueSet?.size || 0);
+    todayBreakdown.push({
+      key: `h_${slot.start}`,
+      label: slot.label,
+      subLabel: slot.range,
+      visits,
+      uniqueVisitors: uniqueCount,
+    });
+  });
+
+  // Helper generator for daily ranges
+  const generateDailyRange = (daysCount: number): ChartBarStat[] => {
+    const result: ChartBarStat[] = [];
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const fullLabel = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      const stat = store.dailyMap.get(dateStr);
+      result.push({
+        key: dateStr,
+        label: daysCount <= 7 ? weekday : `${d.getDate()} ${d.toLocaleDateString('en-US', { month: 'short' })}`,
+        subLabel: fullLabel,
+        visits: stat?.visits || 0,
+        uniqueVisitors: stat?.uniqueSet?.size || 0,
+      });
+    }
+    return result;
+  };
+
+  // 2. 7 DAYS Breakdown
+  const sevenDaysBreakdown = generateDailyRange(7);
+
+  // 3. 15 DAYS Breakdown
+  const fifteenDaysBreakdown = generateDailyRange(15);
+
+  // 4. 1 MONTH (30 Days) Breakdown
+  const oneMonthBreakdown = generateDailyRange(30);
+
+  // 5. 1 YEAR (12 Months) Breakdown
   const currentYear = new Date().getFullYear();
-  const monthlyBreakdown: MonthStat[] = [];
+  const oneYearBreakdown: ChartBarStat[] = [];
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   for (let m = 0; m < 12; m++) {
     const monthNum = String(m + 1).padStart(2, '0');
     const monthKey = `${currentYear}-${monthNum}`;
-    const label = `${monthNames[m]} ${currentYear}`;
+    const label = monthNames[m];
+    const fullLabel = `${monthNames[m]} ${currentYear}`;
     const visits = store.monthlyMap.get(monthKey) || 0;
-    monthlyBreakdown.push({
-      month: monthKey,
+    oneYearBreakdown.push({
+      key: monthKey,
       label,
+      subLabel: fullLabel,
       visits,
     });
   }
 
-  // Generate Yearly breakdown (last 3 years)
+  // Yearly breakdown (last 3 years)
   const yearlyBreakdown: YearStat[] = [];
   for (let y = currentYear - 2; y <= currentYear; y++) {
     const yStr = String(y);
@@ -270,8 +335,22 @@ export const getAnalyticsSummary = () => {
     mobilePercent,
     topPages,
     recentLogs: store.recentLogs,
-    dailyBreakdown,
-    monthlyBreakdown,
+    todayBreakdown,
+    sevenDaysBreakdown,
+    fifteenDaysBreakdown,
+    oneMonthBreakdown,
+    oneYearBreakdown,
+    dailyBreakdown: fifteenDaysBreakdown.map((b) => ({
+      date: b.key,
+      label: b.subLabel || b.label,
+      visits: b.visits,
+      uniqueVisitors: b.uniqueVisitors || 0,
+    })),
+    monthlyBreakdown: oneYearBreakdown.map((b) => ({
+      month: b.key,
+      label: b.subLabel || b.label,
+      visits: b.visits,
+    })),
     yearlyBreakdown,
   };
 };
@@ -287,6 +366,7 @@ export const resetAnalyticsStore = () => {
     pageHits: new Map<string, number>(),
     recentLogs: [],
     dailyMap: new Map<string, { visits: number; uniqueSet: Set<string> }>(),
+    hourlyMap: new Map<number, { visits: number; uniqueSet: Set<string> }>(),
     monthlyMap: new Map<string, number>(),
     yearlyMap: new Map<string, number>(),
   };
