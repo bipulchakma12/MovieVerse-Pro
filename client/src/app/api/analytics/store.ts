@@ -1,4 +1,4 @@
-// Central In-Memory & Cloud-Synced Analytics Store for MovieVerse Pro
+// Central In-Memory & Cloud-Synced Analytics Store for MovieVerse Pro with Daily, Monthly & Yearly Breakdown
 
 export interface VisitorLog {
   id: string;
@@ -10,6 +10,25 @@ export interface VisitorLog {
   action: string;
 }
 
+export interface DayStat {
+  date: string; // 'YYYY-MM-DD'
+  label: string; // e.g. 'Thu, Aug 20'
+  visits: number;
+  uniqueVisitors: number;
+}
+
+export interface MonthStat {
+  month: string; // 'YYYY-MM'
+  label: string; // e.g. 'Aug 2026'
+  visits: number;
+}
+
+export interface YearStat {
+  year: string; // 'YYYY'
+  label: string; // e.g. '2026'
+  visits: number;
+}
+
 export interface AnalyticsStore {
   totalVisits: number;
   uniqueVisitorIds: Set<string>;
@@ -18,6 +37,9 @@ export interface AnalyticsStore {
   activeSessions: Map<string, number>; // visitorId -> lastActiveTimestamp
   pageHits: Map<string, number>; // path -> viewsCount
   recentLogs: VisitorLog[];
+  dailyMap: Map<string, { visits: number; uniqueSet: Set<string> }>; // 'YYYY-MM-DD' -> stats
+  monthlyMap: Map<string, number>; // 'YYYY-MM' -> visits
+  yearlyMap: Map<string, number>; // 'YYYY' -> visits
 }
 
 // Global declaration for Next.js hot-reloading preservation
@@ -38,6 +60,9 @@ const getStore = (): AnalyticsStore => {
       activeSessions: new Map<string, number>(),
       pageHits: new Map<string, number>(),
       recentLogs: [],
+      dailyMap: new Map<string, { visits: number; uniqueSet: Set<string> }>(),
+      monthlyMap: new Map<string, number>(),
+      yearlyMap: new Map<string, number>(),
     };
   }
 
@@ -57,15 +82,63 @@ export const trackVisitorEvent = (data: {
   browser: string;
   country?: string;
   action?: string;
+  clientHistory?: {
+    dailyMap?: Record<string, number>;
+    monthlyMap?: Record<string, number>;
+    yearlyMap?: Record<string, number>;
+    totalVisits?: number;
+    uniqueCount?: number;
+  };
 }) => {
   const store = getStore();
   const now = Date.now();
+  const todayStr = new Date().toISOString().split('T')[0];
+  const monthStr = todayStr.substring(0, 7);
+  const yearStr = todayStr.substring(0, 4);
 
+  // Sync client backup if server is fresh after cold start
+  if (data.clientHistory && store.totalVisits < (data.clientHistory.totalVisits || 0)) {
+    if (data.clientHistory.dailyMap) {
+      Object.entries(data.clientHistory.dailyMap).forEach(([d, v]) => {
+        const existing = store.dailyMap.get(d) || { visits: 0, uniqueSet: new Set<string>() };
+        existing.visits = Math.max(existing.visits, v);
+        store.dailyMap.set(d, existing);
+      });
+    }
+    if (data.clientHistory.monthlyMap) {
+      Object.entries(data.clientHistory.monthlyMap).forEach(([m, v]) => {
+        store.monthlyMap.set(m, Math.max(store.monthlyMap.get(m) || 0, v));
+      });
+    }
+    if (data.clientHistory.yearlyMap) {
+      Object.entries(data.clientHistory.yearlyMap).forEach(([y, v]) => {
+        store.yearlyMap.set(y, Math.max(store.yearlyMap.get(y) || 0, v));
+      });
+    }
+    store.totalVisits = Math.max(store.totalVisits, data.clientHistory.totalVisits || 0);
+  }
+
+  // Increment genuine visits
   store.totalVisits += 1;
   store.todayVisits += 1;
   store.uniqueVisitorIds.add(data.visitorId);
   store.activeSessions.set(data.visitorId, now);
 
+  // Update Daily Map
+  const dayEntry = store.dailyMap.get(todayStr) || { visits: 0, uniqueSet: new Set<string>() };
+  dayEntry.visits += 1;
+  dayEntry.uniqueSet.add(data.visitorId);
+  store.dailyMap.set(todayStr, dayEntry);
+
+  // Update Monthly Map
+  const currentMonthVisits = store.monthlyMap.get(monthStr) || 0;
+  store.monthlyMap.set(monthStr, currentMonthVisits + 1);
+
+  // Update Yearly Map
+  const currentYearVisits = store.yearlyMap.get(yearStr) || 0;
+  store.yearlyMap.set(yearStr, currentYearVisits + 1);
+
+  // Update Page Hits
   const cleanPath = data.path.split('?')[0] || '/';
   const currentHits = store.pageHits.get(cleanPath) || 0;
   store.pageHits.set(cleanPath, currentHits + 1);
@@ -104,10 +177,8 @@ export const getAnalyticsSummary = () => {
       expiredIds.push(id);
     }
   });
-
   expiredIds.forEach((id) => store.activeSessions.delete(id));
 
-  // Ensure at least 1 live user if admin or current request is active
   if (liveOnline === 0 && store.totalVisits > 0) {
     liveOnline = 1;
   }
@@ -122,6 +193,50 @@ export const getAnalyticsSummary = () => {
   const totalLogs = Math.max(1, desktopCount + mobileCount);
   const desktopPercent = Math.round((desktopCount / totalLogs) * 100);
   const mobilePercent = 100 - desktopPercent;
+
+  // Generate last 14 days breakdown
+  const dailyBreakdown: DayStat[] = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const stat = store.dailyMap.get(dateStr);
+    dailyBreakdown.push({
+      date: dateStr,
+      label,
+      visits: stat?.visits || 0,
+      uniqueVisitors: stat?.uniqueSet?.size || 0,
+    });
+  }
+
+  // Generate 12 months breakdown of current year
+  const currentYear = new Date().getFullYear();
+  const monthlyBreakdown: MonthStat[] = [];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  for (let m = 0; m < 12; m++) {
+    const monthNum = String(m + 1).padStart(2, '0');
+    const monthKey = `${currentYear}-${monthNum}`;
+    const label = `${monthNames[m]} ${currentYear}`;
+    const visits = store.monthlyMap.get(monthKey) || 0;
+    monthlyBreakdown.push({
+      month: monthKey,
+      label,
+      visits,
+    });
+  }
+
+  // Generate Yearly breakdown (last 3 years)
+  const yearlyBreakdown: YearStat[] = [];
+  for (let y = currentYear - 2; y <= currentYear; y++) {
+    const yStr = String(y);
+    const visits = store.yearlyMap.get(yStr) || 0;
+    yearlyBreakdown.push({
+      year: yStr,
+      label: yStr,
+      visits,
+    });
+  }
 
   const pathLabelMap: Record<string, string> = {
     '/': 'Home Page',
@@ -155,6 +270,9 @@ export const getAnalyticsSummary = () => {
     mobilePercent,
     topPages,
     recentLogs: store.recentLogs,
+    dailyBreakdown,
+    monthlyBreakdown,
+    yearlyBreakdown,
   };
 };
 
@@ -168,5 +286,8 @@ export const resetAnalyticsStore = () => {
     activeSessions: new Map<string, number>(),
     pageHits: new Map<string, number>(),
     recentLogs: [],
+    dailyMap: new Map<string, { visits: number; uniqueSet: Set<string> }>(),
+    monthlyMap: new Map<string, number>(),
+    yearlyMap: new Map<string, number>(),
   };
 };

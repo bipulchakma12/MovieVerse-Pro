@@ -4,9 +4,8 @@ import { trackVisitorEvent } from '../store';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { visitorId, path, device, browser, action } = body;
+    const { visitorId, path, device, browser, action, clientHistory } = body;
 
-    // Detect Country / IP Header from Vercel edge if present
     const country = req.headers.get('x-vercel-ip-country') || 'Live Visitor';
 
     trackVisitorEvent({
@@ -16,6 +15,7 @@ export async function POST(req: NextRequest) {
       browser: browser || 'Chrome',
       country,
       action,
+      clientHistory,
     });
 
     return NextResponse.json({ success: true });
