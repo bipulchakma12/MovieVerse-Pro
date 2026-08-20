@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { getVisitorAnalytics, VisitorAnalyticsData } from '@/utils/visitorTracker';
+import { getVisitorAnalytics, clearRealVisitorAnalytics, VisitorAnalyticsData } from '@/utils/visitorTracker';
 
 interface TmdbSearchResult {
   tmdbId: string;
@@ -26,7 +26,7 @@ interface TmdbSearchResult {
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'importer' | 'analytics' | 'movies' | 'users'>('analytics');
 
-  // Real-Time Visitor Analytics State
+  // Real-Time Visitor Analytics State (100% Real Live Metrics)
   const [visitorStats, setVisitorStats] = useState<VisitorAnalyticsData>(() => getVisitorAnalytics());
 
   // TMDB Importer Pipeline state
@@ -77,10 +77,16 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     fetchExportStatus();
+    // Clean old test keys if present
+    if (typeof window !== 'undefined') {
+      ['mv_analytics_total_visits', 'mv_analytics_unique_visitors', 'mv_analytics_today_visits', 'mv_analytics_recent_logs'].forEach((k) => {
+        localStorage.removeItem(k);
+      });
+    }
     setVisitorStats(getVisitorAnalytics());
     const interval = setInterval(() => {
       setVisitorStats(getVisitorAnalytics());
-    }, 4000);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -696,17 +702,29 @@ export default function AdminDashboardPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <span className="px-4 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 shadow-inner">
                 <Radio className="w-4 h-4 animate-pulse" />
-                <span>Live Feed: Active</span>
+                <span>100% Real Live Counter</span>
               </span>
               <button
                 onClick={() => setVisitorStats(getVisitorAnalytics())}
-                className="px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                className="px-3.5 py-2 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
                 title="Refresh Live Metrics"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to reset all visitor counters back to 0?')) {
+                    clearRealVisitorAnalytics();
+                    setVisitorStats(getVisitorAnalytics());
+                  }
+                }}
+                className="px-3.5 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-bold transition-all flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                title="Reset Counter to Zero"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Reset Count
               </button>
             </div>
           </div>
