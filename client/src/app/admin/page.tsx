@@ -968,63 +968,79 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
 
-              {/* Period Switcher Buttons (Today, 7 Days, 15 Days, 1 Month, 1 Year) */}
-              <div className="flex flex-wrap items-center gap-1.5 bg-black/40 p-1.5 rounded-2xl border border-white/10 w-fit">
+              {/* Period Switcher Buttons (Today, 7 Days, 15 Days, 1 Month, 1 Year) with High-Impact Animation */}
+              <div className="relative bg-[#0e1017]/90 p-1.5 rounded-2xl border border-white/15 backdrop-blur-xl shadow-2xl flex flex-wrap items-center gap-1.5 w-fit">
+                
+                {/* 1. Today */}
                 <button
                   type="button"
                   onClick={() => setChartPeriod('today')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-1.5 relative overflow-hidden ${
                     chartPeriod === 'today'
-                      ? 'bg-gradient-to-r from-brand-600 to-rose-600 text-white shadow-md shadow-brand-600/30 scale-105'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-gradient-to-r from-brand-600 via-rose-600 to-pink-500 text-white shadow-lg shadow-rose-600/40 animate-glow-pulse-red scale-105 border border-rose-400/40'
+                      : 'text-slate-400 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95 border border-transparent'
                   }`}
                 >
-                  ⚡ Today
+                  <Zap className={`w-3.5 h-3.5 ${chartPeriod === 'today' ? 'text-yellow-300 animate-bounce' : 'text-amber-400'}`} />
+                  <span>Today</span>
                 </button>
+
+                {/* 2. 7 Days */}
                 <button
                   type="button"
                   onClick={() => setChartPeriod('7days')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-1.5 relative overflow-hidden ${
                     chartPeriod === '7days'
-                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/30 scale-105'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-500 text-white shadow-lg shadow-emerald-500/40 scale-105 border border-emerald-400/40'
+                      : 'text-slate-400 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95 border border-transparent'
                   }`}
                 >
-                  📅 7 Days
+                  <Calendar className={`w-3.5 h-3.5 ${chartPeriod === '7days' ? 'text-white' : 'text-slate-400'}`} />
+                  <span>7 Days</span>
                 </button>
+
+                {/* 3. 15 Days */}
                 <button
                   type="button"
                   onClick={() => setChartPeriod('15days')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all duration-300 flex items-center gap-1.5 relative overflow-hidden ${
                     chartPeriod === '15days'
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black shadow-md shadow-amber-500/30 scale-105'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-400 text-slate-950 shadow-lg shadow-amber-500/40 scale-105 border border-amber-300/60'
+                      : 'text-slate-400 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95 border border-transparent'
                   }`}
                 >
-                  📆 15 Days
+                  <Calendar className={`w-3.5 h-3.5 ${chartPeriod === '15days' ? 'text-slate-950' : 'text-slate-400'}`} />
+                  <span>15 Days</span>
                 </button>
+
+                {/* 4. 1 Month */}
                 <button
                   type="button"
                   onClick={() => setChartPeriod('1month')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-1.5 relative overflow-hidden ${
                     chartPeriod === '1month'
-                      ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/30 scale-105'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/40 scale-105 border border-violet-400/40'
+                      : 'text-slate-400 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95 border border-transparent'
                   }`}
                 >
-                  📊 1 Month
+                  <BarChart3 className={`w-3.5 h-3.5 ${chartPeriod === '1month' ? 'text-white' : 'text-slate-400'}`} />
+                  <span>1 Month</span>
                 </button>
+
+                {/* 5. 1 Year */}
                 <button
                   type="button"
                   onClick={() => setChartPeriod('1year')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-1.5 relative overflow-hidden ${
                     chartPeriod === '1year'
-                      ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/30 scale-105'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-gradient-to-r from-sky-600 via-blue-600 to-cyan-400 text-white shadow-lg shadow-sky-500/40 scale-105 border border-sky-400/40'
+                      : 'text-slate-400 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95 border border-transparent'
                   }`}
                 >
-                  🌐 1 Year
+                  <Globe className={`w-3.5 h-3.5 ${chartPeriod === '1year' ? 'text-cyan-200 animate-spin' : 'text-slate-400'}`} style={chartPeriod === '1year' ? { animationDuration: '8s' } : undefined} />
+                  <span>1 Year</span>
                 </button>
+
               </div>
             </div>
 
