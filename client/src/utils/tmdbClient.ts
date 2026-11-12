@@ -256,10 +256,12 @@ export const searchTMDBMulti = async (query: string, limit = 6) => {
 export const fetchTMDBMovieDetail = async (idOrSlug: string) => {
   try {
     const extractedTmdbId = idOrSlug.split('-').pop();
-    const targetId = (extractedTmdbId && !isNaN(Number(extractedTmdbId))) ? extractedTmdbId : '19995';
+    if (!extractedTmdbId || isNaN(Number(extractedTmdbId))) return null;
+    const targetId = extractedTmdbId;
 
     const res = await fetch(`${TMDB_BASE_URL}/movie/${targetId}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`);
     const data = await res.json();
+    if (!data || !data.id) return null;
 
     const videos = data.videos?.results || [];
     const trailer = videos.find((v: any) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser' || v.type === 'Clip'));
@@ -293,7 +295,8 @@ export const fetchTMDBMovieDetail = async (idOrSlug: string) => {
 export const fetchTMDBTvShowDetail = async (idOrSlug: string) => {
   try {
     const extractedTmdbId = idOrSlug.split('-').pop();
-    const targetId = (extractedTmdbId && !isNaN(Number(extractedTmdbId))) ? extractedTmdbId : '1399';
+    if (!extractedTmdbId || isNaN(Number(extractedTmdbId))) return null;
+    const targetId = extractedTmdbId;
 
     const res = await fetch(`${TMDB_BASE_URL}/tv/${targetId}?api_key=${TMDB_API_KEY}`);
     const data = await res.json();
@@ -319,6 +322,30 @@ export const fetchTMDBTvShowDetail = async (idOrSlug: string) => {
     };
   } catch (err) {
     console.error('TMDB TV Show Detail Fallback error:', err);
+    return null;
+  }
+};
+
+/**
+ * Fetches the episode count for a single season of a TV show.
+ * Returns null when the season can't be resolved (caller should fall back).
+ */
+export const fetchTMDBTvSeasonEpisodeCount = async (
+  id: string | number,
+  season: number
+): Promise<number | null> => {
+  try {
+    const res = await fetch(`${TMDB_BASE_URL}/tv/${id}/season/${season}?api_key=${TMDB_API_KEY}`);
+    const data = await res.json();
+    if (Array.isArray(data?.episodes) && data.episodes.length > 0) {
+      return data.episodes.length;
+    }
+    if (typeof data?.episode_count === 'number' && data.episode_count > 0) {
+      return data.episode_count;
+    }
+    return null;
+  } catch (err) {
+    console.error('TMDB TV Season fetch error:', err);
     return null;
   }
 };

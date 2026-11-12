@@ -1,26 +1,23 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Star, Clock, Calendar, Globe, Bookmark, Heart, Send,
-  MessageSquare, Loader2, Play, Tv, Check, CheckCircle2,
-  Film, Sparkles, Share2, Info
+  Star, Clock, Calendar, Bookmark, Heart, Send,
+  MessageSquare, Play, CheckCircle2,
+  Film
 } from 'lucide-react';
-import { VideoPlayer } from '@/components/VideoPlayer';
-import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater, addToWatchHistory } from '@/utils/userLists';
+import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
+import { resolveMovieDetail } from '@/utils/mediaDetail';
 import { getLocalReviews, saveLocalReview, ReviewItem } from '@/utils/reviews';
 import Link from 'next/link';
 
 export default function MovieDetailsPage({ params }: { params: { id: string } }) {
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'sources' | 'trailer'>('sources');
-  const [streamServer, setStreamServer] = useState<'server1' | 'server2' | 'server3' | 'server4'>('server1');
   const [userRating, setUserRating] = useState(0);
   const [commentText, setCommentText] = useState('');
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [reviewSuccess, setReviewSuccess] = useState(false);
-  const playerSectionRef = useRef<HTMLDivElement>(null);
 
   // User List States
   const [isFavorite, setIsFavorite] = useState(false);
@@ -36,52 +33,17 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
   const fetchMovieDetail = async () => {
     try {
       setLoading(true);
-      const { fetchTMDBMovieDetail } = await import('@/utils/tmdbClient');
-      
-      // Fast parallel fetch: Don't wait for offline backend timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 600);
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const backendPromise = fetch(`${apiUrl}/movies/${params.id}`, { signal: controller.signal })
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null);
-
-      const tmdbPromise = fetchTMDBMovieDetail(params.id);
-
-      const [backendRes, tmdbMovie] = await Promise.all([
-        backendPromise.finally(() => clearTimeout(timeoutId)),
-        tmdbPromise
-      ]);
-
-      const resolvedMovie = (backendRes?.success && backendRes?.data) ? backendRes.data : tmdbMovie;
+      const resolvedMovie = await resolveMovieDetail(params.id);
 
       if (resolvedMovie) {
         setMovie(resolvedMovie);
         checkUserLists(resolvedMovie);
-        recordWatchHistory(resolvedMovie);
       }
     } catch (e) {
       console.error('Failed to fetch movie detail:', e);
     } finally {
       setLoading(false);
     }
-  };
-
-  const recordWatchHistory = (movieObj: any) => {
-    if (!movieObj) return;
-    addToWatchHistory({
-      _id: String(movieObj._id || movieObj.tmdbId),
-      tmdbId: String(movieObj.tmdbId || movieObj._id),
-      title: movieObj.title,
-      slug: movieObj.slug || String(movieObj._id),
-      posterUrl: movieObj.posterUrl,
-      releaseYear: movieObj.releaseYear || 2024,
-      runtimeMinutes: movieObj.runtimeMinutes || 120,
-      ratingAverage: movieObj.ratingAverage || 8.0,
-      type: 'movie',
-      genres: movieObj.genres,
-    });
   };
 
   const checkUserLists = (movieObj: any) => {
@@ -151,13 +113,6 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
     setTimeout(() => setReviewSuccess(false), 3500);
   };
 
-  const scrollToPlayer = () => {
-    setActiveTab('sources');
-    if (playerSectionRef.current) {
-      playerSectionRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-[75vh] flex flex-col items-center justify-center select-none animate-fade-in">
@@ -191,24 +146,6 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
   const genreNames = Array.isArray(movie.genres)
     ? movie.genres.map((g: any) => (typeof g === 'string' ? g : g.name))
     : ['Action', 'Sci-Fi'];
-
-  const tmdbId = movie.tmdbId;
-  const trailerUrl = movie.trailerUrl || 'https://www.youtube.com/embed/YoHD9XEInc0';
-
-  // Multi-server endpoints for full movie streaming
-  const server1Url = `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
-  const server2Url = `https://autoembed.co/movie/tmdb/${tmdbId}`;
-  const server3Url = `https://vidsrc.to/embed/movie/${tmdbId}`;
-  const server4Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
-
-  const currentStreamUrl =
-    streamServer === 'server1'
-      ? server1Url
-      : streamServer === 'server2'
-      ? server2Url
-      : streamServer === 'server3'
-      ? server3Url
-      : server4Url;
 
   return (
     <div className="pb-20 space-y-12 animate-fade-in">
@@ -287,12 +224,12 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
 
             {/* Big Yellow "▶ Watch Now" Button & Action Controls */}
             <div className="pt-2 flex flex-wrap items-center gap-4">
-              <button
-                onClick={scrollToPlayer}
+              <Link
+                href={`/watch/movie/${params.id}`}
                 className="px-8 py-3.5 rounded-full bg-[#ffd233] hover:bg-[#ffca1a] text-black font-black text-sm sm:text-base flex items-center gap-2.5 shadow-xl shadow-[#ffd233]/20 hover:scale-105 active:scale-95 transition-all"
               >
                 <Play className="w-5 h-5 fill-current" /> Watch Now
-              </button>
+              </Link>
 
               <button
                 onClick={handleToggleFavorite}
@@ -346,98 +283,6 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
 
           </div>
         </div>
-      </section>
-
-      {/* Main Video Streaming Player Section */}
-      <section ref={playerSectionRef} id="stream-player" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        
-        {/* Player Controls & Server Switcher */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-xl">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('sources')}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
-                activeTab === 'sources'
-                  ? 'bg-[#ffd233] text-black shadow-lg font-black'
-                  : 'text-slate-400 hover:text-white bg-slate-800'
-              }`}
-            >
-              <Tv className="w-4 h-4" /> Watch Full Movie
-            </button>
-            <button
-              onClick={() => setActiveTab('trailer')}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
-                activeTab === 'trailer'
-                  ? 'bg-rose-600 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white bg-slate-800'
-              }`}
-            >
-              <Play className="w-4 h-4 fill-current" /> Trailer
-            </button>
-          </div>
-
-          {/* Server Switcher */}
-          {activeTab === 'sources' && tmdbId && (
-            <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs font-bold">
-              <span className="px-2 text-slate-400">Server:</span>
-              <button
-                onClick={() => setStreamServer('server1')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  streamServer === 'server1' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Server 1 (CineSrc Clean)
-              </button>
-              <button
-                onClick={() => setStreamServer('server2')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  streamServer === 'server2' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Server 2 (AutoEmbed HD)
-              </button>
-              <button
-                onClick={() => setStreamServer('server3')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  streamServer === 'server3' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Server 3 (VidSrc.to)
-              </button>
-              <button
-                onClick={() => setStreamServer('server4')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  streamServer === 'server4' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Server 4 (MultiEmbed)
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Video Player Embed */}
-        {activeTab === 'trailer' ? (
-          <div className="space-y-2">
-            <VideoPlayer
-              src={trailerUrl}
-              poster={movie.bannerUrl || movie.posterUrl}
-              title={`${movie.title} — Official Trailer`}
-            />
-            <p className="text-xs text-slate-500 text-center">
-              🎬 Official YouTube HD Trailer
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <VideoPlayer
-              src={currentStreamUrl}
-              poster={movie.bannerUrl || movie.posterUrl}
-              title={`${movie.title} — Full Movie HD Stream`}
-            />
-          </div>
-        )}
-
       </section>
 
       {/* User Reviews & Comment Section */}

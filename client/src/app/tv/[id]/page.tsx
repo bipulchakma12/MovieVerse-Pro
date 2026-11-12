@@ -1,23 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Star, Clock, Calendar, Globe, Bookmark, Heart, Send,
-  MessageSquare, Loader2, Play, Tv, Layers, Film, CheckCircle2,
-  ChevronDown
+  Star, Clock, Calendar, Bookmark, Heart, Send,
+  MessageSquare, Play, Tv, CheckCircle2
 } from 'lucide-react';
-import { VideoPlayer } from '@/components/VideoPlayer';
-import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater, addToWatchHistory } from '@/utils/userLists';
+import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
+import { resolveTvShowDetail } from '@/utils/mediaDetail';
 import { getLocalReviews, saveLocalReview, ReviewItem } from '@/utils/reviews';
 import Link from 'next/link';
 
 export default function TvShowDetailsPage({ params }: { params: { id: string } }) {
   const [tvShow, setTvShow] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSeason, setSelectedSeason] = useState(1);
-  const [selectedEpisode, setSelectedEpisode] = useState(1);
-  const [activeTab, setActiveTab] = useState<'stream' | 'trailer'>('stream');
-  const [streamServer, setStreamServer] = useState<'server1' | 'server2' | 'server3' | 'server4'>('server1');
   const [userRating, setUserRating] = useState(0);
   const [commentText, setCommentText] = useState('');
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -26,7 +21,6 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
   const [isWatchLater, setIsWatchLater] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const [wlLoading, setWlLoading] = useState(false);
-  const playerSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchTvDetail();
@@ -55,51 +49,16 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
     setTimeout(() => setReviewSuccess(false), 3500);
   };
 
-  const recordTvWatchHistory = (showObj: any) => {
-    if (!showObj) return;
-    addToWatchHistory({
-      _id: String(showObj._id || showObj.tmdbId),
-      tmdbId: String(showObj.tmdbId || showObj._id),
-      title: `${showObj.name} (S${selectedSeason}:E${selectedEpisode})`,
-      slug: showObj.slug || String(showObj._id),
-      posterUrl: showObj.posterUrl,
-      releaseYear: showObj.firstAirYear || 2024,
-      runtimeMinutes: 45,
-      ratingAverage: showObj.ratingAverage || 8.2,
-      type: 'tv',
-      genres: showObj.genres,
-    });
-  };
-
   const fetchTvDetail = async () => {
     try {
       setLoading(true);
-      const { fetchTMDBTvShowDetail } = await import('@/utils/tmdbClient');
-      
-      // Fast parallel fetch: Don't wait for offline backend timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 600);
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const backendPromise = fetch(`${apiUrl}/tv/${params.id}`, { signal: controller.signal })
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null);
-
-      const tmdbPromise = fetchTMDBTvShowDetail(params.id);
-
-      const [backendRes, tmdbShow] = await Promise.all([
-        backendPromise.finally(() => clearTimeout(timeoutId)),
-        tmdbPromise
-      ]);
-
-      const resolvedShow = (backendRes?.success && backendRes?.data) ? backendRes.data : tmdbShow;
+      const resolvedShow = await resolveTvShowDetail(params.id);
 
       if (resolvedShow) {
         setTvShow(resolvedShow);
         const showId = String(resolvedShow._id || resolvedShow.tmdbId);
         setIsFavorite(isItemInFavorites(showId));
         setIsWatchLater(isItemInWatchLater(showId));
-        recordTvWatchHistory(resolvedShow);
       }
     } catch (e) {
       console.error('Failed to fetch TV detail:', e);
@@ -146,13 +105,6 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
     setTimeout(() => setWlLoading(false), 200);
   };
 
-  const scrollToPlayer = () => {
-    setActiveTab('stream');
-    if (playerSectionRef.current) {
-      playerSectionRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-[75vh] flex flex-col items-center justify-center select-none animate-fade-in">
@@ -187,24 +139,7 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
     ? tvShow.genres.map((g: any) => (typeof g === 'string' ? g : g.name))
     : ['Action', 'Drama'];
 
-  const tmdbId = tvShow.tmdbId || '1399';
   const totalSeasons = tvShow.numberOfSeasons || 1;
-  const totalEpisodes = 16;
-
-  // Fast TV Stream URLs with Season & Episode support
-  const server1Url = `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${selectedSeason}/${selectedEpisode}`;
-  const server2Url = `https://vidsrc.xyz/embed/tv?tmdb=${tmdbId}&season=${selectedSeason}&episode=${selectedEpisode}`;
-  const server3Url = `https://player.smashy.stream/tv/${tmdbId}?s=${selectedSeason}&e=${selectedEpisode}`;
-  const server4Url = `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${selectedSeason}&e=${selectedEpisode}`;
-
-  const currentStreamUrl =
-    streamServer === 'server1'
-      ? server1Url
-      : streamServer === 'server2'
-      ? server2Url
-      : streamServer === 'server3'
-      ? server3Url
-      : server4Url;
 
   return (
     <div className="pb-20 space-y-12 animate-fade-in">
@@ -252,7 +187,7 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
 
             {/* Tagline in Gold Italics */}
             <p className="text-[#f5c518] italic font-semibold text-sm sm:text-base">
-              "{tvShow.tagline || 'Only one can wear the ring.' || 'Stream full HD episodes on MovieVerse Pro.'}"
+              "{tvShow.tagline || 'Stream full HD episodes on MovieVerse Pro.'}"
             </p>
 
             {/* Meta Icons Row */}
@@ -261,7 +196,7 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
                 <Star className="w-4 h-4 fill-[#f5c518]" /> {tvShow.ratingAverage || 8.2}
               </span>
               <span className="flex items-center gap-1.5 text-slate-300">
-                <Calendar className="w-4 h-4 text-slate-400" /> {tvShow.firstAirYear || 2026}
+                <Calendar className="w-4 h-4 text-slate-400" /> {tvShow.firstAirYear || 2024}
               </span>
               <span className="flex items-center gap-1.5 text-slate-300">
                 <Clock className="w-4 h-4 text-slate-400" /> 45 min
@@ -281,56 +216,14 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
               </span>
             </div>
 
-            {/* CineB Season & Episode Dropdowns (Mobile Responsive Grid) */}
-            <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-4 pt-1 max-w-md">
-              <div className="w-full">
-                <label className="text-[11px] font-bold text-slate-400 block mb-1.5">Season</label>
-                <div className="relative">
-                  <select
-                    value={selectedSeason}
-                    onChange={(e) => {
-                      setSelectedSeason(Number(e.target.value));
-                      setSelectedEpisode(1);
-                    }}
-                    className="w-full appearance-none bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs sm:text-sm rounded-xl pl-4 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffd233] cursor-pointer shadow-lg"
-                  >
-                    {Array.from({ length: totalSeasons }, (_, i) => i + 1).map((s) => (
-                      <option key={s} value={s} className="bg-slate-900 text-white">
-                        Season {s}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none" />
-                </div>
-              </div>
-
-              <div className="w-full">
-                <label className="text-[11px] font-bold text-slate-400 block mb-1.5">Episode</label>
-                <div className="relative">
-                  <select
-                    value={selectedEpisode}
-                    onChange={(e) => setSelectedEpisode(Number(e.target.value))}
-                    className="w-full appearance-none bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs sm:text-sm rounded-xl pl-4 pr-9 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#ffd233] cursor-pointer shadow-lg"
-                  >
-                    {Array.from({ length: totalEpisodes }, (_, i) => i + 1).map((ep) => (
-                      <option key={ep} value={ep} className="bg-slate-900 text-white">
-                        Episode {ep}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
             {/* Big Yellow "▶ Watch Now" Button & Action Controls */}
             <div className="pt-2 flex flex-wrap items-center gap-4">
-              <button
-                onClick={scrollToPlayer}
+              <Link
+                href={`/watch/tv/${params.id}`}
                 className="px-8 py-3.5 rounded-full bg-[#ffd233] hover:bg-[#ffca1a] text-black font-black text-sm sm:text-base flex items-center gap-2.5 shadow-xl shadow-[#ffd233]/20 hover:scale-105 active:scale-95 transition-all"
               >
                 <Play className="w-5 h-5 fill-current" /> Watch Now
-              </button>
+              </Link>
 
               <button
                 onClick={handleToggleFavorite}
@@ -384,66 +277,6 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
 
           </div>
         </div>
-      </section>
-
-      {/* Main Video Streaming Player Section */}
-      <section ref={playerSectionRef} id="stream-player" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        
-        {/* Player Controls & Server Switcher */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-xl">
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-xl bg-sky-600/20 text-sky-400 text-xs font-bold">
-              Playing: S{selectedSeason} - Episode {selectedEpisode}
-            </span>
-          </div>
-
-          {/* Server Switcher */}
-          <div className="flex flex-wrap items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 text-xs font-bold">
-            <span className="px-2 text-slate-400">Server:</span>
-            <button
-              onClick={() => setStreamServer('server1')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                streamServer === 'server1' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Server 1 (VidSrc.cc Clean)
-            </button>
-            <button
-              onClick={() => setStreamServer('server2')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                streamServer === 'server2' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Server 2 (VidSrc.xyz)
-            </button>
-            <button
-              onClick={() => setStreamServer('server3')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                streamServer === 'server3' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Server 3 (Smashy)
-            </button>
-            <button
-              onClick={() => setStreamServer('server4')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                streamServer === 'server4' ? 'bg-[#00e054] text-black font-black' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Server 4 (MultiEmbed)
-            </button>
-          </div>
-        </div>
-
-        {/* Video Player Embed */}
-        <div className="space-y-3">
-          <VideoPlayer
-            src={currentStreamUrl}
-            poster={tvShow.bannerUrl || tvShow.posterUrl}
-            title={`${tvShow.name} Season ${selectedSeason} Episode ${selectedEpisode}`}
-          />
-        </div>
-
       </section>
 
       {/* User Reviews & Comment Section */}
