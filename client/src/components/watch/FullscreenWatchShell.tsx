@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, X, ChevronLeft } from 'lucide-react';
 
@@ -10,6 +10,7 @@ interface FullscreenWatchShellProps {
   embedSrc: string;
   embedTitle: string;
   tabLabel: string;
+  sidebarLabel: string;
   sidebar: React.ReactNode;
 }
 
@@ -24,9 +25,26 @@ export default function FullscreenWatchShell({
   embedSrc,
   embedTitle,
   tabLabel,
+  sidebarLabel,
   sidebar,
 }: FullscreenWatchShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+    // Return focus to the edge tab so keyboard users aren't stranded
+    requestAnimationFrame(() => toggleRef.current?.focus());
+  };
+
+  // Escape closes the sidebar (and returns focus to the toggle)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeSidebar();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
     <div className="relative h-screen min-h-[480px] w-full bg-black overflow-hidden select-none">
@@ -60,6 +78,7 @@ export default function FullscreenWatchShell({
       {/* Right-edge vertical tab (visible when sidebar is closed) */}
       {!sidebarOpen && (
         <button
+          ref={toggleRef}
           onClick={() => setSidebarOpen(true)}
           aria-label="Open panel"
           className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-3 rounded-l-2xl border border-r-0 border-white/10 bg-[#141417]/90 backdrop-blur px-2 py-4 shadow-2xl hover:bg-[#1b1b1f] transition-colors"
@@ -73,15 +92,16 @@ export default function FullscreenWatchShell({
         </button>
       )}
 
-      {/* Right-side sliding sidebar */}
+      {/* Right-side sliding sidebar — hidden from tab order & AT when closed */}
       <aside
+        aria-label={sidebarLabel}
         aria-hidden={!sidebarOpen}
-        className={`absolute right-0 top-0 z-30 h-full w-[400px] max-w-[94vw] bg-[#0d0d10]/95 backdrop-blur-md border-l border-white/5 shadow-2xl transition-transform duration-300 ease-out ${
-          sidebarOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+        className={`absolute right-0 top-0 z-30 h-full w-[400px] max-w-[94vw] bg-[#0d0d10]/95 backdrop-blur-md border-l border-white/5 shadow-2xl transition-all duration-300 ease-out ${
+          sidebarOpen ? 'translate-x-0 visible' : 'translate-x-full invisible pointer-events-none'
         }`}
       >
         <button
-          onClick={() => setSidebarOpen(false)}
+          onClick={closeSidebar}
           aria-label="Close panel"
           className="absolute right-3 top-3 z-10 rounded-lg border border-white/10 bg-[#1b1b1f] p-2 text-slate-400 hover:text-white hover:bg-[#242429] transition-all"
         >

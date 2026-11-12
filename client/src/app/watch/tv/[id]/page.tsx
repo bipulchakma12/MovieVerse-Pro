@@ -17,6 +17,16 @@ import { addToWatchHistory } from '@/utils/userLists';
 const FALLBACK_EPISODE_COUNT = 16;
 const TMDB_STILL_BASE = 'https://image.tmdb.org/t/p/w300';
 
+const FALLBACK_EPISODES = Array.from({ length: FALLBACK_EPISODE_COUNT }, (_, i) => ({
+  episode_number: i + 1,
+  name: `Episode ${i + 1}`,
+  overview: '',
+  still_path: null,
+  runtime: null,
+  vote_average: 0,
+  air_date: null as string | null,
+}));
+
 function formatRuntime(minutes: number | null): string {
   if (!minutes || minutes <= 0) return '';
   const h = Math.floor(minutes / 60);
@@ -33,6 +43,7 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
   const [streamServer, setStreamServer] = useState<StreamServerId>('server1');
   const [seasonDetail, setSeasonDetail] = useState<TMDBSeasonDetail | null>(null);
   const [seasonLoading, setSeasonLoading] = useState(false);
+  const [seasonRetryNonce, setSeasonRetryNonce] = useState(0);
   const [episodeQuery, setEpisodeQuery] = useState('');
   const [spoilerMode, setSpoilerMode] = useState(false);
   const [revealedEpisodes, setRevealedEpisodes] = useState<Set<number>>(new Set());
@@ -65,11 +76,15 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
     };
   }, [params.id]);
 
-  // Load the full season (episode list + overview) from TMDB
+  // Load the full season (episode list + overview) from TMDB.
+  // Reset to null first so stale episodes from the previous season never render
+  // under the new season's heading.
   useEffect(() => {
     if (!tmdbIdNum) return;
     let cancelled = false;
+    setSeasonDetail(null);
     setSeasonLoading(true);
+    setRevealedEpisodes(new Set());
 
     fetchTMDBTvSeason(tmdbIdNum, selectedSeason)
       .then((detail) => {
@@ -85,7 +100,7 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
     return () => {
       cancelled = true;
     };
-  }, [tmdbIdNum, selectedSeason]);
+  }, [tmdbIdNum, selectedSeason, seasonRetryNonce]);
 
   // Record watch history once per (show, season, episode) selection.
   useEffect(() => {
@@ -151,17 +166,18 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
   const servers = getTvServers(tmdbId, selectedSeason, selectedEpisode);
   const currentStreamUrl = servers.find((s) => s.id === streamServer)?.url ?? servers[0].url;
 
-  const episodes = seasonDetail?.episodes ?? [];
-  const episodeCount = episodes.length || FALLBACK_EPISODE_COUNT;
+  const seasonFailed = !seasonLoading && seasonDetail === null;
+  const episodes = seasonDetail?.episodes ?? (seasonFailed ? FALLBACK_EPISODES : []);
+  const episodeCount = episodes.length;
 
   const query = episodeQuery.trim().toLowerCase();
+  const isNumericQuery = /^\d+$/.test(query);
   const filteredEpisodes = query
     ? episodes.filter(
         (ep) =>
-          ep.name.toLowerCase().includes(query) ||
-          String(ep.episode_number) === query ||
-          `e${ep.episode_number}` === query ||
-          `episode ${ep.episode_number}`.includes(query)
+          (isNumericQuery
+            ? String(ep.episode_number).includes(query)
+            : ep.name.toLowerCase().includes(query))
       )
     : episodes;
 
@@ -257,7 +273,7 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
           Season {selectedSeason}{' '}
           <span className="align-middle text-[10px] text-red-600">●</span>{' '}
           <span className="text-[10px] font-bold tracking-[0.18em] text-slate-400">
-            {episodeCount} EPISODE{episodeCount === 1 ? '' : 'S'}
+            {seasonLoading ? '… EPISODES' : `${episodeCount} EPISODE${episodeCount === 1 ? '' : 'S'}`}
           </span>
         </h2>
         <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-slate-500">
@@ -266,15 +282,32 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
             : seasonDetail?.overview ||
               'A collection of episodes from this season. Pick one below to keep watching.'}
         </p>
+        {seasonFailed && (
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+            <span className="text-[10px] font-semibold text-amber-400">
+              Couldn’t load episode details — showing numbered list.
+            </span>
+            <button
+              onClick={() => setSeasonRetryNonce((n) => n + 1)}
+              className="shrink-0 rounded-md bg-amber-500/20 px-2 py-1 text-[10px] font-black text-amber-300 hover:bg-amber-500/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Episode list */}
       <div className="mt-1 space-y-3">
-        {seasonLoading && episodes.length === 0 && (
-          <div className="flex items-center justify-center gap-2 py-8 text-slate-500">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-xs">Loading episodes…</span>
-          </div>
+        {seasonLoading && (
+          <>
+            {[0, 1, 2].map((n) => (
+              <div
+                key={n}
+                className="h-44 w-full animate-pulse rounded-2xl border border-white/5 bg-[#141418]"
+              />
+            ))}
+          </>
         )}
 
         {filteredEpisodes.map((ep) => {
@@ -284,23 +317,19 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
           return (
             <div
               key={ep.episode_number}
-              role="button"
-              tabIndex={0}
-              onClick={() => setSelectedEpisode(ep.episode_number)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setSelectedEpisode(ep.episode_number);
-                }
-              }}
-              aria-current={isCurrent}
-              aria-label={`Play episode ${ep.episode_number}: ${ep.name}`}
-              className={`w-full cursor-pointer overflow-hidden rounded-2xl border text-left transition-all ${
+              className={`w-full overflow-hidden rounded-2xl border transition-all ${
                 isCurrent
                   ? 'border-red-600/70 bg-[#161216] shadow-[0_0_24px_-8px_rgba(229,9,20,0.45)]'
                   : 'border-white/10 bg-[#141418] hover:border-white/25'
               }`}
             >
+              {/* Play target: thumbnail + title row */}
+              <button
+                onClick={() => setSelectedEpisode(ep.episode_number)}
+                aria-current={isCurrent}
+                aria-label={`Play episode ${ep.episode_number}: ${ep.name}`}
+                className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600/70 focus-visible:ring-inset"
+              >
               {/* Thumbnail */}
               <div className="relative aspect-[16/9] overflow-hidden bg-[#1b1b1f]">
                 {ep.still_path ? (
@@ -311,7 +340,7 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-slate-600">
+                  <div className="flex h-full w-full items-center justify-center text-slate-500">
                     <Film className="h-8 w-8" />
                   </div>
                 )}
@@ -324,18 +353,20 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
               </div>
 
               {/* Meta */}
-              <div className="space-y-1 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-xs font-bold text-slate-100">
-                    {ep.episode_number}. {ep.name}
-                  </p>
-                  <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-slate-500">
-                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                    {ep.vote_average > 0 ? ep.vote_average.toFixed(1) : '—'}
-                    {ep.runtime ? <span className="text-slate-600">· {formatRuntime(ep.runtime)}</span> : null}
-                  </span>
-                </div>
+              <div className="flex items-center justify-between gap-2 p-3 pb-2">
+                <p className="truncate text-xs font-bold text-slate-100">
+                  {ep.episode_number}. {ep.name}
+                </p>
+                <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-slate-500">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  {ep.vote_average > 0 ? ep.vote_average.toFixed(1) : '—'}
+                  {ep.runtime ? <span className="text-slate-500">· {formatRuntime(ep.runtime)}</span> : null}
+                </span>
+              </div>
+              </button>
 
+              {/* Overview row (spoiler-gated) */}
+              <div className="px-3 pb-3">
                 {hidden ? (
                   <div className="relative overflow-hidden rounded-md">
                     <p
@@ -345,10 +376,7 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
                       {ep.overview || 'No description available for this episode.'}
                     </p>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        revealEpisode(ep.episode_number);
-                      }}
+                      onClick={() => revealEpisode(ep.episode_number)}
                       className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 text-[10px] font-black tracking-wide text-white transition-colors hover:bg-black/55"
                     >
                       Click to reveal
@@ -372,7 +400,7 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* Server hint */}
-      <p className="mt-1 flex items-start gap-1.5 text-[10px] leading-snug text-slate-600">
+      <p className="mt-1 flex items-start gap-1.5 text-[10px] leading-snug text-slate-500">
         <Info className="mt-0.5 h-3 w-3 shrink-0" />
         If a server fails to load, switch to another one in the SERVER dropdown — Server 1 starts automatically.
       </p>
@@ -386,6 +414,7 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
       embedSrc={currentStreamUrl}
       embedTitle={`${tvShow.name} — Season ${selectedSeason} Episode ${selectedEpisode}`}
       tabLabel={tabLabel}
+      sidebarLabel="Episodes"
       sidebar={sidebar}
     />
   );

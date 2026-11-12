@@ -11,7 +11,7 @@ import { Footer } from '@/components/Footer';
  */
 export function Chrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isWatch = pathname?.startsWith('/watch') ?? false;
+  const isWatch = !!pathname && (pathname === '/watch' || pathname.startsWith('/watch/'));
 
   if (isWatch) {
     return <main className="flex-1">{children}</main>;

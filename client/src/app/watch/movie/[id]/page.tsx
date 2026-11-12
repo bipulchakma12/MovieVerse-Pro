@@ -111,14 +111,13 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
         </p>
       </div>
 
-      <div className="space-y-2" role="radiogroup" aria-label="Streaming server">
+      <div className="space-y-2" role="group" aria-label="Streaming server">
         {servers.map((s) => {
           const active = s.id === streamServer;
           return (
             <button
               key={s.id}
-              role="radio"
-              aria-checked={active}
+              aria-pressed={active}
               onClick={() => setStreamServer(s.id)}
               className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${
                 active
@@ -136,7 +135,7 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
                 </span>
                 <span>
                   <span className="block text-xs font-bold text-slate-100">{s.label}</span>
-                  <span className="block text-[9px] text-slate-600 truncate max-w-[200px]">{s.url.replace(/^https?:\/\//, '').split('/')[0]}</span>
+                  <span className="block text-[9px] text-slate-500 truncate max-w-[200px]">{s.url.replace(/^https?:\/\//, '').split('/')[0]}</span>
                 </span>
               </span>
               <span
@@ -170,7 +169,7 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
         </p>
       </div>
 
-      <p className="mt-auto flex items-start gap-1.5 text-[10px] leading-snug text-slate-600">
+      <p className="mt-auto flex items-start gap-1.5 text-[10px] leading-snug text-slate-500">
         <Info className="mt-0.5 h-3 w-3 shrink-0" />
         Server 1 starts automatically with the best available source. If a server fails, try another — your progress here will always pick up the latest server.
       </p>
@@ -184,6 +183,7 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
       embedSrc={currentStreamUrl}
       embedTitle={`${movie.title} — Full Movie HD Stream`}
       tabLabel="SERVERS"
+      sidebarLabel="Streaming servers"
       sidebar={sidebar}
     />
   );
