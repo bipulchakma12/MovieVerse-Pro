@@ -2,17 +2,27 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Star, Calendar, ArrowLeft, Tv, Loader2, AlertCircle, ChevronDown, Info
+  Star, ArrowLeft, Loader2, AlertCircle, ChevronDown, Search, X, EyeOff, Film, Info
 } from 'lucide-react';
 import Link from 'next/link';
-import { VideoPlayer } from '@/components/VideoPlayer';
-import ServerSwitcher from '@/components/watch/ServerSwitcher';
+import FullscreenWatchShell from '@/components/watch/FullscreenWatchShell';
 import { getTvServers, StreamServerId } from '@/utils/streamServers';
-import { resolveTvShowDetail, extractNumericTmdbId } from '@/utils/mediaDetail';
-import { fetchTMDBTvSeasonEpisodeCount } from '@/utils/tmdbClient';
+import {
+  resolveTvShowDetail,
+  extractNumericTmdbId,
+} from '@/utils/mediaDetail';
+import { fetchTMDBTvSeason, TMDBSeasonDetail } from '@/utils/tmdbClient';
 import { addToWatchHistory } from '@/utils/userLists';
 
 const FALLBACK_EPISODE_COUNT = 16;
+const TMDB_STILL_BASE = 'https://image.tmdb.org/t/p/w300';
+
+function formatRuntime(minutes: number | null): string {
+  if (!minutes || minutes <= 0) return '';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
 
 export default function WatchTvPage({ params }: { params: { id: string } }) {
   const [tvShow, setTvShow] = useState<any>(null);
@@ -21,8 +31,14 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState(1);
   const [streamServer, setStreamServer] = useState<StreamServerId>('server1');
-  const [seasonEpisodeCount, setSeasonEpisodeCount] = useState(FALLBACK_EPISODE_COUNT);
+  const [seasonDetail, setSeasonDetail] = useState<TMDBSeasonDetail | null>(null);
+  const [seasonLoading, setSeasonLoading] = useState(false);
+  const [episodeQuery, setEpisodeQuery] = useState('');
+  const [spoilerMode, setSpoilerMode] = useState(false);
+  const [revealedEpisodes, setRevealedEpisodes] = useState<Set<number>>(new Set());
   const lastRecordedRef = useRef('');
+
+  const tmdbIdNum = extractNumericTmdbId(tvShow?.tmdbId) ?? extractNumericTmdbId(params.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,28 +65,29 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
     };
   }, [params.id]);
 
-  // Resolve episode count for the selected season from TMDB (falls back to
-  // FALLBACK_EPISODE_COUNT when the season can't be loaded), and clamp the
-  // selected episode into the valid range.
-  const tmdbIdNum = extractNumericTmdbId(tvShow?.tmdbId) ?? extractNumericTmdbId(params.id);
-
+  // Load the full season (episode list + overview) from TMDB
   useEffect(() => {
     if (!tmdbIdNum) return;
     let cancelled = false;
-    fetchTMDBTvSeasonEpisodeCount(tmdbIdNum, selectedSeason).then((count) => {
-      if (cancelled) return;
-      const resolved = count ?? FALLBACK_EPISODE_COUNT;
-      setSeasonEpisodeCount(resolved);
-      setSelectedEpisode((ep) => (ep > resolved ? resolved : ep));
-    });
+    setSeasonLoading(true);
+
+    fetchTMDBTvSeason(tmdbIdNum, selectedSeason)
+      .then((detail) => {
+        if (cancelled) return;
+        setSeasonDetail(detail);
+        const count = detail?.episodes.length ?? FALLBACK_EPISODE_COUNT;
+        setSelectedEpisode((ep) => Math.min(Math.max(1, ep), count));
+      })
+      .finally(() => {
+        if (!cancelled) setSeasonLoading(false);
+      });
+
     return () => {
       cancelled = true;
     };
   }, [tmdbIdNum, selectedSeason]);
 
   // Record watch history once per (show, season, episode) selection.
-  // Selecting a season resets the episode to 1, so this fires exactly on
-  // user-driven context switches — not on repeat renders or StrictMode double-invoke.
   useEffect(() => {
     if (!tvShow) return;
     const key = `${tvShow._id || tvShow.tmdbId}:S${selectedSeason}:E${selectedEpisode}`;
@@ -92,23 +109,23 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-[75vh] flex flex-col items-center justify-center gap-4 select-none animate-fade-in">
-        <Loader2 className="w-10 h-10 text-sky-500 animate-spin" />
-        <p className="text-xs text-slate-400 font-semibold tracking-wide">Preparing your stream…</p>
+      <div className="h-screen bg-black flex flex-col items-center justify-center gap-4 select-none">
+        <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
+        <p className="text-xs text-slate-500 font-semibold tracking-wide">Preparing your stream…</p>
       </div>
     );
   }
 
   if (notFound || !tvShow) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-6">
-        <AlertCircle className="w-12 h-12 text-slate-600" />
+      <div className="h-screen bg-black flex flex-col items-center justify-center gap-4 text-center px-6">
+        <AlertCircle className="w-12 h-12 text-slate-700" />
         <p className="text-slate-400">TV show not found.</p>
         <Link
           href="/"
-          className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all"
         >
-          Back to Home
+          <ArrowLeft className="w-4 h-4" /> Back to Home
         </Link>
       </div>
     );
@@ -116,156 +133,260 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
 
   if (!tmdbIdNum) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 text-center px-6">
-        <AlertCircle className="w-12 h-12 text-slate-600" />
+      <div className="h-screen bg-black flex flex-col items-center justify-center gap-4 text-center px-6">
+        <AlertCircle className="w-12 h-12 text-slate-700" />
         <p className="text-slate-400">Streaming isn’t available for this title yet — no TMDB id found.</p>
         <Link
           href={`/tv/${params.id}`}
-          className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all"
         >
-          Back to Details
+          <ArrowLeft className="w-4 h-4" /> Back to Details
         </Link>
       </div>
     );
   }
 
   const tmdbId = tmdbIdNum;
-  const totalSeasons = tvShow.numberOfSeasons || 1;
+  const totalSeasons = Math.max(1, tvShow.numberOfSeasons || 1);
   const servers = getTvServers(tmdbId, selectedSeason, selectedEpisode);
   const currentStreamUrl = servers.find((s) => s.id === streamServer)?.url ?? servers[0].url;
 
-  const genreNames = Array.isArray(tvShow.genres)
-    ? tvShow.genres.map((g: any) => (typeof g === 'string' ? g : g.name)).filter(Boolean)
-    : [];
+  const episodes = seasonDetail?.episodes ?? [];
+  const episodeCount = episodes.length || FALLBACK_EPISODE_COUNT;
 
-  return (
-    <div className="min-h-screen bg-[#0b0c10] text-white pb-16 animate-fade-in">
-      {/* Watch-page top bar */}
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-[#0b0c10]/85 border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <Link
-            href={`/tv/${params.id}`}
-            className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-300 hover:text-white transition-colors shrink-0"
+  const query = episodeQuery.trim().toLowerCase();
+  const filteredEpisodes = query
+    ? episodes.filter(
+        (ep) =>
+          ep.name.toLowerCase().includes(query) ||
+          String(ep.episode_number) === query ||
+          `e${ep.episode_number}` === query ||
+          `episode ${ep.episode_number}`.includes(query)
+      )
+    : episodes;
+
+  const revealEpisode = (n: number) =>
+    setRevealedEpisodes((prev) => new Set(prev).add(n));
+
+  const tabLabel = `EPISODES S${selectedSeason}·E${selectedEpisode}`;
+
+  const sidebar = (
+    <div className="flex h-full flex-col gap-3 overflow-y-auto px-4 pt-4 pb-6 pr-14">
+      {/* Season selector + search (header row) */}
+      <div className="flex items-center gap-2">
+        <div className="relative shrink-0">
+          <select
+            value={selectedSeason}
+            onChange={(e) => {
+              setSelectedSeason(Number(e.target.value));
+              setSelectedEpisode(1);
+            }}
+            aria-label="Season"
+            className="appearance-none cursor-pointer rounded-lg border border-red-500/40 bg-gradient-to-b from-red-700 to-red-900 py-2.5 pl-4 pr-9 text-xs font-black text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back to Details</span>
-            <span className="sm:hidden">Back</span>
-          </Link>
-
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="hidden md:inline text-[10px] font-black tracking-widest text-sky-400 uppercase shrink-0">
-              Now Playing
-            </span>
-            <h1 className="text-sm sm:text-base font-black text-white truncate">
-              {tvShow.name} <span className="text-slate-400 font-bold">S{selectedSeason}:E{selectedEpisode}</span>
-            </h1>
-          </div>
-
-          <span className="shrink-0 px-2.5 py-1 rounded-md bg-[#00e054] text-black font-black text-[10px] sm:text-xs shadow">
-            HD
-          </span>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        {/* Season & Episode Selectors + Server Switcher */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-xl">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="px-3 py-1.5 rounded-xl bg-sky-600/20 text-sky-400 text-xs font-bold">
-              S{selectedSeason} : E{selectedEpisode}
-            </span>
-
-            <div className="relative">
-              <select
-                value={selectedSeason}
-                onChange={(e) => {
-                  setSelectedSeason(Number(e.target.value));
-                  setSelectedEpisode(1);
-                }}
-                aria-label="Season"
-                className="appearance-none bg-slate-950 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
-              >
-                {Array.from({ length: totalSeasons }, (_, i) => i + 1).map((s) => (
-                  <option key={s} value={s} className="bg-slate-900 text-white">
-                    Season {s}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2 top-2 pointer-events-none" />
-            </div>
-
-            <div className="relative">
-              <select
-                value={selectedEpisode}
-                onChange={(e) => setSelectedEpisode(Number(e.target.value))}
-                aria-label="Episode"
-                className="appearance-none bg-slate-950 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer"
-              >
-                {Array.from({ length: seasonEpisodeCount }, (_, i) => i + 1).map((ep) => (
-                  <option key={ep} value={ep} className="bg-slate-900 text-white">
-                    Episode {ep}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2 top-2 pointer-events-none" />
-            </div>
-          </div>
-
-          <ServerSwitcher servers={servers} active={streamServer} onChange={setStreamServer} />
+            {Array.from({ length: totalSeasons }, (_, i) => i + 1).map((s) => (
+              <option key={s} value={s} className="bg-[#1b1b1f] text-white">
+                Season {s}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/80" />
         </div>
 
-        {/* Video Player Embed */}
-        <div className="space-y-3">
-          <VideoPlayer
-            key={currentStreamUrl}
-            src={currentStreamUrl}
-            poster={tvShow.bannerUrl || tvShow.posterUrl}
-            title={`${tvShow.name} Season ${selectedSeason} Episode ${selectedEpisode}`}
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+          <input
+            value={episodeQuery}
+            onChange={(e) => setEpisodeQuery(e.target.value)}
+            placeholder="Search"
+            aria-label="Search episodes"
+            className="w-full rounded-lg border border-white/10 bg-[#1b1b1f] py-2.5 pl-9 pr-8 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-red-600"
           />
-          <p className="text-[11px] text-slate-500 text-center flex items-center justify-center gap-1.5">
-            <Info className="w-3.5 h-3.5" />
-            If a server fails to load, switch to another server above.
-          </p>
-        </div>
-
-        {/* Compact show info strip */}
-        <div className="flex flex-col sm:flex-row gap-5 p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
-          <img
-            src={tvShow.posterUrl}
-            alt={tvShow.name}
-            className="w-20 sm:w-24 aspect-[2/3] object-cover rounded-xl border border-white/10 shadow-lg shrink-0"
-          />
-          <div className="min-w-0 space-y-2">
-            <h2 className="text-lg sm:text-xl font-black text-white leading-snug">{tvShow.name}</h2>
-            <div className="flex flex-wrap items-center gap-3 text-[11px] sm:text-xs text-slate-300 font-semibold">
-              <span className="flex items-center gap-1.5 text-[#f5c518] font-black">
-                <Star className="w-3.5 h-3.5 fill-[#f5c518]" /> {tvShow.ratingAverage || 8.2}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" /> {tvShow.firstAirYear || 2026}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Tv className="w-3.5 h-3.5 text-slate-500" /> {totalSeasons} Season{totalSeasons > 1 ? 's' : ''}
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
-              {tvShow.storyline || tvShow.overview || 'No overview available for this series.'}
-            </p>
-            {genreNames.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {genreNames.slice(0, 5).map((g: string) => (
-                  <span
-                    key={g}
-                    className="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-white/5 border border-white/10 text-slate-300"
-                  >
-                    {g}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+          {episodeQuery && (
+            <button
+              onClick={() => setEpisodeQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
+
+      {/* SERVER dropdown + SPOILER toggle */}
+      <div className="flex items-stretch gap-2">
+        <div className="flex flex-1 items-center justify-between gap-2 rounded-lg border border-white/10 bg-[#1b1b1f] py-2.5 pl-4 pr-2">
+          <span className="shrink-0 text-[10px] font-black tracking-[0.18em] text-slate-400">
+            SERVER
+          </span>
+          <div className="relative min-w-0">
+            <select
+              value={streamServer}
+              onChange={(e) => setStreamServer(e.target.value as StreamServerId)}
+              aria-label="Streaming server"
+              className="w-full cursor-pointer appearance-none bg-transparent pl-1 pr-6 text-right text-xs font-bold text-slate-100 focus:outline-none"
+            >
+              {servers.map((s) => (
+                <option key={s.id} value={s.id} className="bg-[#1b1b1f] text-slate-100">
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          </div>
+        </div>
+
+        <button
+          onClick={() => setSpoilerMode((v) => !v)}
+          aria-pressed={spoilerMode}
+          className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-[10px] font-black tracking-[0.18em] transition-all ${
+            spoilerMode
+              ? 'border-red-500/60 bg-red-600/15 text-red-400'
+              : 'border-white/10 bg-[#1b1b1f] text-slate-400 hover:text-white'
+          }`}
+        >
+          <EyeOff className="h-4 w-4" />
+          SPOILER
+        </button>
+      </div>
+
+      {/* Season summary */}
+      <div className="pt-1">
+        <h2 className="text-lg font-black text-white">
+          Season {selectedSeason}{' '}
+          <span className="align-middle text-[10px] text-red-600">●</span>{' '}
+          <span className="text-[10px] font-bold tracking-[0.18em] text-slate-400">
+            {episodeCount} EPISODE{episodeCount === 1 ? '' : 'S'}
+          </span>
+        </h2>
+        <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-slate-500">
+          {seasonLoading
+            ? 'Loading season details…'
+            : seasonDetail?.overview ||
+              'A collection of episodes from this season. Pick one below to keep watching.'}
+        </p>
+      </div>
+
+      {/* Episode list */}
+      <div className="mt-1 space-y-3">
+        {seasonLoading && episodes.length === 0 && (
+          <div className="flex items-center justify-center gap-2 py-8 text-slate-500">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span className="text-xs">Loading episodes…</span>
+          </div>
+        )}
+
+        {filteredEpisodes.map((ep) => {
+          const isCurrent = ep.episode_number === selectedEpisode;
+          const hidden = spoilerMode && !revealedEpisodes.has(ep.episode_number);
+
+          return (
+            <div
+              key={ep.episode_number}
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedEpisode(ep.episode_number)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedEpisode(ep.episode_number);
+                }
+              }}
+              aria-current={isCurrent}
+              aria-label={`Play episode ${ep.episode_number}: ${ep.name}`}
+              className={`w-full cursor-pointer overflow-hidden rounded-2xl border text-left transition-all ${
+                isCurrent
+                  ? 'border-red-600/70 bg-[#161216] shadow-[0_0_24px_-8px_rgba(229,9,20,0.45)]'
+                  : 'border-white/10 bg-[#141418] hover:border-white/25'
+              }`}
+            >
+              {/* Thumbnail */}
+              <div className="relative aspect-[16/9] overflow-hidden bg-[#1b1b1f]">
+                {ep.still_path ? (
+                  <img
+                    src={`${TMDB_STILL_BASE}${ep.still_path}`}
+                    alt={`Episode ${ep.episode_number} — ${ep.name}`}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-slate-600">
+                    <Film className="h-8 w-8" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141418] via-black/10 to-transparent" />
+                {isCurrent && (
+                  <span className="absolute right-2 top-2 rounded-md bg-red-600 px-2 py-0.5 text-[9px] font-black tracking-[0.15em] text-white shadow">
+                    WATCHING
+                  </span>
+                )}
+              </div>
+
+              {/* Meta */}
+              <div className="space-y-1 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-xs font-bold text-slate-100">
+                    {ep.episode_number}. {ep.name}
+                  </p>
+                  <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-slate-500">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                    {ep.vote_average > 0 ? ep.vote_average.toFixed(1) : '—'}
+                    {ep.runtime ? <span className="text-slate-600">· {formatRuntime(ep.runtime)}</span> : null}
+                  </span>
+                </div>
+
+                {hidden ? (
+                  <div className="relative overflow-hidden rounded-md">
+                    <p
+                      aria-hidden="true"
+                      className="line-clamp-2 select-none text-[10px] leading-snug text-slate-300 blur-[5px]"
+                    >
+                      {ep.overview || 'No description available for this episode.'}
+                    </p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        revealEpisode(ep.episode_number);
+                      }}
+                      className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 text-[10px] font-black tracking-wide text-white transition-colors hover:bg-black/55"
+                    >
+                      Click to reveal
+                    </button>
+                  </div>
+                ) : (
+                  <p className="line-clamp-2 text-[10px] leading-snug text-slate-500">
+                    {ep.overview || 'No description available for this episode.'}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {!seasonLoading && filteredEpisodes.length === 0 && episodes.length > 0 && (
+          <p className="py-6 text-center text-xs text-slate-500">
+            No episodes match “{episodeQuery}”.
+          </p>
+        )}
+      </div>
+
+      {/* Server hint */}
+      <p className="mt-1 flex items-start gap-1.5 text-[10px] leading-snug text-slate-600">
+        <Info className="mt-0.5 h-3 w-3 shrink-0" />
+        If a server fails to load, switch to another one in the SERVER dropdown — Server 1 starts automatically.
+      </p>
     </div>
+  );
+
+  return (
+    <FullscreenWatchShell
+      backHref={`/tv/${params.id}`}
+      title={`${tvShow.name} - S${selectedSeason}E${selectedEpisode}`}
+      embedSrc={currentStreamUrl}
+      embedTitle={`${tvShow.name} — Season ${selectedSeason} Episode ${selectedEpisode}`}
+      tabLabel={tabLabel}
+      sidebar={sidebar}
+    />
   );
 }

@@ -4,8 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { SecurityProvider } from "@/components/SecurityProvider";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { Chrome } from "@/components/Chrome";
 
 export const metadata: Metadata = {
   title: "MovieVerse Pro",
@@ -81,11 +80,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <SecurityProvider>
-              <div className="flex flex-col min-h-screen">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
+              <Chrome>{children}</Chrome>
             </SecurityProvider>
           </AuthProvider>
         </ThemeProvider>

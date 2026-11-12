@@ -349,3 +349,53 @@ export const fetchTMDBTvSeasonEpisodeCount = async (
     return null;
   }
 };
+
+export interface TMDBSeasonEpisode {
+  episode_number: number;
+  name: string;
+  overview: string;
+  still_path: string | null;
+  runtime: number | null;
+  vote_average: number;
+  air_date: string | null;
+}
+
+export interface TMDBSeasonDetail {
+  name: string;
+  overview: string;
+  episodes: TMDBSeasonEpisode[];
+}
+
+/**
+ * Fetches full season details (episode list + overview) from TMDB.
+ * Returns null when the season can't be resolved.
+ */
+export const fetchTMDBTvSeason = async (
+  id: string | number,
+  season: number
+): Promise<TMDBSeasonDetail | null> => {
+  try {
+    const res = await fetch(`${TMDB_BASE_URL}/tv/${id}/season/${season}?api_key=${TMDB_API_KEY}`);
+    const data = await res.json();
+    if (!data || !Array.isArray(data.episodes) || data.episodes.length === 0) return null;
+
+    const episodes: TMDBSeasonEpisode[] = data.episodes.map((ep: any) => ({
+      episode_number: ep.episode_number,
+      name: ep.name || `Episode ${ep.episode_number}`,
+      overview: ep.overview || '',
+      still_path: ep.still_path ?? null,
+      runtime: ep.runtime ?? null,
+      vote_average: typeof ep.vote_average === 'number' ? ep.vote_average : 0,
+      air_date: ep.air_date ?? null,
+    }));
+
+    return {
+      name: data.name || `Season ${season}`,
+      overview: data.overview || '',
+      episodes,
+    };
+  } catch (err) {
+    console.error('TMDB TV Season fetch error:', err);
+    return null;
+  }
+};
