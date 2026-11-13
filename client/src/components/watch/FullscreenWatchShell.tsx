@@ -251,6 +251,18 @@ export default function FullscreenWatchShell({
         }}
       />
 
+      {/* Fullscreen shim — sits exactly over the provider's dead fullscreen button (bottom-right
+          of the embed chrome). The provider's button does nothing inside a cross-origin iframe,
+          so clicks there are redirected to our verified fullscreen path (root div + Fullscreen API). */}
+      <button
+        onClick={toggleFullscreen}
+        aria-label="Toggle fullscreen"
+        title="Fullscreen (F)"
+        className="absolute bottom-1 right-1 z-20 h-12 w-12 sm:h-14 sm:w-14 cursor-pointer rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-red-600/70"
+      >
+        <span className="sr-only">Toggle fullscreen</span>
+      </button>
+
       {/* Top gradient scrim for legibility */}
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-10" />
 
