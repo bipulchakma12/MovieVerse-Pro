@@ -402,7 +402,7 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
       {/* Server hint */}
       <p className="mt-1 flex items-start gap-1.5 text-[10px] leading-snug text-slate-500">
         <Info className="mt-0.5 h-3 w-3 shrink-0" />
-        If a server fails to load, switch to another one in the SERVER dropdown — Server 1 starts automatically.
+        Server 1 is tried first and the player advances automatically within 5s if it fails — or pick any server above. Mute is controlled inside the player.
       </p>
     </div>
   );
@@ -416,6 +416,9 @@ export default function WatchTvPage({ params }: { params: { id: string } }) {
       tabLabel={tabLabel}
       sidebarLabel="Episodes"
       sidebar={sidebar}
+      servers={servers}
+      activeServerId={streamServer}
+      onSelectServer={(id) => setStreamServer(id as StreamServerId)}
     />
   );
 }

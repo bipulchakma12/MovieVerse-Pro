@@ -171,7 +171,7 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
 
       <p className="mt-auto flex items-start gap-1.5 text-[10px] leading-snug text-slate-500">
         <Info className="mt-0.5 h-3 w-3 shrink-0" />
-        Server 1 starts automatically with the best available source. If a server fails, try another — your progress here will always pick up the latest server.
+        Server 1 is tried first and the player advances automatically if a server fails. Mute is controlled inside the player — tap the unmute button to enable sound.
       </p>
     </div>
   );
@@ -185,6 +185,9 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
       tabLabel="SERVERS"
       sidebarLabel="Streaming servers"
       sidebar={sidebar}
+      servers={servers}
+      activeServerId={streamServer}
+      onSelectServer={(id) => setStreamServer(id as StreamServerId)}
     />
   );
 }
