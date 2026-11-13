@@ -1,13 +1,19 @@
 import { fetchTMDBMovieDetail, fetchTMDBTvShowDetail } from '@/utils/tmdbClient';
 
 const BACKEND_TIMEOUT_MS = 600;
+// In development, default to the local backend; in production, only hit the backend
+// when one is explicitly configured — otherwise go straight to TMDB (avoids a
+// guaranteed-refused localhost:5000 request for every visitor).
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV !== 'production' ? 'http://localhost:5000/api' : undefined);
 
 async function fetchBackend(path: string): Promise<any> {
+  if (!API_URL) return null;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), BACKEND_TIMEOUT_MS);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
   try {
-    const res = await fetch(`${apiUrl}${path}`, { signal: controller.signal });
+    const res = await fetch(`${API_URL}${path}`, { signal: controller.signal });
     return res.ok ? await res.json() : null;
   } catch {
     return null;

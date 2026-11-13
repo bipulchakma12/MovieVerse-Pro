@@ -88,11 +88,13 @@ export default function FullscreenWatchShell({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sidebarOpen]);
 
-  // Move focus into the panel when it opens (the toggle unmounts, so focus would otherwise drop to <body>)
+  // Move focus into the panel when it opens (the toggle unmounts, so focus would otherwise drop to <body>).
+  // rAF fires before the visibility class recomputes — the close button is still visibility:hidden at that
+  // point and Chrome refuses the focus call — so wait a tick for the style flush.
   useEffect(() => {
     if (!sidebarOpen) return;
-    const t = requestAnimationFrame(() => closeButtonRef.current?.focus());
-    return () => cancelAnimationFrame(t);
+    const t = window.setTimeout(() => closeButtonRef.current?.focus(), 60);
+    return () => window.clearTimeout(t);
   }, [sidebarOpen]);
 
   // Track fullscreen changes (native Escape, browser F11, vendor prefixes)
