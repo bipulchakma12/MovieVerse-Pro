@@ -57,7 +57,7 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
     return (
       <div className="h-screen bg-black flex flex-col items-center justify-center gap-4 select-none">
         <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
-        <p className="text-xs text-slate-500 font-semibold tracking-wide">Preparing your stream…</p>
+        <p className="text-xs text-slate-400 font-semibold tracking-wide">Preparing your stream…</p>
       </div>
     );
   }
@@ -67,6 +67,7 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
       <div className="h-screen bg-black flex flex-col items-center justify-center gap-4 text-center px-6">
         <AlertCircle className="w-12 h-12 text-slate-700" />
         <p className="text-slate-400">Movie not found.</p>
+        <button onClick={() => window.location.reload()} className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all">Try Again</button>
         <Link
           href="/"
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all"
@@ -106,7 +107,7 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
             SERVERS
           </span>
         </h2>
-        <p className="mt-1 text-[10px] leading-snug text-slate-500">
+        <p className="mt-1 text-[10px] leading-snug text-slate-400">
           Server 1 selected automatically. Switch anytime if one fails to load.
         </p>
       </div>
@@ -135,7 +136,7 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
                 </span>
                 <span>
                   <span className="block text-xs font-bold text-slate-100">{s.label}</span>
-                  <span className="block text-[9px] text-slate-500 truncate max-w-[200px]">{s.url.replace(/^https?:\/\//, '').split('/')[0]}</span>
+                  <span className="block text-[9px] text-slate-400 truncate max-w-[200px]">{s.url.replace(/^https?:\/\//, '').split('/')[0]}</span>
                 </span>
               </span>
               <span
@@ -164,12 +165,12 @@ export default function WatchMoviePage({ params }: { params: { id: string } }) {
             <Clock className="h-3 w-3" /> {movie.runtimeMinutes || 120} min
           </span>
         </div>
-        <p className="text-[10px] leading-snug text-slate-500 line-clamp-3">
+        <p className="text-[10px] leading-snug text-slate-400 line-clamp-3">
           {movie.storyline || movie.overview || 'No overview available for this movie.'}
         </p>
       </div>
 
-      <p className="mt-auto flex items-start gap-1.5 text-[10px] leading-snug text-slate-500">
+      <p className="mt-auto flex items-start gap-1.5 text-[10px] leading-snug text-slate-400">
         <Info className="mt-0.5 h-3 w-3 shrink-0" />
         Server 1 is tried first and the player advances automatically if a server fails. Mute is controlled inside the player — tap the unmute button to enable sound.
       </p>

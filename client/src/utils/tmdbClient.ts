@@ -3,6 +3,19 @@ export const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 export const TMDB_IMAGE_ORIGINAL = 'https://image.tmdb.org/t/p/w1280';
 
+const TMDB_TIMEOUT_MS = 10000;
+
+/** fetch() with an abort timeout so stalled TMDB connections never hang the UI */
+async function fetchWithTimeout(url: string): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TMDB_TIMEOUT_MS);
+  try {
+    return await fetch(url, { signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // TMDB Genre ID Mappings
 export const MOVIE_GENRE_MAP: Record<string, number> = {
   action: 28,
@@ -259,7 +272,7 @@ export const fetchTMDBMovieDetail = async (idOrSlug: string) => {
     if (!extractedTmdbId || isNaN(Number(extractedTmdbId))) return null;
     const targetId = extractedTmdbId;
 
-    const res = await fetch(`${TMDB_BASE_URL}/movie/${targetId}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`);
+    const res = await fetchWithTimeout(`${TMDB_BASE_URL}/movie/${targetId}?api_key=${TMDB_API_KEY}&append_to_response=videos,credits`);
     const data = await res.json();
     if (!data || !data.id) return null;
 
@@ -298,7 +311,7 @@ export const fetchTMDBTvShowDetail = async (idOrSlug: string) => {
     if (!extractedTmdbId || isNaN(Number(extractedTmdbId))) return null;
     const targetId = extractedTmdbId;
 
-    const res = await fetch(`${TMDB_BASE_URL}/tv/${targetId}?api_key=${TMDB_API_KEY}`);
+    const res = await fetchWithTimeout(`${TMDB_BASE_URL}/tv/${targetId}?api_key=${TMDB_API_KEY}`);
     const data = await res.json();
     if (!data || !data.id) return null;
 
@@ -335,7 +348,7 @@ export const fetchTMDBTvSeasonEpisodeCount = async (
   season: number
 ): Promise<number | null> => {
   try {
-    const res = await fetch(`${TMDB_BASE_URL}/tv/${id}/season/${season}?api_key=${TMDB_API_KEY}`);
+    const res = await fetchWithTimeout(`${TMDB_BASE_URL}/tv/${id}/season/${season}?api_key=${TMDB_API_KEY}`);
     const data = await res.json();
     if (Array.isArray(data?.episodes) && data.episodes.length > 0) {
       return data.episodes.length;
@@ -375,11 +388,13 @@ export const fetchTMDBTvSeason = async (
   season: number
 ): Promise<TMDBSeasonDetail | null> => {
   try {
-    const res = await fetch(`${TMDB_BASE_URL}/tv/${id}/season/${season}?api_key=${TMDB_API_KEY}`);
+    const res = await fetchWithTimeout(`${TMDB_BASE_URL}/tv/${id}/season/${season}?api_key=${TMDB_API_KEY}`);
     const data = await res.json();
-    if (!data || !Array.isArray(data.episodes) || data.episodes.length === 0) return null;
+    // null means the fetch/parse failed; an empty array is a legitimately empty (e.g. unaired) season
+    if (!data || typeof data !== 'object' || data.success === false) return null;
+    const rawEpisodes = Array.isArray(data.episodes) ? data.episodes : [];
 
-    const episodes: TMDBSeasonEpisode[] = data.episodes.map((ep: any) => ({
+    const episodes: TMDBSeasonEpisode[] = rawEpisodes.map((ep: any) => ({
       episode_number: ep.episode_number,
       name: ep.name || `Episode ${ep.episode_number}`,
       overview: ep.overview || '',
