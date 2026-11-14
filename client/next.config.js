@@ -1,14 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async redirects() {
-    return [
-      {
-        source: '/ads.txt',
-        destination: 'https://srv.adstxtmanager.com/19390/movieversepro.xyz',
-        permanent: true,
-      },
-    ];
-  },
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
