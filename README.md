@@ -36,3 +36,16 @@ movieverse-pro/
    ```
    - Frontend: `http://localhost:3000`
    - Backend: `http://localhost:5000`
+
+## 🛡️ Ad Policy
+
+MovieVerse Pro blocks all third-party ad/redirect pop-ups from movie API providers by default — the site denies `window.open()` to any external origin (see `client/src/utils/adPolicy.ts` and `SecurityProvider`).
+
+To run **your own ads** after you deploy, allow your ad network's domains — everything else stays blocked:
+
+```bash
+# client build environment (Vercel / hosting env vars)
+NEXT_PUBLIC_OWN_AD_DOMAINS=ads.example.com,adservice.google.com
+```
+
+Subdomains of allowlisted domains are allowed automatically. Do **not** add movie API provider domains here — the goal is a hard boundary between your own ads and third-party API ads.

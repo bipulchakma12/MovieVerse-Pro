@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { recordPageVisit } from '@/utils/visitorTracker';
+import { canOpenPopup } from '@/utils/adPolicy';
 
 export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
@@ -40,14 +41,15 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       e.preventDefault();
     };
 
-    // 4. Block unauthorized ad redirects & popunders
+    // 4. Block third-party ad popunders & redirect popups.
+    //    Same-origin URLs and your own ad domains (NEXT_PUBLIC_OWN_AD_DOMAINS) are allowed.
     const originalOpen = window.open;
     window.open = function (...args: any[]) {
       const url = args[0] ? String(args[0]) : '';
-      if (url.startsWith('/') || (typeof window !== 'undefined' && url.includes(window.location.hostname))) {
+      if (canOpenPopup(url)) {
         return originalOpen.apply(window, args as any);
       }
-      console.log('Blocked ad popup window:', url);
+      console.log('Blocked third-party ad popup window:', url);
       return null;
     };
 
