@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { SecurityProvider } from "@/components/SecurityProvider";
 import { Chrome } from "@/components/Chrome";
+import EzoicPageView from "@/components/EzoicPageView";
 
 export const metadata: Metadata = {
   title: "MovieVerse Pro",
@@ -58,6 +59,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
+        {/* Ezoic — Step 2: Site Integration (header scripts; privacy first) */}
+        <script data-cfasync="false" src="https://cmp.gatekeeperconsent.com/min.js"></script>
+        <script data-cfasync="false" src="https://the.gatekeeperconsent.com/cmp.min.js"></script>
+        <script async src="//www.ezojs.com/ezoic/sa.min.js"></script>
+        <script>
+          {`window.ezstandalone = window.ezstandalone || {}; ezstandalone.cmd = ezstandalone.cmd || [];`}
+        </script>
+        <script src="//ezoicanalytics.com/analytics.js"></script>
+
         {/* Resource Preconnection for High-Speed Image & API Delivery */}
         <link rel="preconnect" href="https://image.tmdb.org" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://image.tmdb.org" />
@@ -81,6 +91,7 @@ export default function RootLayout({
           <AuthProvider>
             <SecurityProvider>
               <Chrome>{children}</Chrome>
+              <EzoicPageView />
             </SecurityProvider>
           </AuthProvider>
         </ThemeProvider>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Flame, Star, Sparkles, MonitorPlay, Tv, Film, Bookmark, ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import Link from 'next/link';
+import EzoicAdSlot from '@/components/EzoicAdSlot';
 
 interface MediaItem {
   _id: string;
@@ -403,6 +404,11 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Ezoic — Step 3: ad placement (header row is Ezoic-managed) */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4">
+        <EzoicAdSlot className="w-full h-24 sm:h-28 rounded-xl bg-slate-100/60 dark:bg-white/[0.03] border border-dashed border-slate-300 dark:border-white/10 flex items-center justify-center" />
+      </div>
 
       {/* Main Combined Feed: Featured Movies & TV Shows */}
       <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
