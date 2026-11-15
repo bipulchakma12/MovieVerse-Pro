@@ -141,9 +141,37 @@ export default function TvShowDetailsPage({ params }: { params: { id: string } }
 
   const totalSeasons = tvShow.numberOfSeasons || 1;
 
+  const tvUrl = `https://www.movieversepro.xyz/tv/${params.id}`;
+  const tvImage = tvShow.bannerUrl || tvShow.posterUrl || '';
+  const tvYear = tvShow.firstAirYear || 2026;
+  const tvGenres = (Array.isArray(tvShow.genres) ? tvShow.genres : [])
+    .map((g: any) => (typeof g === 'string' ? g : g?.name))
+    .filter(Boolean);
+  const tvRatingAvg = Number(tvShow.ratingAverage) || 0;
+  const tvJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TVSeries',
+    name: tvShow.name,
+    description: tvShow.storyline || tvShow.overview || `Watch ${tvShow.name} online in HD on MovieVerse Pro.`,
+    image: tvImage,
+    url: tvUrl,
+    genre: tvGenres,
+    ...(tvShow.firstAirDate ? { datePublished: tvShow.firstAirDate } : {}),
+    aggregateRating: tvRatingAvg
+      ? { '@type': 'AggregateRating', ratingValue: tvRatingAvg, bestRating: 10, worstRating: 1, ratingCount: Number(tvShow.ratingCount) || 1 }
+      : undefined,
+    numberOfSeasons: tvShow.numberOfSeasons || 1,
+    numberOfEpisodes: Number(tvShow.numberOfEpisodes) || undefined,
+    contentRating: 'TV-MA',
+  };
+
   return (
     <div className="pb-20 space-y-12 animate-fade-in">
-      
+      {/* SEO: structured data + canonical for this TV page */}
+      <script type="application/ld+json">{JSON.stringify(tvJsonLd)}</script>
+      <link rel="canonical" href={tvUrl} />
+
+
       {/* CineB-Style Cinematic TV Hero Details Header */}
       <section className="relative w-full min-h-[560px] lg:min-h-[620px] bg-slate-950 overflow-hidden select-none">
         

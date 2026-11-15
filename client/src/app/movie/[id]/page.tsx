@@ -143,13 +143,41 @@ export default function MovieDetailsPage({ params }: { params: { id: string } })
     );
   }
 
+  const movieUrl = `https://www.movieversepro.xyz/movie/${params.id}`;
+  const movieImage = movie.bannerUrl || movie.posterUrl || '';
+  const movieYear = movie.releaseYear || 2024;
+  const movieRuntime = Number(movie.runtimeMinutes) || 0;
+  const movieGenres = (Array.isArray(movie.genres) ? movie.genres : [])
+    .map((g: any) => (typeof g === 'string' ? g : g?.name))
+    .filter(Boolean);
+  const ratingAvg = Number(movie.ratingAverage) || 0;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Movie',
+    name: movie.title,
+    description: movie.storyline || movie.overview || `Watch ${movie.title} online in HD on MovieVerse Pro.`,
+    image: movieImage,
+    url: movieUrl,
+    datePublished: movie.releaseDate || `${movieYear}-01-01`,
+    genre: movieGenres,
+    aggregateRating: ratingAvg
+      ? { '@type': 'AggregateRating', ratingValue: ratingAvg, bestRating: 10, worstRating: 1, ratingCount: Number(movie.ratingCount) || 1 }
+      : undefined,
+    duration: movieRuntime ? `PT${movieRuntime}M` : undefined,
+    contentRating: 'PG-13',
+  };
+
   const genreNames = Array.isArray(movie.genres)
     ? movie.genres.map((g: any) => (typeof g === 'string' ? g : g.name))
     : ['Action', 'Sci-Fi'];
 
   return (
     <div className="pb-20 space-y-12 animate-fade-in">
-      
+      {/* SEO: structured data + canonical for this movie page */}
+      <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      <link rel="canonical" href={movieUrl} />
+
+
       {/* CineB-Style Cinematic Movie Hero Details Header */}
       <section className="relative w-full min-h-[560px] lg:min-h-[620px] bg-slate-950 overflow-hidden select-none">
         
