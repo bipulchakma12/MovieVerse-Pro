@@ -33,6 +33,14 @@ export const metadata: Metadata = {
     url: "https://movie-verse-pro-client.vercel.app",
     siteName: "MovieVerse Pro",
     type: "website",
+    images: [
+      {
+        url: "https://www.movieversepro.xyz/icon.svg",
+        width: 512,
+        height: 512,
+        alt: "MovieVerse Pro logo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -90,9 +98,17 @@ export default function RootLayout({
         {/* Google Search Console Verification — Hardcoded for 100% detection */}
         <meta name="google-site-verification" content="MH1Osikqntad8Po7T5cLX2qqGlwwi7gT3i02s8YRGHc" />
         {/* Browser Favicon Logo */}
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/svg+xml" sizes="512x512" href="/icon.svg" />
         <link rel="alternate icon" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
+
+        {/* Structured Data (JSON-LD) — site name + logo for Google search results */}
+        <script type="application/ld+json">
+          {`{"@context":"https://schema.org","@type":"WebSite","name":"MovieVerse Pro","url":"https://www.movieversepro.xyz/","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://www.movieversepro.xyz/search?q={search_term_string}"},"query-input":"required name=search_term_string"}}`}
+        </script>
+        <script type="application/ld+json">
+          {`{"@context":"https://schema.org","@type":"Organization","name":"MovieVerse Pro","url":"https://www.movieversepro.xyz/","logo":{"@type":"ImageObject","url":"https://www.movieversepro.xyz/icon.svg","width":512,"height":512},"image":"https://www.movieversepro.xyz/icon.svg","sameAs":[]}`}
+        </script>
       </head>
       <body>
         <ThemeProvider>
