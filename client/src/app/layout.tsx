@@ -42,7 +42,7 @@ const organizationJsonLd = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "MovieVerse Pro",
+  title: "MovieVerse Pro — Watch Movies & TV Shows Online Free in HD",
   description: "MovieVerse Pro is the ultimate online movie streaming platform. Watch full movies, blockbuster hits, trending TV series, and trailers in full HD online for free.",
   keywords: [
     "movie",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
   publisher: "MovieVerse Pro",
   robots: "index, follow",
   openGraph: {
-    title: "MovieVerse Pro",
+    title: "MovieVerse Pro — Watch Movies & TV Shows Online Free in HD",
     description: "Discover, stream, review, and track 50,000+ movies & TV shows with high-speed CineSrc streaming on MovieVerse Pro.",
     url: "https://www.movieversepro.xyz",
     siteName: "MovieVerse Pro",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MovieVerse Pro",
+    title: "MovieVerse Pro — Watch Movies & TV Shows Online Free in HD",
     description: "Stream full movies & TV series in HD for free on MovieVerse Pro.",
   },
   icons: {
