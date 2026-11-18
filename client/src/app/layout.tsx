@@ -32,11 +32,11 @@ const organizationJsonLd = {
   url: `${SITE_URL}/`,
   logo: {
     "@type": "ImageObject",
-    url: `${SITE_URL}/icon.svg`,
+    url: `${SITE_URL}/icon-512.png`,
     width: 512,
     height: 512,
   },
-  image: `${SITE_URL}/icon.svg`,
+  image: `${SITE_URL}/icon-512.png`,
   sameAs: [],
 };
 
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://www.movieversepro.xyz/icon.svg",
+        url: "https://www.movieversepro.xyz/icon-512.png",
         width: 512,
         height: 512,
         alt: "MovieVerse Pro logo",
@@ -82,14 +82,18 @@ export const metadata: Metadata = {
     description: "Stream full movies & TV series in HD for free on MovieVerse Pro.",
   },
   icons: {
+    // Google Search only shows favicons that are square raster images >= 48x48
+    // (SVG and 32x32 icons are ignored), so the PNG/ICO set is listed first.
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon-48.png', type: 'image/png', sizes: '48x48' },
+      { url: '/icon-96.png', type: 'image/png', sizes: '96x96' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
+      { url: '/icon.svg', type: 'image/svg+xml', sizes: '512x512' },
     ],
-    shortcut: ['/favicon.svg'],
-    apple: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-    ],
+    shortcut: ['/favicon.ico'],
+    apple: [{ url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' }],
   },
 };
 
@@ -131,10 +135,7 @@ export default function RootLayout({
 
         {/* Google Search Console Verification — Hardcoded for 100% detection */}
         <meta name="google-site-verification" content="MH1Osikqntad8Po7T5cLX2qqGlwwi7gT3i02s8YRGHc" />
-        {/* Browser Favicon Logo */}
-        <link rel="icon" type="image/svg+xml" sizes="512x512" href="/icon.svg" />
-        <link rel="alternate icon" href="/favicon.svg" />
-        <link rel="apple-touch-icon" href="/icon.svg" />
+        {/* Favicons are declared through metadata.icons above (PNG 48–512 + favicon.ico) */}
 
         {/* Structured Data (JSON-LD) — site name + logo for Google search results */}
         <JsonLd data={websiteJsonLd} />
