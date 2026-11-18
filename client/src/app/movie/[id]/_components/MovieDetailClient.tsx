@@ -8,6 +8,7 @@ import {
 import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
 import { getLocalReviews, saveLocalReview, ReviewItem } from '@/utils/reviews';
 import Link from 'next/link';
+import JsonLd from '@/components/JsonLd';
 
 export default function MovieDetailsPage({ movie, params }: { movie: any; params: { id: string } }) {
   const [userRating, setUserRating] = useState(0);
@@ -122,9 +123,8 @@ export default function MovieDetailsPage({ movie, params }: { movie: any; params
 
   return (
     <div className="pb-20 space-y-12 animate-fade-in">
-      {/* SEO: structured data + canonical for this movie page */}
-      <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-      <link rel="canonical" href={movieUrl} />
+      {/* SEO: structured data for this movie page (canonical is set in generateMetadata) */}
+      <JsonLd data={jsonLd} />
 
 
       {/* CineB-Style Cinematic Movie Hero Details Header */}

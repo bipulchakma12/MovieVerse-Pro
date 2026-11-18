@@ -8,6 +8,7 @@ import {
 import { isItemInFavorites, toggleItemFavorite, isItemInWatchLater, toggleItemWatchLater } from '@/utils/userLists';
 import { getLocalReviews, saveLocalReview, ReviewItem } from '@/utils/reviews';
 import Link from 'next/link';
+import JsonLd from '@/components/JsonLd';
 
 export default function TvShowDetailsPage({ tvShow, params }: { tvShow: any; params: { id: string } }) {
   const [userRating, setUserRating] = useState(0);
@@ -123,9 +124,8 @@ export default function TvShowDetailsPage({ tvShow, params }: { tvShow: any; par
 
   return (
     <div className="pb-20 space-y-12 animate-fade-in">
-      {/* SEO: structured data + canonical for this TV page */}
-      <script type="application/ld+json">{JSON.stringify(tvJsonLd)}</script>
-      <link rel="canonical" href={tvUrl} />
+      {/* SEO: structured data for this TV page (canonical is set in generateMetadata) */}
+      <JsonLd data={tvJsonLd} />
 
 
       {/* CineB-Style Cinematic TV Hero Details Header */}

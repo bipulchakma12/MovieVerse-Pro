@@ -26,6 +26,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       title,
       description,
       keywords: [movie.title, `watch ${movie.title} online`, `${movie.title} HD`, `${movie.title} full movie`, 'free movies online', 'watch movies HD', 'MovieVerse Pro'],
+      alternates: {
+        canonical: `https://www.movieversepro.xyz/movie/${id}`,
+      },
       openGraph: {
         title,
         description,

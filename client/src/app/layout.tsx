@@ -6,8 +6,42 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SecurityProvider } from "@/components/SecurityProvider";
 import { Chrome } from "@/components/Chrome";
 import EzoicPageView from "@/components/EzoicPageView";
+import JsonLd from "@/components/JsonLd";
+
+const SITE_URL = "https://www.movieversepro.xyz";
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "MovieVerse Pro",
+  url: `${SITE_URL}/`,
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "MovieVerse Pro",
+  url: `${SITE_URL}/`,
+  logo: {
+    "@type": "ImageObject",
+    url: `${SITE_URL}/icon.svg`,
+    width: 512,
+    height: 512,
+  },
+  image: `${SITE_URL}/icon.svg`,
+  sameAs: [],
+};
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "MovieVerse Pro",
   description: "MovieVerse Pro is the ultimate online movie streaming platform. Watch full movies, blockbuster hits, trending TV series, and trailers in full HD online for free.",
   keywords: [
@@ -30,7 +64,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "MovieVerse Pro",
     description: "Discover, stream, review, and track 50,000+ movies & TV shows with high-speed CineSrc streaming on MovieVerse Pro.",
-    url: "https://movie-verse-pro-client.vercel.app",
+    url: "https://www.movieversepro.xyz",
     siteName: "MovieVerse Pro",
     type: "website",
     images: [
@@ -103,12 +137,8 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.svg" />
 
         {/* Structured Data (JSON-LD) — site name + logo for Google search results */}
-        <script type="application/ld+json">
-          {`{"@context":"https://schema.org","@type":"WebSite","name":"MovieVerse Pro","url":"https://www.movieversepro.xyz/","potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://www.movieversepro.xyz/search?q={search_term_string}"},"query-input":"required name=search_term_string"}}`}
-        </script>
-        <script type="application/ld+json">
-          {`{"@context":"https://schema.org","@type":"Organization","name":"MovieVerse Pro","url":"https://www.movieversepro.xyz/","logo":{"@type":"ImageObject","url":"https://www.movieversepro.xyz/icon.svg","width":512,"height":512},"image":"https://www.movieversepro.xyz/icon.svg","sameAs":[]}`}
-        </script>
+        <JsonLd data={websiteJsonLd} />
+        <JsonLd data={organizationJsonLd} />
       </head>
       <body>
         <ThemeProvider>
