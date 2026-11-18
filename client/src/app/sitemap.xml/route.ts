@@ -1,6 +1,15 @@
 import { buildUrlSet, SITE_URL, xmlResponse, type ChangeFrequency, type SitemapUrl } from '@/utils/sitemap';
 
-export const dynamic = 'force-dynamic';
+/**
+ * Prerender this sitemap instead of building it per request.
+ *
+ * With `force-dynamic` every Googlebot/Bingbot fetch had to hit a cold
+ * serverless function. Prerendering removes that failure mode (Search Console
+ * reported "Couldn't fetch") while `revalidate` still refreshes `lastmod`
+ * hourly.
+ */
+export const dynamic = 'force-static';
+export const revalidate = 3600;
 
 /**
  * Keep this list in sync with the main navigation.
